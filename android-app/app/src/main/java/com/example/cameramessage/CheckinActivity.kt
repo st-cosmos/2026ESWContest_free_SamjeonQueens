@@ -38,6 +38,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.concurrent.Executors
+import java.util.concurrent.RejectedExecutionException
 
 /**
  * app-checkin / -new / -new-complete / -alert (design-spec §3.5~3.8)
@@ -204,15 +205,30 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
             val image = InputImage.fromMediaImage(mediaImage, imageProxy.imageInfo.rotationDegrees)
             val textTask = recognizer.process(image)
             val barcodeTask = barcodeScanner.process(image)
-            // 완료 콜백을 카메라 스레드에서 실행 — 프레임 JPEG 변환(offer)이 UI를 막지 않는다
-            Tasks.whenAllComplete(textTask, barcodeTask).addOnCompleteListener(cameraExecutor) {
+            // 완료 콜백은 메인 스레드(기본값)에서 받는다. 콜백 자체를 cameraExecutor 에
+            // 올리면 화면 이탈(onDestroy→shutdown) 후 완료되는 태스크가 종료된 풀에
+            // 제출되며 RejectedExecutionException 으로 앱이 죽는다.
+            Tasks.whenAllComplete(textTask, barcodeTask).addOnCompleteListener {
                 val text = if (textTask.isSuccessful) textTask.result?.text?.trim().orEmpty() else ""
                 val barcode = if (barcodeTask.isSuccessful) {
                     barcodeTask.result?.firstOrNull { !it.rawValue.isNullOrBlank() }?.rawValue
                 } else null
-                if (!isScanned) frameCache.offer(imageProxy, text.length)
-                runOnUiThread { if (!isScanned) scanner.onFrame(text, barcode) }
-                imageProxy.close()
+                // 프레임 JPEG 변환(offer)만 카메라 스레드로 — UI를 막지 않는다.
+                // executor 가 이미 종료됐으면 캡처만 건너뛴다.
+                var closesLater = false
+                if (!isScanned) {
+                    try {
+                        cameraExecutor.execute {
+                            frameCache.offer(imageProxy, text.length)
+                            imageProxy.close()
+                        }
+                        closesLater = true
+                    } catch (e: RejectedExecutionException) {
+                        // 화면 이탈 직후 — 캡처 생략
+                    }
+                    scanner.onFrame(text, barcode)
+                }
+                if (!closesLater) imageProxy.close()
             }
         }
     }
