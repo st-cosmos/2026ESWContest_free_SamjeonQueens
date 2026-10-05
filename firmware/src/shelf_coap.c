@@ -7,6 +7,11 @@
  * address is latched and used from then on. If the gateway stops answering,
  * the node falls back to multicast again.
  *
+ * Every ACTIVE shelf node hears that multicast too, so two rules keep a peer
+ * from being mistaken for the gateway: a node never answers a request it does
+ * not serve (no 4.04), and a discovery exchange only completes on a 2.xx
+ * response - anything else is ignored while the real answer is awaited.
+ *
  * All reception happens on one RX thread:
  *   - responses are matched to the (single) waiting requester by token,
  *   - incoming requests (`PUT <base>/led`, `PUT <base>/mode`) are handled in
@@ -59,6 +64,8 @@ static int64_t last_contact;
 /* The one in-flight request the RX thread may complete. */
 static struct {
 	bool busy;
+	/* Sent to the discovery multicast: only a 2.xx may complete it. */
+	bool discovery;
 	uint8_t token[TOKEN_LEN];
 	uint8_t buf[RX_BUF_SIZE];
 	int len;
@@ -179,10 +186,12 @@ static void gw_target(struct sockaddr_in6 *dst)
 
 /* @p token must already be filled in by the caller (see do_exchange: it is
  * registered with the RX thread before the datagram leaves, so a fast answer
- * cannot arrive before anyone is listening for it). */
+ * cannot arrive before anyone is listening for it). @p dst comes from
+ * gw_target(). */
 static int send_request(uint8_t type, uint8_t method, const char *resource,
 			const char *query, const uint8_t *payload, size_t payload_len,
-			const uint8_t token[TOKEN_LEN], struct sockaddr_in6 *dst)
+			const uint8_t token[TOKEN_LEN],
+			const struct sockaddr_in6 *dst)
 {
 	uint8_t buf[TX_BUF_SIZE];
 	struct coap_packet req;
@@ -227,10 +236,8 @@ static int send_request(uint8_t type, uint8_t method, const char *resource,
 		}
 	}
 
-	gw_target(dst);
-
 	ret = zsock_sendto(sock, req.data, req.offset, 0,
-			   (struct sockaddr *)dst, sizeof(*dst));
+			   (const struct sockaddr *)dst, sizeof(*dst));
 	if (ret < 0) {
 		return -errno;
 	}
@@ -256,10 +263,12 @@ static int do_exchange(uint8_t type, uint8_t method, const char *resource,
 	k_mutex_lock(&req_lock, K_FOREVER);
 
 	memcpy(token, coap_next_token(), TOKEN_LEN);
+	gw_target(&dst);
 
 	k_sem_reset(&pending_done);
 	key = k_spin_lock(&state_lock);
 	pending.busy = true;
+	pending.discovery = net_ipv6_is_addr_mcast(&dst.sin6_addr);
 	memcpy(pending.token, token, TOKEN_LEN);
 	k_spin_unlock(&state_lock, key);
 
@@ -350,6 +359,7 @@ int shelf_coap_report_weight(int32_t raw, int32_t milligram, uint32_t seq,
 
 	k_mutex_lock(&req_lock, K_FOREVER);
 	memcpy(token, coap_next_token(), TOKEN_LEN);
+	gw_target(&dst);
 	ret = send_request(COAP_TYPE_NON_CON, COAP_METHOD_POST, "weight", NULL,
 			   (const uint8_t *)payload, len, token, &dst);
 	k_mutex_unlock(&req_lock);
@@ -513,6 +523,10 @@ static void send_ack(const struct coap_packet *req, uint8_t code,
  * Handle a request pushed by the gateway. Only two resources exist:
  *   PUT <base>/led  "1"/"0"          -> drive the LED (ACTIVE mode push path)
  *   PUT <base>/mode "active"/"idle"  -> switch the power mode
+ *
+ * Anything else is dropped without an answer: it is another node's multicast
+ * gateway discovery (GET <base>/mode, GET <base>/led, POST <base>/weight), and
+ * a 4.04 from us would be taken for the gateway's reply.
  */
 static void handle_request(struct coap_packet *req,
 			   const struct sockaddr_in6 *from)
@@ -529,9 +543,6 @@ static void handle_request(struct coap_packet *req,
 	if (n != 2 ||
 	    path[0].len != strlen(CONFIG_SHELF_COAP_BASE_PATH) ||
 	    memcmp(path[0].value, CONFIG_SHELF_COAP_BASE_PATH, path[0].len) != 0) {
-		if (confirmable) {
-			send_ack(req, COAP_RESPONSE_CODE_NOT_FOUND, from);
-		}
 		return;
 	}
 
@@ -571,9 +582,6 @@ static void handle_request(struct coap_packet *req,
 			return;
 		}
 	} else {
-		if (confirmable) {
-			send_ack(req, COAP_RESPONSE_CODE_NOT_FOUND, from);
-		}
 		return;
 	}
 
@@ -634,9 +642,15 @@ static void rx_thread_fn(void *p1, void *p2, void *p3)
 			continue;
 		}
 
+		/* During discovery every listening node may answer; only a
+		 * success can be the gateway. Skipping the rest (e.g. a 4.04
+		 * from a peer on older firmware) keeps the exchange open for
+		 * the gateway's own reply. */
 		key = k_spin_lock(&state_lock);
 		if (pending.busy &&
-		    memcmp(token, pending.token, TOKEN_LEN) == 0) {
+		    memcmp(token, pending.token, TOKEN_LEN) == 0 &&
+		    (!pending.discovery ||
+		     (coap_header_get_code(&pkt) >> 5) == 2)) {
 			memcpy(pending.buf, buf, received);
 			pending.len = received;
 			memcpy(&pending.from, &from, sizeof(from));
