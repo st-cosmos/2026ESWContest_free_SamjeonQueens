@@ -60,6 +60,12 @@ class ScanInRequest(BaseModel):
 class ExpirationRequest(BaseModel):
     expiration_date: str
 
+class RelocateRequest(BaseModel):
+    # 잘못된 칸에 안착된 병을 지정 위치로 옮겨 놓기
+    chemical_id: str
+    target_shelf_id: str
+    username: Optional[str] = None
+
 class ScanOutRequest(BaseModel):
     ocr_text: str
     username: str  # who scanned it

@@ -195,6 +195,13 @@ data class SelectLedResponse(
     val col: Int
 )
 
+// 잘못된 칸에 안착된 병을 지정 위치로 옮겨 놓기 (위치 이동 세션 시작)
+data class RelocateRequest(
+    val chemical_id: String,
+    val target_shelf_id: String,
+    val username: String
+)
+
 data class CheckinSessionState(
     val active: Boolean,
     val chemical_name: String,

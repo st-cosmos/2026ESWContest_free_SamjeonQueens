@@ -74,6 +74,8 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
     private var recommendedShelfId: String? = null
     private var recommendedShelfDesc: String = ""
     private var scannedName: String = ""  // 세션 완료 후 결과 조회용 (세션 리셋 시 이름이 비므로)
+    // '지정 위치로 옮기기' 진행 중인 병 — 지정 칸 안착(또는 타임아웃)까지 유지
+    private var relocatingChemId: String? = null
 
     // 세션 완료를 폴링 루프와 WebSocket 트리거가 동시에 감지해 완료 모달이
     // 두 번 뜨는 것을 막기 위한 가드. 서버는 완료 결과를 다음 세션 시작
@@ -526,11 +528,18 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
                 // 세션 종료 → 안착 완료 또는 타임아웃
                 val targetName = session.chemical_name.ifBlank { scannedName }
                 val chemicals = NetworkClient.api.getChemicals()
-                val latestChem = chemicals
-                    .filter { it.name == targetName }
-                    .maxByOrNull { it.time_in ?: "" }
+                val relocatingId = relocatingChemId
+                val latestChem = if (relocatingId != null) {
+                    chemicals.find { it.id == relocatingId }
+                } else {
+                    chemicals
+                        .filter { it.name == targetName }
+                        .maxByOrNull { it.time_in ?: "" }
+                }
                 if (latestChem != null && !session.timeout) {
                     handleCheckinComplete(latestChem)
+                } else if (relocatingId != null) {
+                    showRelocateTimeout(latestChem)
                 } else {
                     resetScanState()
                 }
@@ -614,8 +623,8 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
                             "현재 ${placedShelfDesc}에 안착이 감지되었습니다.",
                     "지정 위치로 옮기기", "이 위치로 수정하기",
                     onSecondary = {
-                        // 다시 옮겨 놓도록 초기화 → 재스캔 시 LED 재안내
-                        resetScanState()
+                        // 지정 칸 안착이 감지돼야 위치가 바뀐다 — 그 전까지는 현재 칸 기록 유지
+                        startRelocation(chemical)
                     },
                     onPrimary = {
                         // 서버에는 이미 현재 칸으로 기록되어 있으므로 이 위치를 확정
@@ -644,6 +653,44 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
                 )
             }
         }
+    }
+
+    /** '지정 위치로 옮기기': 서버에 위치 이동 세션을 열고 지정 칸 안착을 기다린다.
+     *  완료·타임아웃은 반입 세션 폴링이 그대로 감지한다. */
+    private fun startRelocation(chemical: ChemicalData) {
+        val targetShelfId = recommendedShelfId ?: run { resetScanState(); return }
+        lifecycleScope.launch {
+            try {
+                NetworkClient.api.relocateCheckin(
+                    RelocateRequest(chemical.id, targetShelfId, currentUser)
+                )
+                relocatingChemId = chemical.id
+                scannedName = chemical.name
+                binding.scanStatusText.text = "안착 감지 중"
+                setStatusWaiting("지정 위치로 옮겨 주세요", "$recommendedShelfDesc 안착 감지 중")
+                startSessionPolling()
+            } catch (e: Exception) {
+                Toast.makeText(
+                    this@CheckinActivity,
+                    httpErrorDetail(e) ?: "위치 이동 요청 실패 — 현재 위치로 기록되어 있습니다.",
+                    Toast.LENGTH_SHORT
+                ).show()
+                resetScanState()
+            }
+        }
+    }
+
+    /** 제한 시간 안에 지정 칸 안착이 감지되지 않음 — 기록은 처음 놓인 칸 그대로다 */
+    private fun showRelocateTimeout(chemical: ChemicalData?) {
+        binding.statusIcon.clearAnimation()
+        AppModal.show(
+            this, AppModal.Tone.WARNING, R.drawable.ic_triangle_alert,
+            "지정 위치 안착이 확인되지 않았습니다",
+            "${chemical?.name ?: scannedName}이(가) ${recommendedShelfDesc}에 놓인 것을 " +
+                    "확인하지 못했습니다.\n보관 위치는 처음 안착된 칸으로 기록되어 있습니다.",
+            null, "확인",
+            onPrimary = { resetScanState() }
+        )
     }
 
     /** 추천 수납칸이 속한 선반 전체의 점유 현황을 모아 모달용 시각화 데이터를 만든다 */
@@ -680,6 +727,7 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
         recommendedShelfId = null
         recommendedShelfDesc = ""
         scannedName = ""
+        relocatingChemId = null
         activeSessionJob?.cancel()
 
         binding.statusIcon.clearAnimation()

@@ -129,14 +129,13 @@ def scan_in(req: schemas.ScanInRequest, db: Session = Depends(get_db)):
             db.commit()
 
     # Start active check-in session
-    from session_store import checkin_session
+    from session_store import checkin_session, reset_checkin
+    # 직전 세션의 잔재(유통기한·용량·위치 이동 대상)가 새 병에 붙지 않도록 초기화
+    reset_checkin()
     checkin_session["active"] = True
     checkin_session["chemical_name"] = matched_std_name
     checkin_session["start_time"] = time.time()
     checkin_session["username"] = req.username
-    # 직전 세션의 잔재가 새 병에 붙지 않도록 초기화 (앱이 스캔 후 별도 등록)
-    checkin_session["expiration_date"] = None
-    checkin_session["capacity_kg"] = None
 
     return {
         "status": "success",
