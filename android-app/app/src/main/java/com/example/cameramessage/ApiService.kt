@@ -123,6 +123,10 @@ interface ApiService {
     @POST("api/checkin-session/cancel")
     suspend fun cancelCheckinSession(): Map<String, String>
 
+    // 잘못된 칸에 놓인 병을 지정 위치로 옮기기 — 지정 칸 안착 감지 시 위치가 변경된다
+    @POST("api/checkin-session/relocate")
+    suspend fun relocateCheckin(@Body request: RelocateRequest): Map<String, Any>
+
     @POST("api/checkin-session/expiration")
     suspend fun setCheckinExpiration(@Body request: ExpirationRequest): Map<String, String>
 

@@ -8,6 +8,7 @@ import models
 import schemas
 import services.llm_safety as llm_safety
 from datetime import datetime
+import time
 
 router = APIRouter(prefix="/api/shelves", tags=["shelves"])
 
@@ -177,14 +178,45 @@ def delete_config_col(shelf_id: str, req: Dict[str, int], db: Session = Depends(
 MIN_EVENT_DELTA_KG = 0.05
 
 
+# '지정 위치로 옮기기' 버튼을 누르기 전에 병을 먼저 옮겨 놓는 순서 지원:
+# 반입 세션 없이 발생한 무게 증가를 칸별로 기억해 두고, 이 시간 안에 온
+# 위치 이동 요청(routes/session.relocate_checkin)이 청구하면 즉시 확정한다.
+UNCLAIMED_RISE_TTL_S = 60.0
+_unclaimed_rises: dict = {}  # shelf_id -> (delta_kg, timestamp)
+
+
+def claim_recent_rise(shelf_id):
+    """이 칸의 최근 미청구 증가량을 소비하고 반환한다. 없으면 None."""
+    entry = _unclaimed_rises.pop(shelf_id, None)
+    if entry is None:
+        return None
+    delta, at = entry
+    if time.time() - at > UNCLAIMED_RISE_TTL_S:
+        return None
+    return delta
+
+
+def _relocating_from(db: Session, shelf: models.Shelf) -> bool:
+    """위치 이동 세션 중 옮길 병이 지금 이 칸에 기록돼 있는가 (= 이 칸에서 들어 올릴 차례)."""
+    from session_store import checkin_session
+    chem_id = checkin_session["active"] and checkin_session.get("relocate_chemical_id")
+    if not chem_id:
+        return False
+    chem = db.query(models.Chemical).filter(models.Chemical.id == chem_id).first()
+    return chem is not None and chem.shelf_id == shelf.id
+
+
 def _handle_checkin_increase(db: Session, shelf: models.Shelf, delta_kg: float):
     """체크인 세션 중 무게 증가(안착) 처리.
 
     증가량(delta)을 병 무게로 기록하고, 같은 이름의 반출중 병 중
     무게가 허용 오차 내로 가장 근접한 병이 있으면 그 병을 복귀 처리해
     (동일 이름 개체 식별) 신규 행 난립을 막는다.
+
+    위치 이동 세션(relocate_chemical_id)이면 새 병을 만들지 않고, 이미 반입
+    기록된 그 병의 보관 칸만 안착이 감지된 칸으로 옮긴다.
     """
-    from session_store import checkin_session
+    from session_store import checkin_session, reset_checkin
     if not (checkin_session["active"] and checkin_session["chemical_name"]):
         return None
 
@@ -196,10 +228,21 @@ def _handle_checkin_increase(db: Session, shelf: models.Shelf, delta_kg: float):
     now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     shelf_desc = f"선반 {shelf.parent_shelf} · {shelf.row}행 {shelf.col}열"
 
+    relocate_id = checkin_session.get("relocate_chemical_id")
+    moving = None
+    if relocate_id:
+        moving = db.query(models.Chemical).filter(models.Chemical.id == relocate_id).first()
+        if moving is None:
+            reset_checkin()
+            return None
+        if moving.shelf_id == shelf.id:
+            # 원래 칸에 다시 내려놓았다 — 옮긴 것이 아니므로 계속 대기
+            return None
+
     # 반출중인 같은 이름 병 중 실측 증가량과 가장 근접한 병 → 복귀로 판정
     restored = None
     best_diff = None
-    outgone = db.query(models.Chemical).filter(
+    outgone = [] if moving is not None else db.query(models.Chemical).filter(
         models.Chemical.name == chem_name,
         models.Chemical.current_status == "반출중",
     ).all()
@@ -209,7 +252,25 @@ def _handle_checkin_increase(db: Session, shelf: models.Shelf, delta_kg: float):
             if best_diff is None or diff < best_diff:
                 best_diff, restored = diff, cand
 
-    if restored is not None:
+    if moving is not None:
+        old_shelf = db.query(models.Shelf).filter(models.Shelf.id == moving.shelf_id).first()
+        old_desc = (f"선반 {old_shelf.parent_shelf} · {old_shelf.row}행 {old_shelf.col}열"
+                    if old_shelf else "위치 미상")
+        # 잘못 놓였던 칸에 남은 혼재 경고 LED 소등
+        if old_shelf and (old_shelf.led_message or "").startswith("🚨"):
+            old_shelf.led_on = False
+            old_shelf.led_message = ""
+        # 옮기려고 들어 올린 감소가 '반출 스캔 대기'로 남지 않게 한다
+        if moving.shelf_id:
+            checkout_flow.clear_unclaimed_drop(moving.shelf_id)
+        moving.shelf_id = shelf.id
+        moving.shelf_row = shelf.row or 1
+        moving.shelf_col = shelf.col or 1
+        chem = moving
+        on_target = shelf.id == checkin_session.get("target_shelf_id")
+        details = (f"지정 위치로 이동 완료: {old_desc} → {shelf_desc}" if on_target
+                   else f"위치 변경: {old_desc} → {shelf_desc} (지정 위치 아님)")
+    elif restored is not None:
         restored.current_status = "비치중"
         restored.shelf_id = shelf.id
         restored.shelf_row = shelf.row or 1
@@ -258,7 +319,7 @@ def _handle_checkin_increase(db: Session, shelf: models.Shelf, delta_kg: float):
     db.add(models.Log(
         chemical_id=chem.id,
         chemical_name=chem.name,
-        action="반입",
+        action="위치 변경" if moving is not None else "반입",
         operator_name=operator_name,
         details=details,
     ))
@@ -275,17 +336,15 @@ def _handle_checkin_increase(db: Session, shelf: models.Shelf, delta_kg: float):
             shelf.led_message = f"🚨 혼재 위험! 추천 이송: {safe_desc}"
             break
 
-    checkin_session["active"] = False
-    checkin_session["chemical_name"] = ""
-    checkin_session["start_time"] = 0.0
-    checkin_session["username"] = ""
-    checkin_session["expiration_date"] = None
-    checkin_session["capacity_kg"] = None
+    reset_checkin()
+    # 이 안착 이전의 증가 기록은 방금 확정된 병과 무관하다
+    _unclaimed_rises.clear()
     db.commit()
 
     return {
         "event": "checkin_complete",
         "restored": restored is not None,
+        "relocated": moving is not None,
         "co_warning": co_warning,
         "recommended_safe_shelf_desc": safe_desc,
         "chemical": {
@@ -319,11 +378,15 @@ def update_weight(shelf_id: str, req: schemas.WeightUpdate, db: Session = Depend
     delta = req.weight - prev_w
     if delta >= MIN_EVENT_DELTA_KG:
         session_result = _handle_checkin_increase(db, shelf, delta)
+        if session_result is None:
+            # 세션이 소비하지 않은 증가 — 곧이어 올 위치 이동 요청이 청구할 수 있다
+            _unclaimed_rises[shelf.id] = (round(delta, 2), time.time())
         # 병이 다시 올라왔으면 직전의 미청구 감소 기록은 무효
         checkout_flow.clear_unclaimed_drop(shelf.id)
     elif delta <= -MIN_EVENT_DELTA_KG:
+        _unclaimed_rises.pop(shelf.id, None)
         session_result = checkout_flow.handle_weight_drop(db, shelf, -delta)
-        if session_result is None:
+        if session_result is None and not _relocating_from(db, shelf):
             # 반출 세션이 소비하지 않은 감소 — 사용자가 병을 먼저 들고 온
             # 경우다. 곧이어 올 스캔이 이 감소를 청구해 즉시 확정한다.
             checkout_flow.note_unclaimed_drop(shelf.id, -delta)
