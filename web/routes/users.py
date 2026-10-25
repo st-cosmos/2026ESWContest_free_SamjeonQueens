@@ -7,15 +7,8 @@ from database import get_db
 import models
 import schemas
 import shelf_power
-from datetime import datetime
 
 router = APIRouter(prefix="/api/users", tags=["users"])
-
-
-def _validate_username(username: str):
-    """아이디 규칙: 4자 이상."""
-    if not username or len(username.strip()) < 4:
-        raise HTTPException(status_code=400, detail="아이디는 4자 이상이어야 합니다.")
 
 
 def _validate_password(password: str):
@@ -36,9 +29,9 @@ def _validate_pin(pin: str):
 
 @router.post("/register", response_model=schemas.UserResponse)
 def register_user(req: schemas.UserRegister, db: Session = Depends(get_db)):
-    if not req.username or not req.nickname:
-        raise HTTPException(status_code=400, detail="아이디·별명을 모두 입력하세요.")
-    _validate_username(req.username)
+    # 아이디 규칙(4자 이상, 영문·숫자·._-)은 schemas.UserRegister 의 validator 가 먼저 검사한다.
+    if not req.nickname.strip():
+        raise HTTPException(status_code=400, detail="별명을 입력하세요.")
     _validate_password(req.password)
     _validate_pin(req.pin)
 

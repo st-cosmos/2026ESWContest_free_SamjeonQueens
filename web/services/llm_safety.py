@@ -2,8 +2,7 @@ import os
 import json
 import logging
 import urllib.request
-import urllib.error
-from typing import Dict, List, Any
+from typing import Any, Dict
 
 logger = logging.getLogger("llm_safety")
 

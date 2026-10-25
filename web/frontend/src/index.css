@@ -1999,26 +1999,6 @@ select.input-field {
 }
 
 /* ============================================================
-   사이드바 사용자 블록 → 프로필 진입
-   ============================================================ */
-.sidebar-user-main {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 1;
-  min-width: 0;
-  background: none;
-  border: none;
-  padding: 0;
-  cursor: pointer;
-  text-align: left;
-}
-
-.sidebar-user.active {
-  background: var(--primary-soft);
-}
-
-/* ============================================================
    내 프로필 (web-profile-edit)
    ============================================================ */
 .profile-card {

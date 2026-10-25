@@ -1,13 +1,21 @@
+import json
+import re
+import time
+from datetime import datetime
+from typing import Dict, List
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List, Dict, Optional
-from database import get_db
+
 import checkout_flow
 import matching
 import models
 import schemas
-from datetime import datetime
-import time
+import services.capacity as capacity
+import services.llm_match as llm_match
+import services.llm_safety as llm_safety
+from database import get_db
+from session_store import checkin_session, checkout_session, reset_checkin
 
 router = APIRouter(prefix="/api/chemicals", tags=["chemicals"])
 
@@ -26,15 +34,9 @@ def _resolve_chemical_name(db: Session, req, error_detail: str) -> str:
 @router.get("", response_model=List[schemas.ChemicalResponse])
 def get_chemicals(db: Session = Depends(get_db)):
     chemicals = db.query(models.Chemical).all()
-    import services.llm_safety as llm_safety
     for c in chemicals:
         llm_safety.ensure_chemical_incompatibility_info(c, db)
     return chemicals
-
-@router.get("/ocr-chemicals")
-def get_ocr_chemicals(db: Session = Depends(get_db)):
-    # (구버전 호환) 인식 대상 시약명 목록 — 이제 별칭 사전 기반
-    return matching.known_names(db)
 
 @router.get("/known-names")
 def get_known_names(db: Session = Depends(get_db)):
@@ -51,7 +53,6 @@ def match_chemical(req: schemas.MatchRequest, db: Session = Depends(get_db)):
 def match_chemical_llm(req: schemas.MatchRequest, db: Session = Depends(get_db)):
     """사전 매칭 실패가 지속될 때의 LLM 폴백 — 결과는 항상 사용자 확인을 거친다.
     확인되면 /match/confirm 이 label 문구를 별칭으로 학습해 다음부터 즉시 인식된다."""
-    import services.llm_match as llm_match
     result = llm_match.identify_chemical_from_ocr(
         req.ocr_text, matching.known_names(db), image_b64=req.image_b64
     )
@@ -74,9 +75,6 @@ def estimate_capacity(req: schemas.CapacityEstimateRequest, db: Session = Depend
     """반입 스캔 직후 앱이 백그라운드로 호출 — 라벨 OCR/사진으로 병의 가득
     총 무게(capacity_kg, 잔량 % 분모)를 추정한다. 결과는 진행 중인 반입 세션에
     실리고, 세션이 이미 끝났으면 방금 반입된 같은 이름의 병에 바로 반영한다."""
-    import services.capacity as capacity
-    from session_store import checkin_session
-
     images = req.images_b64 or ([req.image_b64] if req.image_b64 else [])
     est = capacity.estimate_capacity(req.chemical_name, req.ocr_text, images)
     if not est:
@@ -129,7 +127,6 @@ def scan_in(req: schemas.ScanInRequest, db: Session = Depends(get_db)):
             db.commit()
 
     # Start active check-in session
-    from session_store import checkin_session, reset_checkin
     # 직전 세션의 잔재(유통기한·용량·위치 이동 대상)가 새 병에 붙지 않도록 초기화
     reset_checkin()
     checkin_session["active"] = True
@@ -200,7 +197,6 @@ def scan_out(req: schemas.ScanOutRequest, db: Session = Depends(get_db)):
     candidates = checkout_flow.start(
         db, matched_std_name, req.username, chemical_id=req.chemical_id
     )
-    from session_store import checkout_session
     return {
         "status": "pending",
         "chemical_name": matched_std_name,
@@ -257,8 +253,7 @@ def select_led(req: schemas.SelectLedRequest, db: Session = Depends(get_db)):
 @router.post("/{chem_id}/expiration")
 def set_chemical_expiration(chem_id: str, req: schemas.ExpirationRequest, db: Session = Depends(get_db)):
     """반입 때 '나중에 입력하기'로 미뤄둔 유통기한을 웹에서 입력한다."""
-    import re as _re
-    if not _re.fullmatch(r"\d{4}-\d{2}-\d{2}", req.expiration_date):
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", req.expiration_date):
         raise HTTPException(status_code=400, detail="날짜는 YYYY-MM-DD 형식이어야 합니다.")
     chem = db.query(models.Chemical).filter(models.Chemical.id == chem_id).first()
     if not chem:
@@ -352,8 +347,6 @@ def get_alerts(db: Session = Depends(get_db)):
                 
     # 3. Co-storage safety warning (LLM / Rule-based dynamic incompatibility check):
     co_storage_warnings = []
-    import json
-    import services.llm_safety as llm_safety
 
     # Ensure all checked-in chemicals have incompatible_chemicals analyzed
     for c in chemicals:
