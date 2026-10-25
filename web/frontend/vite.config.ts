@@ -11,7 +11,12 @@ export default defineConfig({
         target: 'http://localhost:8000',
         changeOrigin: true,
         secure: false,
-      }
+      },
+      // 실시간 갱신용 WebSocket — useWebSocket.ts 는 같은 호스트의 /ws 에 붙는다
+      '/ws': {
+        target: 'ws://localhost:8000',
+        ws: true,
+      },
     }
   }
 })
