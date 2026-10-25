@@ -15,9 +15,6 @@ interface ApiService {
     @GET("api/users")
     suspend fun getUsers(): List<UserData>
 
-    @POST("api/users/register")
-    suspend fun registerUser(@Body request: UserRegisterRequest): UserData
-
     // 앱 로그인은 4자리 PIN 방식(login-pin)을 사용한다. (웹은 비밀번호 방식 /login)
     // 성공하면 서버가 앱 세션을 등록해 선반들을 깨운다 (docs/power-modes.md).
     @POST("api/users/login-pin")
@@ -46,12 +43,6 @@ interface ApiService {
         @Body request: ShelfRegister
     ): ShelfDevice
 
-    @POST("api/shelves/{shelfId}/weight")
-    suspend fun updateShelfWeight(
-        @Path("shelfId") shelfId: String,
-        @Body request: ShelfWeightUpdate
-    ): ShelfWeightResponse
-
     @POST("api/shelves/{shelfId}/led")
     suspend fun setLedState(
         @Path("shelfId") shelfId: String,
@@ -61,9 +52,6 @@ interface ApiService {
     // --- Chemicals ---
     @GET("api/chemicals")
     suspend fun getChemicals(): List<ChemicalData>
-
-    @GET("api/chemicals/ocr-chemicals")
-    suspend fun getOcrChemicals(): List<String>
 
     @GET("api/chemicals/known-names")
     suspend fun getKnownNames(): List<String>
@@ -119,9 +107,6 @@ interface ApiService {
     // --- Check-in Session ---
     @GET("api/checkin-session")
     suspend fun getCheckinSession(): CheckinSessionState
-
-    @POST("api/checkin-session/cancel")
-    suspend fun cancelCheckinSession(): Map<String, String>
 
     // 잘못된 칸에 놓인 병을 지정 위치로 옮기기 — 지정 칸 안착 감지 시 위치가 변경된다
     @POST("api/checkin-session/relocate")
