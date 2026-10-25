@@ -11,7 +11,7 @@ Thread 메시로 게이트웨이([`../gateway`](../gateway))에 붙어서 로드
 
 앱 로그인 여부에 따라 두 전력 모드를 오갑니다 (`../docs/power-modes.md`). 게이트웨이가 `PUT shelf/mode` 로 전환을 밀어넣고, 부팅 시에는 노드가 `GET shelf/mode` 로 동기화합니다.
 
-* **IDLE (평상시, 부팅 기본)** — Thread SED (라디오는 1초 데이터 폴만), 2초마다 로드셀 전원을 켜 40 Hz 로 측정 후 전원 차단, LED 소등. 임계 이상 무게 변화는 즉시, 아니어도 30초마다 하트비트 보고.
+* **IDLE (평상시, 부팅 기본)** — Thread SED (라디오는 1초 데이터 폴만), 60초마다(`prj.conf`; Kconfig 기본값은 2초) 로드셀 전원을 켜 40 Hz 로 측정 후 전원 차단, LED 소등. 임계 이상 무게 변화는 즉시, 아니어도 30초마다 하트비트 보고.
 * **ACTIVE (로그인 중)** — Thread MED (수신 상시 ON), 로드셀 전원 상시 + 640 Hz 로 0.2초마다 측정, LED 는 게이트웨이 푸시(`PUT shelf/led`)로 즉시 반영 (+5초 백업 폴). 게이트웨이가 60초간 무응답이면 스스로 IDLE 로 강등.
 * **무게 보고** — 직전 보고값 대비 `SHELF_ADC_DELTA_THRESHOLD` 이상 변하고, 연속 측정이 `SHELF_SETTLE_THRESHOLD_G`(기본 10 g) 이내로 **안정됐을 때만** 게이트웨이로 CoAP POST (`md` 필드에 현재 모드 포함 — 게이트웨이가 웨이크/슬립 놓침을 교정). 안정화 필터 덕에 병을 내려놓는 도중의 과도값(0→300→500 g)이 두 번의 변화로 새지 않습니다.
 * **배터리** — 보고 시마다 SAADC 의 내부 VDDH/5 탭으로 배터리 전압(mV)을 함께 보냅니다. 4.4 V 초과면 USB 전원 상태입니다.
@@ -36,7 +36,7 @@ docs/build-and-flash.md                빌드, 플래싱, 부트로더, 캘리�
 ## 빠른 시작
 
 ```powershell
-cd C:\Users\seadmisk\workspace\smart-chemical-shelf\firmware
+cd <저장소>\firmware
 west build -b nrf52840dk/nrf52840 --sysbuild -p always .
 
 $env:NRFUTIL_HOME = "C:\ncs\toolchains\dcbdc366a1\nrfutil\home"

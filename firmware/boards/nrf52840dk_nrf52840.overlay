@@ -5,11 +5,12 @@
  * every DK specific pin assignment that the module uses differently. Only the
  * SoC parts of the DK board files are actually relied on.
  *
- * Pin map (docs/plan.md):
- *   P0.06  LED
- *   P0.08  CS1237 DRDY/DOUT
- *   P1.09  CS1237 SCLK
- *   P0.12  load cell rail power switch      <-- plan.md says "P12", assumed P0.12
+ * Pin map, verified against the pcb-smart-shelf schematic
+ * (docs/build-and-flash.md section 9):
+ *   P0.06  LED                          (U1/14, Q1 gate, active high)
+ *   P0.08  CS1237 DRDY/DOUT             (U1/16)
+ *   P1.09  CS1237 SCLK                  (U1/17)
+ *   P0.12  load cell rail power switch  (U1/20, Q2 gate, active low)
  */
 
 #include <zephyr/dt-bindings/gpio/gpio.h>
