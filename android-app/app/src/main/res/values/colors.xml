@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- 기존 시스템 색 (런처 아이콘 등에서 사용) -->
-    <color name="black">#FF000000</color>
+    <!-- 기본 색 (런처 아이콘·텍스트 반전 등에서 사용) -->
     <color name="white">#FFFFFFFF</color>
-    <color name="purple_500">#FF6200EE</color>
     <color name="ic_launcher_background">#3D6BF5</color> <!-- Smart Shelf primary -->
 
 
