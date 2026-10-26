@@ -27,7 +27,7 @@ export default function Sidebar({ activeTab, onSelect, user, onProfile, onLogout
           <FlaskConical size={22} />
         </div>
         <div>
-          <div className="sidebar-logo-title">Smart Shelf</div>
+          <div className="sidebar-logo-title">Chemical Memory</div>
           <div className="sidebar-logo-sub">시약 관리 시스템</div>
         </div>
       </div>

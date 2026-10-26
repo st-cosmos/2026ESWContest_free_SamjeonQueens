@@ -101,7 +101,7 @@ async def lifespan(app: FastAPI):
     shelf_power.set_notifier(None)
 
 
-app = FastAPI(title="Smart Chemical Shelf", lifespan=lifespan)
+app = FastAPI(title="Chemical Memory", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
