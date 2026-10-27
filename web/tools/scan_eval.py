@@ -11,7 +11,7 @@
 지표
 - 초회 성공률: 서버의 첫 제안(no_match 가 아닌 첫 응답)이 정답이고, 거절 없이 자동 확정 또는 확인으로 끝난 세션 비율
 - 자동 확정 정확도 / 오확정률: source=auto 로 끝난 세션 중 정답·오답 비율 (오확정은 가장 치명적인 실패)
-- 최종 정답률: 최종 결정(auto/confirm/llm/manual)이 정답인 비율, 수동 선택 비율, LLM 사용 비율
+- 최종 정답률: 최종 결정(auto/confirm/llm/manual)이 정답인 세션 / 정답이 있는 모든 세션 — 미결은 실패로 센다
 - 인식 소요 시간: session_start(없으면 첫 match 요청) → 최종 결정까지, 평균·중앙값·p90
 - 오제안 수: 세션 중 정답이 아닌 이름을 제안한 응답 수
 """
@@ -204,7 +204,9 @@ def summarize(results: list[dict]) -> dict:
     s = {
         "sessions": len(results), "scored": len(scored), "resolved": len(resolved),
         "first_attempt": (sum(r["first_attempt_success"] for r in scored), len(scored)),
-        "final_correct": (sum(bool(r["final_ok"]) for r in resolved), len(resolved)),
+        # 최종 정답률: 미결(결정 없이 끝남)은 실패로 센다 — 분모는 정답이 있는 모든 세션
+        "final_correct": (sum(bool(r["final_ok"]) for r in resolved), len(scored)),
+        "final_correct_resolved": (sum(bool(r["final_ok"]) for r in resolved), len(resolved)),
         "auto_sessions": (len(auto), len(resolved)),
         "auto_correct": (sum(bool(r["final_ok"]) for r in auto), len(auto)),
         "auto_wrong": (sum(r["final_ok"] is False for r in auto), len(auto)),
@@ -225,7 +227,7 @@ def print_report(results: list[dict], s: dict, title: str) -> None:
     print(f"\n=== {title}")
     print(f"세션 {s['sessions']}개 (정답 있는 세션 {s['scored']}, 결정까지 간 세션 {s['resolved']}, 미결 {s['unresolved']})")
     print(f"초회 성공률        {pct(*s['first_attempt'])}")
-    print(f"최종 정답률        {pct(*s['final_correct'])}")
+    print(f"최종 정답률        {pct(*s['final_correct'])}   (미결 {s['unresolved']}건은 실패로 집계, 결정 세션만 보면 {pct(*s['final_correct_resolved'])})")
     print(f"자동 확정 비율     {pct(*s['auto_sessions'])}   자동 확정 정답 {pct(*s['auto_correct'])}   오확정 {pct(*s['auto_wrong'])}")
     print(f"수동 선택 비율     {pct(*s['manual'])}   LLM 사용 {pct(*s['llm_used'])}   오제안 응답 {s['wrong_suggestions']}건")
     if "time_mean" in s:
