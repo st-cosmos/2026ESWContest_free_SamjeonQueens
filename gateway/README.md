@@ -8,9 +8,10 @@
                                         | USB CDC (/dev/ttyACM0)
                                    [ot-daemon] --> wpan0 (IPv6)
                                         |
-                                   [gateway.py]  CoAP 서버 (shelfcoap.py)
-                                        |          POST shelf/weight ← 노드
-                                        |          GET  shelf/led    ← 노드 (700 ms)
+                                   [gateway.py]  CoAP 서버 + 클라이언트 (shelfcoap.py)
+                                        |          POST shelf/weight   ← 노드 (변화 시 + 하트비트)
+                                        |          GET  shelf/led|mode ← 노드 (ACTIVE 5 s 백업 폴 / 부팅 동기화)
+                                        |          PUT  shelf/led|mode → 노드 (즉시 푸시)
                                         | HTTP
                                    [web 서버 FastAPI :8000]
                                         POST /api/weight/{id}  (무게 g + 배터리 %)
@@ -228,7 +229,7 @@ ip -brief addr show wpan0  # fd..::/64 IPv6 주소
 CoAP(메시) ↔ 웹 서버 HTTP(LAN) 브리지입니다. 하는 일:
 
 * **무게** — 노드의 `POST shelf/weight` (JSON: `id`, `seq`, `raw`, `mg`, `mv`) 를 받아 웹 서버 `POST /api/weight/{선반ID}` 로 전달. `mg → g` 환산, 배터리 `mV → %` 환산(펌웨어 `shelf battery` 와 같은 3.3–4.2 V 선형 추정, USB 전원(>4.4 V)·측정 실패는 미보고) 포함.
-* **LED** — 노드의 `GET shelf/led?id=...` (700 ms 주기, **응답 데드라인 400 ms**) 에 캐시로 즉시 응답. 캐시는 백그라운드에서 웹 서버 `GET /api/led/{선반ID}` 를 1초 주기로 읽어 갱신하며, 이 폴링이 웹 서버의 온라인 판정(하트비트)도 겸합니다 — 기존 ESP8266 의 1초 폴링과 같은 효과. CoAP 응답 경로에서는 절대 HTTP 를 기다리지 않습니다.
+* **LED** — 노드의 `GET shelf/led?id=...` (ACTIVE 5 초 백업 폴, **응답 데드라인 400 ms**) 에 캐시로 즉시 응답하고, 캐시 값이 바뀌면 ACTIVE 노드에 `PUT shelf/led` 로 바로 푸시합니다. 캐시는 백그라운드에서 웹 서버 `GET /api/led/{선반ID}` 를 1초(IDLE 5초) 주기로 읽어 갱신하며, 이 폴링이 웹 서버의 온라인 판정(하트비트)도 겸합니다. CoAP 응답 경로에서는 절대 HTTP 를 기다리지 않습니다.
 * **탐색** — `ff03::1` (realm-local all-nodes) 멀티캐스트 그룹에 가입해 노드의 게이트웨이 탐색 요청을 받습니다. 노드는 LED 폴에 응답한 유니캐스트 주소를 기억합니다. **wpan0 은 ot-daemon 재시작 때 새로 만들어져 가입이 조용히 사라지므로, 10초마다 재가입해 유지합니다.**
 * **선반 ID 매핑** — 노드 하드웨어 ID(16 hex) → 웹 서버 선반 ID 를 `gateway.toml` 의 `[nodes]` 로 매핑. 매핑이 없으면 하드웨어 ID 그대로 서버에 올라가고, 웹의 미등록 기기 흐름으로 등록하면 됩니다.
 
@@ -289,7 +290,7 @@ journalctl -u shelf-gateway -f
 | 노드가 게이트웨이를 못 찾음 (`ot state` 는 `child`) | 게이트웨이 로그에 폴이 안 보이면 멀티캐스트 가입 여부와 `base_path`(기본 `shelf`) 일치 확인. 노드에서 `ot ping ff03::1` 로 도달성 확인. |
 | 노드는 붙는데 LED 가 안 켜짐 | `curl http://<파이>:8080/status` 로 `server_ok` 확인. `false` 면 `gateway.toml` 의 `base_url`/방화벽(웹 서버 PC 인바운드 8000) 문제. 웹 서버는 반드시 `--host 0.0.0.0` 으로 실행. |
 | 무게가 웹에 안 뜸 | 게이트웨이 로그의 `무게 보고` 라인 유무로 노드↔게이트웨이 문제인지, `웹 서버 통신 실패` 라인으로 게이트웨이↔서버 문제인지 구분. |
-| 웹에서 노드가 오프라인 | 노드가 죽었거나(마지막 접촉 15초 초과 시 하트비트 대행 중단) 게이트웨이가 내려간 것. `/status` 의 `last_seen_age_s` 확인. |
+| 웹에서 노드가 오프라인 | 노드가 죽었거나(마지막 접촉이 ACTIVE 15초 / IDLE 90초를 넘으면 하트비트 대행 중단) 게이트웨이가 내려간 것. `/status` 의 `last_seen_age_s` 확인. |
 
 ---
 
