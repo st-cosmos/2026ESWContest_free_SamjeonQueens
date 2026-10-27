@@ -39,7 +39,9 @@ class ChemicalScanner(
         private const val FAILED_AFTER_MS = 9000L      // "직접 선택" 유도 시점
         private const val DECLINE_COOLDOWN_MS = 12000L // 거절한 후보 재제안 금지 시간
         private const val LLM_AFTER_MS = 4000L         // 이 시간 이상 매칭 실패 시 LLM 폴백
-        private const val LLM_RETRY_MS = 10000L        // LLM 재시도(통신 실패 시) 최소 간격
+        private const val LLM_AFTER_DECLINE_MS = 500L  // 후보를 거절한 뒤에는 거의 즉시 LLM 에 묻는다
+        private const val LLM_RETRY_MS = 6000L         // LLM 재시도(통신 실패·no_match 후) 최소 간격
+        private const val LLM_MAX_ATTEMPTS = 2         // 한 병당 LLM 응답 최대 횟수
         private const val LLM_MIN_TEXT = 6             // LLM 호출에 필요한 최소 누적 글자 수
     }
 
@@ -65,9 +67,10 @@ class ChemicalScanner(
     private var offline = false
     private var lastPhase: Phase? = null
     private val declined = mutableMapOf<String, Long>()
-    private var llmAnswered = false    // 이번 스캔 세션에서 LLM 응답을 이미 받았는가
+    private var llmAnswers = 0         // 이번 스캔 세션에서 받은 LLM 응답 수 (no_match 포함)
     private var llmInFlight = false
     private var lastLlmAt = 0L
+    private var declinedInSession = 0  // 이번 병에서 사용자가 거절한 횟수
 
     /** 최근 프레임들의 OCR 텍스트 (서버 매칭·학습 요청용) */
     val aggregatedText: String
@@ -156,12 +159,16 @@ class ChemicalScanner(
         }
     }
 
-    /** 사전 매칭이 LLM_AFTER_MS 이상 계속 실패하면 LLM 폴백을 1회 호출한다.
-     *  사전 매칭은 그대로 병행되며, 그 사이 사전이 먼저 맞히면 LLM 결과는 버린다.
-     *  사용자가 확인하면 라벨 문구가 별칭으로 학습되어 다음부터는 사전에서 즉시 잡힌다. */
+    /** 사전 매칭이 LLM_AFTER_MS 이상 계속 실패하거나, 사전의 후보를 사용자가 거절한 직후에는
+     *  LLM 폴백을 호출한다 (병당 최대 LLM_MAX_ATTEMPTS 회). 사전 매칭은 그대로 병행되며,
+     *  그 사이 사전이 먼저 맞히면 LLM 결과는 버린다. 사용자가 확인하면 라벨 문구가 별칭으로
+     *  학습되어 다음부터는 사전에서 즉시 잡힌다.
+     *  실측: 영단어 하나로 틀린 후보가 0.9초마다 뜨는 라벨에서는 거절할 때마다 타이머가 다시
+     *  돌아 4초 조건이 영영 충족되지 않았다 — 거절 뒤에는 0.5초만 기다린다. */
     private fun maybeAskLlm(now: Long, struggling: Long) {
-        if (llmAnswered || llmInFlight || frozen || offline) return
-        if (struggling < LLM_AFTER_MS) return
+        if (llmAnswers >= LLM_MAX_ATTEMPTS || llmInFlight || frozen || offline) return
+        val waitMs = if (declinedInSession > 0) LLM_AFTER_DECLINE_MS else LLM_AFTER_MS
+        if (struggling < waitMs) return
         if (now - lastLlmAt < LLM_RETRY_MS) return
         val ocr = aggregatedText
         if (ocr.replace(Regex("\\s"), "").length < LLM_MIN_TEXT) return
@@ -178,7 +185,7 @@ class ChemicalScanner(
                         session_id = sessionId, label_id = ScanExperiment.activeLabelId
                     )
                 )
-                llmAnswered = true  // 응답을 받았으면(no_match 포함) 이번 세션엔 재호출 안 함
+                llmAnswers++  // no_match 도 응답으로 센다 — 같은 병에 무한 재호출 방지
                 if (frozen) return@launch
                 val name = result.chemical_name
                 if (result.status == "needs_confirmation" && name != null && !isDeclined(name)) {
@@ -196,6 +203,7 @@ class ChemicalScanner(
     /** 사용자가 "아니요"한 후보를 잠시 다시 제안하지 않는다. */
     fun declineCandidate(name: String) {
         declined[name] = SystemClock.elapsedRealtime()
+        declinedInSession++
         ScanExperiment.event(sessionId, "decision", mode, name = name, source = "decline")
     }
 
@@ -232,7 +240,9 @@ class ChemicalScanner(
         lastPhase = null
         frozen = false
         if (newSession) {
-            llmAnswered = false  // 새 병 스캔에는 LLM 기회를 다시 준다 (거절 쿨다운은 별도 유지)
+            llmAnswers = 0       // 새 병 스캔에는 LLM 기회를 다시 준다 (거절 쿨다운은 별도 유지)
+            lastLlmAt = 0L       // 직전 병의 LLM 재시도 간격도 새 병에는 적용하지 않는다
+            declinedInSession = 0
             sessionId = newSessionId()  // 다음 병은 새 측정 세션
             sessionStarted = false
             lastSentFrame = null
