@@ -2,7 +2,7 @@
 
 로그인한 앱 사용자가 한 명이라도 있으면 "active", 아무도 없으면 "idle".
 Thread 게이트웨이가 `GET /api/shelf-power` 를 폴링해 이 값을 모든 선반
-노드에 전파한다 (active = 상시 수신 + 0.5초 측정, idle = 슬립).
+노드에 전파한다 (active = 상시 수신 + 0.2초 측정, idle = 슬립).
 
 세션의 출입:
   * enter — `/api/users/login-pin` 성공 시 서버가 내부에서 호출 (앱 무수정),

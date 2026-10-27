@@ -1,5 +1,3 @@
-import time
-
 CHECKIN_TIMEOUT_S = 15.0
 # 지정 위치로 옮기기: 병을 다시 들어 다른 칸에 놓는 시간까지 포함하므로 더 길게 둔다
 RELOCATE_TIMEOUT_S = 30.0

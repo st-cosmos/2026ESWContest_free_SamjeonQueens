@@ -45,7 +45,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
           <div className="login-brand-mark">
             <FlaskConical size={28} />
           </div>
-          <span className="login-brand-name">Smart Shelf</span>
+          <span className="login-brand-name">Chemical Memory</span>
         </div>
 
         <div className="login-headline">

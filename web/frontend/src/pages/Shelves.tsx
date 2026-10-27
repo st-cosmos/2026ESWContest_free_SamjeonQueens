@@ -414,7 +414,7 @@ export default function Shelves() {
         <div className="topbar-info">
           <h1 className="topbar-title" style={{ fontSize: 24 }}>선반 관리</h1>
           <span className="topbar-sub">
-            스마트 쉘프의 구역별 선반 상태 및 적재 현황을 실시간으로 모니터링합니다.
+            Chemical Memory의 구역별 선반 상태 및 적재 현황을 실시간으로 모니터링합니다.
           </span>
         </div>
         {/* 새 선반 추가는 수정 모드(연필)에서만 노출 — 선반이 하나도 없을 때는 예외적으로 표시 */}

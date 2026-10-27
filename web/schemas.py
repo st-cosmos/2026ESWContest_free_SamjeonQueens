@@ -177,12 +177,3 @@ class LogResponse(BaseModel):
 
     class Config:
         from_attributes = True
-
-# Legacy support
-class LedCommand(BaseModel):
-    on: bool
-    by: str
-
-class PotentiometerEvent(BaseModel):
-    value: int
-    esp_id: str = "ESP-01"

@@ -6,6 +6,7 @@ import time
 import checkout_flow
 from database import get_db
 import models
+import routes.shelves as shelf_routes
 import schemas
 from session_store import (
     RELOCATE_TIMEOUT_S, checkin_session, checkout_session, reset_checkin,
@@ -57,8 +58,6 @@ def relocate_checkin(req: schemas.RelocateRequest, db: Session = Depends(get_db)
     (routes/shelves._handle_checkin_increase). 앱은 기존 반입 세션 폴링
     (GET /api/checkin-session)으로 완료·타임아웃을 그대로 감지한다.
     """
-    import routes.shelves as shelf_routes
-
     chem = db.query(models.Chemical).filter(models.Chemical.id == req.chemical_id).first()
     if not chem or chem.current_status != "비치중":
         raise HTTPException(status_code=404, detail="옮길 시약을 찾을 수 없습니다.")

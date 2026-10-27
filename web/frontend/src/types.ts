@@ -1,4 +1,4 @@
-// 백엔드 API 응답 타입 (api-reference.md 기준)
+// 백엔드 API 응답 타입 (web/schemas.py 의 *Response 모델과 routes/ 의 dict 응답 기준)
 
 export interface User {
   username: string;

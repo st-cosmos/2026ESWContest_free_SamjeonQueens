@@ -19,6 +19,8 @@ Chemical Memory 프로젝트입니다. E73-2G4M08S1C(nRF52840) 커스텀 보드 
 - `firmware`: 선반 노드 펌웨어 — E73-2G4M08S1C(nRF52840) + CS1237 로드셀, nRF Connect SDK(Zephyr) + OpenThread + CoAP. 이전 ESP8266(PlatformIO) 버전은 git 히스토리에 있습니다.
 - `gateway`: Thread 게이트웨이 — 라즈베리파이 + nRF52840 RCP 동글(ot-daemon) + CoAP↔웹서버 브리지(`gateway.py`)
 - `web`: 웹 대시보드 및 FastAPI 서버 소스 코드 (uv 패키지 관리 환경)
+- `docs`: 컴포넌트를 가로지르는 설계 문서 (`power-modes.md` — 앱 세션 연동 전력 모드)
+- `ui-design`: 웹·앱 화면 디자인 원본 (`design.pen`, pen.dev 파일) — 코드 주석의 `design.pen <프레임명>` 참조 대상
 
 ---
 
@@ -37,7 +39,7 @@ cd web
 # 2. 로컬 개발 서버 실행 (기본 localhost:8000)
 uv run uvicorn main:app --reload
 
-# 3. 외부 기기(ESP8266 등) 접속 허용을 위한 0.0.0.0 호스팅 실행 (중요)
+# 3. 외부 기기(게이트웨이·안드로이드 앱) 접속 허용을 위한 0.0.0.0 호스팅 실행 (중요)
 uv run uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 

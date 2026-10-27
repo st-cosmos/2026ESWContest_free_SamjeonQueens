@@ -1,12 +1,14 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from typing import List, Dict, Optional
+from typing import Dict, List
 from database import get_db
 import checkout_flow
 import device_status
 import models
+import routes.chemicals as chemical_routes
 import schemas
 import services.llm_safety as llm_safety
+from session_store import checkin_session, reset_checkin
 from datetime import datetime
 import time
 
@@ -198,7 +200,6 @@ def claim_recent_rise(shelf_id):
 
 def _relocating_from(db: Session, shelf: models.Shelf) -> bool:
     """위치 이동 세션 중 옮길 병이 지금 이 칸에 기록돼 있는가 (= 이 칸에서 들어 올릴 차례)."""
-    from session_store import checkin_session
     chem_id = checkin_session["active"] and checkin_session.get("relocate_chemical_id")
     if not chem_id:
         return False
@@ -216,7 +217,6 @@ def _handle_checkin_increase(db: Session, shelf: models.Shelf, delta_kg: float):
     위치 이동 세션(relocate_chemical_id)이면 새 병을 만들지 않고, 이미 반입
     기록된 그 병의 보관 칸만 안착이 감지된 칸으로 옮긴다.
     """
-    from session_store import checkin_session, reset_checkin
     if not (checkin_session["active"] and checkin_session["chemical_name"]):
         return None
 
@@ -327,7 +327,6 @@ def _handle_checkin_increase(db: Session, shelf: models.Shelf, delta_kg: float):
     # 반입 직후 인접 수납칸 혼재 금지 시약 배치 여부 검사
     safe_id, safe_desc = llm_safety.find_recommended_safe_shelf(chem, db)
     co_warning = None
-    import routes.chemicals as chemical_routes
     alerts = chemical_routes.get_alerts(db)
     for warning in alerts.get("co_storage_warnings", []):
         if warning["chemical_1_id"] == chem.id or warning["chemical_2_id"] == chem.id:
