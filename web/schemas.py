@@ -84,6 +84,22 @@ class MatchRequest(BaseModel):
     barcode: Optional[str] = None
     # LLM 폴백용 라벨 사진 (JPEG base64) — 비전 모델이 OCR 오독을 바로잡는다
     image_b64: Optional[str] = None
+    # 스캔 정확도 측정용 (services/scan_log.py): 스캔 세션 식별자, 실험 라벨 번호,
+    # 실험 모드에서만 첨부되는 보관용 프레임 — 없으면 로그만 남는다
+    session_id: Optional[str] = None
+    label_id: Optional[str] = None
+    frame_b64: Optional[str] = None
+
+class ScanEventRequest(BaseModel):
+    # 앱 쪽 스캔 이벤트 (session_start / decision / decline 등) — 측정 로그 전용
+    session_id: str
+    event: str
+    label_id: Optional[str] = None
+    chemical_name: Optional[str] = None
+    source: Optional[str] = None        # auto | confirm | llm | manual | decline
+    method: Optional[str] = None
+    confidence: Optional[float] = None
+    mode: Optional[str] = None          # checkin | checkout
 
 class CapacityEstimateRequest(BaseModel):
     # 반입 스캔 직후 병의 가득 무게(용량) 추정 요청 — 잔량 % 분모
@@ -101,6 +117,7 @@ class MatchConfirmRequest(BaseModel):
     chemical_name: str
     barcode: Optional[str] = None
     matched_token: Optional[str] = None
+    session_id: Optional[str] = None    # 측정 로그용 (선택)
 
 class SelectLedRequest(BaseModel):
     chem_id: str
