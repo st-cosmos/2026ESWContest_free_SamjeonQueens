@@ -3,6 +3,7 @@ package com.example.cameramessage
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
+import android.content.Intent
 import android.text.InputType
 import android.widget.EditText
 import android.widget.LinearLayout
@@ -37,6 +38,16 @@ object ScanExperiment {
         val prefs = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
         enabled = prefs.getBoolean(KEY_ENABLED, false)
         labelId = prefs.getString(KEY_LABEL, null)?.takeIf { it.isNotBlank() }
+    }
+
+    fun setEnabled(context: Context, on: Boolean) {
+        enabled = on
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putBoolean(KEY_ENABLED, on).apply()
+    }
+
+    fun setLabel(context: Context, label: String?) {
+        labelId = label?.trim()?.takeIf { it.isNotBlank() }
+        context.getSharedPreferences(PREFS, Context.MODE_PRIVATE).edit().putString(KEY_LABEL, labelId).apply()
     }
 
     /** 요청에 실을 라벨 번호 — 실험 모드가 켜진 동안만 */
@@ -96,6 +107,9 @@ object ScanExperiment {
         AlertDialog.Builder(activity)
             .setTitle("스캔 정확도 측정")
             .setView(layout)
+            .setNeutralButton("측정 화면 열기") { _, _ ->
+                activity.startActivity(Intent(activity, ScanBenchActivity::class.java))
+            }
             .setNegativeButton("취소", null)
             .setPositiveButton("적용") { _, _ ->
                 enabled = toggle.isChecked
