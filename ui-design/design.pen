@@ -1,5 +1,5 @@
 {
-  "version": "2.14",
+  "version": "2.21",
   "children": [
     {
       "type": "frame",
@@ -19,7 +19,7 @@
           "id": "x0rON",
           "name": "DS Title",
           "fill": "$text-strong",
-          "content": "Smart Shelf Design System",
+          "content": "Chemical Memory Design System",
           "fontFamily": "$font",
           "fontSize": 40,
           "fontWeight": "700"
@@ -1680,7 +1680,7 @@
                           "id": "J6OFs",
                           "name": "Logo Title",
                           "fill": "$text-strong",
-                          "content": "Smart Shelf",
+                          "content": "Chemical Memory",
                           "fontFamily": "$font",
                           "fontSize": 17,
                           "fontWeight": "700"
@@ -2241,7 +2241,7 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "images/generated-1784301257188.png",
-                                "mode": "fill"
+                                "mode": "cover"
                               },
                               "width": 150,
                               "height": 150
@@ -2268,7 +2268,7 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "images/generated-1784301256202.png",
-                                "mode": "fill"
+                                "mode": "cover"
                               },
                               "width": 150,
                               "height": 150
@@ -2303,7 +2303,7 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "images/generated-1784301256568.png",
-                                "mode": "fill"
+                                "mode": "cover"
                               },
                               "width": 150,
                               "height": 150
@@ -2330,7 +2330,7 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "images/generated-1784301256163.png",
-                                "mode": "fill"
+                                "mode": "cover"
                               },
                               "width": 150,
                               "height": 150
@@ -2452,7 +2452,7 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "images/generated-1784301256313.png",
-                                "mode": "fill"
+                                "mode": "cover"
                               },
                               "width": 150,
                               "height": 150
@@ -2479,7 +2479,7 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "images/generated-1784301256362.png",
-                                "mode": "fill"
+                                "mode": "cover"
                               },
                               "width": 150,
                               "height": 150
@@ -2514,7 +2514,7 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "images/generated-1784301257229.png",
-                                "mode": "fill"
+                                "mode": "cover"
                               },
                               "width": 150,
                               "height": 150
@@ -2541,7 +2541,7 @@
                                 "type": "image",
                                 "enabled": true,
                                 "url": "images/generated-1784301257354.png",
-                                "mode": "fill"
+                                "mode": "cover"
                               },
                               "width": 150,
                               "height": 150
@@ -2649,7 +2649,7 @@
                   "id": "TwIpd",
                   "name": "Logo Text",
                   "fill": "$text-strong",
-                  "content": "Smart Shelf",
+                  "content": "Chemical Memory",
                   "fontFamily": "$font",
                   "fontSize": 44,
                   "fontWeight": "700"
@@ -7918,7 +7918,7 @@
                   "id": "zsS6u",
                   "name": "Brand Name",
                   "fill": "#FFFFFF",
-                  "content": "Smart Shelf",
+                  "content": "Chemical Memory",
                   "fontFamily": "$font",
                   "fontSize": 24,
                   "fontWeight": "700"
@@ -8564,6 +8564,7 @@
                     "bottom": 1
                   },
                   "strokeAlignment": "inner",
+                  "strokeLinejoin": "round",
                   "children": [
                     {
                       "type": "frame",
@@ -8716,6 +8717,7 @@
                     "bottom": 1
                   },
                   "strokeAlignment": "inner",
+                  "strokeLinejoin": "round",
                   "alignItems": "center",
                   "children": [
                     {
@@ -8906,6 +8908,7 @@
                     "bottom": 1
                   },
                   "strokeAlignment": "inner",
+                  "strokeLinejoin": "round",
                   "alignItems": "center",
                   "children": [
                     {
@@ -9096,6 +9099,7 @@
                     "bottom": 1
                   },
                   "strokeAlignment": "inner",
+                  "strokeLinejoin": "round",
                   "alignItems": "center",
                   "children": [
                     {
@@ -9296,6 +9300,7 @@
                     "bottom": 1
                   },
                   "strokeAlignment": "inner",
+                  "strokeLinejoin": "round",
                   "alignItems": "center",
                   "children": [
                     {
@@ -9496,6 +9501,7 @@
                     "bottom": 1
                   },
                   "strokeAlignment": "inner",
+                  "strokeLinejoin": "round",
                   "alignItems": "center",
                   "children": [
                     {
@@ -9696,6 +9702,7 @@
                     "bottom": 1
                   },
                   "strokeAlignment": "inner",
+                  "strokeLinejoin": "round",
                   "alignItems": "center",
                   "children": [
                     {
@@ -9896,6 +9903,7 @@
                     "bottom": 1
                   },
                   "strokeAlignment": "inner",
+                  "strokeLinejoin": "round",
                   "alignItems": "center",
                   "children": [
                     {
@@ -10091,6 +10099,7 @@
             "left": 1
           },
           "strokeAlignment": "inner",
+          "strokeLinejoin": "round",
           "layout": "vertical",
           "gap": 18,
           "padding": 24,
@@ -10773,6 +10782,7 @@
                     "bottom": 1
                   },
                   "strokeAlignment": "inner",
+                  "strokeLinejoin": "round",
                   "alignItems": "center",
                   "children": [
                     {
@@ -10949,6 +10959,7 @@
                     "bottom": 1
                   },
                   "strokeAlignment": "inner",
+                  "strokeLinejoin": "round",
                   "alignItems": "center",
                   "children": [
                     {
@@ -11279,6 +11290,7 @@
                     "bottom": 1
                   },
                   "strokeAlignment": "inner",
+                  "strokeLinejoin": "round",
                   "alignItems": "center",
                   "children": [
                     {
@@ -11609,6 +11621,7 @@
                     "bottom": 1
                   },
                   "strokeAlignment": "inner",
+                  "strokeLinejoin": "round",
                   "alignItems": "center",
                   "children": [
                     {
@@ -11922,6 +11935,7 @@
                     "bottom": 1
                   },
                   "strokeAlignment": "inner",
+                  "strokeLinejoin": "round",
                   "alignItems": "center",
                   "children": [
                     {
@@ -12656,6 +12670,7 @@
                         "bottom": 1
                       },
                       "strokeAlignment": "inner",
+                      "strokeLinejoin": "round",
                       "padding": [
                         16,
                         24
@@ -12697,6 +12712,7 @@
                         "bottom": 1
                       },
                       "strokeAlignment": "inner",
+                      "strokeLinejoin": "round",
                       "gap": 14,
                       "padding": [
                         13,
@@ -12802,6 +12818,7 @@
                         "bottom": 1
                       },
                       "strokeAlignment": "inner",
+                      "strokeLinejoin": "round",
                       "gap": 14,
                       "padding": [
                         13,
@@ -12907,6 +12924,7 @@
                         "bottom": 1
                       },
                       "strokeAlignment": "inner",
+                      "strokeLinejoin": "round",
                       "gap": 14,
                       "padding": [
                         13,
@@ -13088,7 +13106,7 @@
                   "id": "xzHIz",
                   "name": "Logo Text",
                   "fill": "$text-strong",
-                  "content": "Smart Shelf",
+                  "content": "Chemical Memory",
                   "fontFamily": "$font",
                   "fontSize": 44,
                   "fontWeight": "700"
@@ -15146,7 +15164,7 @@
                       "id": "UUDxA",
                       "name": "Shelf Sub",
                       "fill": "$text-muted",
-                      "content": "스마트 쉘프의 구역별 선반 상태 및 적재 현황을 실시간으로 모니터링합니다.",
+                      "content": "Chemical Memory의 구역별 선반 상태 및 적재 현황을 실시간으로 모니터링합니다.",
                       "fontFamily": "$font",
                       "fontSize": 13,
                       "fontWeight": "normal"
@@ -19232,7 +19250,7 @@
                       "id": "SSRXS",
                       "name": "Shelf Sub",
                       "fill": "$text-muted",
-                      "content": "스마트 쉘프의 구역별 선반 상태 및 적재 현황을 실시간으로 모니터링합니다.",
+                      "content": "Chemical Memory의 구역별 선반 상태 및 적재 현황을 실시간으로 모니터링합니다.",
                       "fontFamily": "$font",
                       "fontSize": 13,
                       "fontWeight": "normal"
@@ -21826,7 +21844,7 @@
                       "id": "R7NxgC",
                       "name": "Shelf Sub",
                       "fill": "$text-muted",
-                      "content": "스마트 쉘프의 구역별 선반 상태 및 적재 현황을 실시간으로 모니터링합니다.",
+                      "content": "Chemical Memory의 구역별 선반 상태 및 적재 현황을 실시간으로 모니터링합니다.",
                       "fontFamily": "$font",
                       "fontSize": 13,
                       "fontWeight": "normal"
