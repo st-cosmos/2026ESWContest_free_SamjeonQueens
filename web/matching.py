@@ -167,7 +167,40 @@ FORM_SUFFIXES = ("수용액", "용액", "표준액", "solution", "soln")
 
 
 def _is_generic(norm_token: str) -> bool:
-    return norm_token in GENERIC_WORDS
+    """일반 단어이거나, OCR 이 끝을 잘라 읽은 일반 단어("solutio", "chemica")인가."""
+    if norm_token in GENERIC_WORDS:
+        return True
+    return len(norm_token) >= 4 and any(len(g) > len(norm_token) and g.startswith(norm_token)
+                                        for g in GENERIC_WORDS)
+
+
+_ALIAS_SPLIT_RE = re.compile(r"[\n/()\[\],;:|]+")
+_SCRIPT_BOUNDARY_RE = re.compile(r"(?<=[가-힣])\s*(?=[A-Za-z])|(?<=[A-Za-z])\s*(?=[가-힣])")
+ALIAS_MAX_LEN = 30
+
+
+def learnable_aliases(label_text: str) -> list:
+    """확인된 라벨 문구에서 학습할 별칭들. LLM 이 돌려주는 label_text 는 여러 줄·괄호 병기
+    ("Sodium hydrogen carbonate Solution
+탄산수소나트륨용액 (중탄산나트륨용액)") 라서 통째로
+    학습하면 어떤 라벨과도 정확히 일치하지 않고, 잘린 토큰("Solutio")이 그 안에 포함돼 엉뚱한
+    라벨에 부분 일치로 걸린다. 구분자로 나눈 구절마다 따로 학습하되, 형태 접미("용액")는 떼고
+    일반 단어만으로 된 구절·너무 짧거나 긴 구절은 버린다."""
+    out = []
+    # 한글과 영문이 붙어 있으면("Sodium Chloride Solution 염화나트륨용액") 문자 체계 경계에서도 나눈다
+    text = _SCRIPT_BOUNDARY_RE.sub("\n", label_text or "")
+    for phrase in _ALIAS_SPLIT_RE.split(text):
+        alias = normalize(phrase)
+        alias = _strip_form_suffix(alias)
+        if not alias or alias.isdigit() or len(alias) > ALIAS_MAX_LEN:
+            continue
+        if not (_usable_short(alias) or len(alias) >= 5):
+            continue
+        if _is_generic(alias):
+            continue
+        if alias not in out:
+            out.append(alias)
+    return out
 
 
 def _prefix_remainder_ok(rem: str) -> bool:
@@ -478,11 +511,9 @@ def confirm(db: Session, chemical_name: str, barcode: Optional[str] = None,
         learned["barcode"] = True
 
     if matched_token:
-        alias = normalize(matched_token)
-        # 짧은 영문/숫자 조각("eth", "thy" 등)은 부분 일치 오탐의 씨앗이 되므로
-        # 학습하지 않는다. 한글은 2자부터, 그 외는 5자부터 별칭으로 인정.
-        # 일반 단어("hydroxide", "sodium")와 숫자만인 토큰은 어떤 시약도 특정하지 못하므로 거부.
-        if (_usable_short(alias) or len(alias) >= 5) and not _is_generic(alias) and not alias.isdigit():
+        # 짧은 영문/숫자 조각("eth", "thy")과 일반 단어("hydroxide", "sodium")는 부분 일치 오탐의
+        # 씨앗이 되므로 학습하지 않는다 — learnable_aliases 가 구절 단위로 거른다.
+        for alias in learnable_aliases(matched_token):
             row = db.query(models.ChemicalAlias).filter(models.ChemicalAlias.alias == alias).first()
             if not row:
                 db.add(models.ChemicalAlias(alias=alias, standard_name=chemical_name))
