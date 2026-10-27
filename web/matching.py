@@ -136,13 +136,103 @@ CONFUSABLE_GROUPS = [
 ]
 
 
-def _apply_confusable_guard(scores: dict, norm_full: str):
-    """혼동 쌍이 매칭 결과에 끼어 있으면 텍스트 증거로 판정을 정정한다."""
+# 단독으로는 시약을 특정하지 못하는 일반 단어 (정규화 기준). 이 토큰은
+#  - "토큰이 별칭의 일부" 규칙과 퍼지 매칭의 근거가 될 수 없고 ("Sodium" → 수산화나트륨 오제안 방지)
+#  - 사용자 확인으로도 별칭으로 학습되지 않는다 ("hydroxide" 가 학습돼 수산화칼슘을 수산화나트륨으로
+#    자동 확정한 실측 사례 방지)
+GENERIC_WORDS = {
+    "sodium", "potassium", "calcium", "magnesium", "ammonium", "lithium", "zinc", "copper", "iron",
+    "hydroxide", "hydrogen", "chloride", "bromide", "iodide", "fluoride", "oxide", "peroxide",
+    "carbonate", "bicarbonate", "nitrate", "nitrite", "sulfate", "sulphate", "sulfide", "phosphate",
+    "acetate", "citrate", "silicate", "acid", "alcohol", "solution", "soln", "ketone", "ether",
+    "ester", "amine", "glycol", "ethyl", "methyl", "propyl", "butyl", "phenyl", "benzyl",
+    "anhydrous", "reagent", "reagents", "grade", "chemical", "chemicals", "laboratory",
+    "나트륨", "칼륨", "칼슘", "마그네슘", "암모늄", "용액", "수용액", "표준액", "시약", "무수",
+    "산", "염", "알코올", "알콜", "에틸", "메틸",
+}
+
+# 별칭이 더 긴 토큰의 접두일 때 허용하는 나머지 — "탄산수소나트륨용액" 의 "용액",
+# "에탄올95" 의 "95" 처럼 같은 물질의 형태·농도 표기만 인정한다.
+# "phenolphthalein"(phenol+phthalein), "ethanolamine"(ethanol+amine) 처럼 다른 물질이 되는
+# 접미는 거부한다.
+PREFIX_SUFFIX_OK = {"", "용액", "수용액", "표준액", "액", "solution", "soln", "sol", "anhydrous", "무수",
+                    "시약", "reagent"}
+
+# 성분표 표기로 보는 퍼센트 상한 — "with 15% Methanol", "METHANOL 5%" 는 주성분이 아니다.
+# (37% Formaldehyde, 35% 염산처럼 주성분 농도는 이보다 크다)
+INGREDIENT_PCT_MAX = 30.0
+_PCT_RE = re.compile(r"(\d{1,2}(?:\.\d+)?)\s*%")
+# 토큰 끝의 형태 접미 — "수산화나트륨용액" 은 수산화나트륨과 같은 물질 표기로 본다
+FORM_SUFFIXES = ("수용액", "용액", "표준액", "solution", "soln")
+
+
+def _is_generic(norm_token: str) -> bool:
+    return norm_token in GENERIC_WORDS
+
+
+def _prefix_remainder_ok(rem: str) -> bool:
+    if rem in PREFIX_SUFFIX_OK or rem.isdigit():
+        return True
+    # "95용액", "35pct" 처럼 농도 + 형태
+    m = re.match(r"^\d+(.*)$", rem)
+    return bool(m) and m.group(1) in PREFIX_SUFFIX_OK
+
+
+def _strip_form_suffix(nt: str) -> str:
+    for suf in FORM_SUFFIXES:
+        if nt.endswith(suf) and len(nt) > len(suf):
+            return nt[:-len(suf)]
+    return nt
+
+
+def _name_in_tokens(name: str, toks: list) -> bool:
+    """이름이 토큰 경계에 맞춰 나타나는가 — 'ethanol' 이 'methanol' 안에서 잡히지 않도록.
+    인접 토큰을 이어 붙인 것(최대 4개)과 통째로 같거나, 형태·농도 접미만 더 붙은 경우만 인정."""
+    for i in range(len(toks)):
+        acc = ""
+        for j in range(i, min(i + 4, len(toks))):
+            if not toks[j]:
+                break
+            acc += toks[j]
+            if acc == name or (acc.startswith(name) and _prefix_remainder_ok(acc[len(name):])):
+                return True
+            if len(acc) > len(name) + 12:
+                break
+    return False
+
+
+def _ingredient_demote(scores: dict, ocr_text: str, aliases: list):
+    """낮은 퍼센트(≤30%)와 같은 줄에 적힌 이름은 성분표 항목으로 보고 확인 수준 이하로 낮춘다.
+    (포름알데히드 라벨의 'with 15% Methanol', 변성 에탄올의 'METHANOL 5%')
+    모든 후보가 성분표 의심이면(라벨이 '과산화수소 3%' 하나뿐인 경우) 아무것도 낮추지 않는다."""
+    low_lines = []
+    for line in (ocr_text or "").splitlines():
+        pcts = [float(p) for p in _PCT_RE.findall(line)]
+        if pcts and min(pcts) <= INGREDIENT_PCT_MAX:
+            low_lines.append([normalize(t) for t in tokenize(line)])
+    if not low_lines:
+        return
+    suspects = set()
+    for std, (score, method, token) in scores.items():
+        names = {normalize(token or "")} | {na for na, s in aliases if s == std}
+        names.discard("")
+        if any(_name_in_tokens(n, toks) for n in names for toks in low_lines):
+            suspects.add(std)
+    if suspects and len(suspects) < len(scores):
+        for std in suspects:
+            score, method, token = scores[std]
+            if score > 0.6:
+                scores[std] = (0.6, "ingredient", token)
+
+
+def _apply_confusable_guard(scores: dict, spaced_text: str):
+    """혼동 쌍이 매칭 결과에 끼어 있으면 텍스트 증거로 판정을 정정한다.
+    spaced_text 는 토큰을 공백으로 이은 정규화 문자열 — 단어 경계 lookbehind 가 동작하도록."""
     for group in CONFUSABLE_GROUPS:
         if not any(m in scores for m in group):
             continue
         hits = {
-            m: sum(len(re.findall(p, norm_full)) for p in patterns)
+            m: sum(len(re.findall(p, spaced_text)) for p in patterns)
             for m, patterns in group.items()
         }
         best = max(group, key=lambda m: hits[m])
@@ -160,7 +250,10 @@ def _apply_confusable_guard(scores: dict, norm_full: str):
                     scores[m] = (0.85,) + scores[m][1:]
 
 
-CAS_RE = re.compile(r"(\d{2,7})-(\d{2})-(\d)")
+# CAS 는 "64-17-5" 꼴. OCR 이 하이픈 하나를 자주 삼키므로("64-175", "6417-5") 하이픈이
+# 하나만 남은 꼴도 후보로 보되, 앞뒤에 숫자가 더 붙지 않아야 하고 체크디짓을 통과해야 한다.
+CAS_RE = re.compile(r"(?<![\d-])(\d{2,7})-(\d{2})-(\d)(?![\d-])")
+CAS_LOOSE_RE = re.compile(r"(?<![\d-])(\d{2,7})-(\d{2})(\d)(?![\d-])|(?<![\d-])(\d{2,7})(\d{2})-(\d)(?![\d-])")
 TOKEN_RE = re.compile(r"[0-9A-Za-z가-힣%.]+")
 KOREAN_ONLY_RE = re.compile(r"^[가-힣]+$")
 
@@ -192,24 +285,50 @@ def cas_checksum_ok(cas: str) -> bool:
 
 
 def extract_cas_numbers(text: str) -> list:
-    return [m.group(0) for m in CAS_RE.finditer(text or "") if cas_checksum_ok(m.group(0))]
+    """체크디짓을 통과한 CAS 번호들. 정상 표기를 먼저, 하이픈 하나가 빠진 표기는 보정해서 뒤에."""
+    text = text or ""
+    found = [m.group(0) for m in CAS_RE.finditer(text) if cas_checksum_ok(m.group(0))]
+    for m in CAS_LOOSE_RE.finditer(text):
+        g = [x for x in m.groups() if x is not None]
+        if len(g) != 3:
+            continue
+        cas = f"{g[0]}-{g[1]}-{g[2]}"
+        if cas not in found and cas_checksum_ok(cas):
+            found.append(cas)
+    return found
 
 
 def _load_aliases(db: Session) -> list:
-    """[(정규화 별칭, 표준명)] — 긴 별칭 우선(부분 일치 오탐 최소화)."""
+    """[(정규화 별칭, 표준명)] — 긴 별칭 우선(부분 일치 오탐 최소화).
+    일반 단어 하나짜리 별칭(과거에 학습된 "hydroxide" 등)은 무시한다."""
+    return _load_aliases_and_registered(db)[0]
+
+
+def _load_aliases_and_registered(db: Session) -> tuple:
     rows = db.query(models.ChemicalAlias).all()
-    pairs = [(r.alias, r.standard_name) for r in rows if r.alias]
-    
+    pairs = [(r.alias, r.standard_name) for r in rows if r.alias and not _is_generic(r.alias)]
+
     # 추가: 실제 등록된 시약 이름들도 자동 별칭으로 포함하여 OCR 인식을 지원한다.
+    registered = set()
     for chem in db.query(models.Chemical).all():
         if chem.name:
+            registered.add(chem.name)
             norm = normalize(chem.name)
             if norm:
                 pairs.append((norm, chem.name))
-                
+
     pairs = list(set(pairs))
     pairs.sort(key=lambda p: len(p[0]), reverse=True)
-    return pairs
+    return pairs, registered
+
+
+def _same_substance(a: str, b: str) -> bool:
+    """'에탄올' 과 '에탄올 95%' 처럼 농도·형태 표기만 다른 같은 물질인가."""
+    na, nb = normalize(a), normalize(b)
+    if na == nb:
+        return True
+    short, long_ = (na, nb) if len(na) <= len(nb) else (nb, na)
+    return long_.startswith(short) and _prefix_remainder_ok(long_[len(short):])
 
 
 def match(db: Session, ocr_text: str, barcode: Optional[str] = None) -> dict:
@@ -236,9 +355,10 @@ def match(db: Session, ocr_text: str, barcode: Optional[str] = None) -> dict:
                 "matched_token": cas,
             }
 
-    aliases = _load_aliases(db)
+    aliases, registered = _load_aliases_and_registered(db)
     tokens = tokenize(ocr_text)
-    norm_full = normalize(ocr_text)
+    norm_tokens = [normalize(t) for t in tokens]
+    spaced_text = " ".join(t for t in norm_tokens if t)   # 단어 경계가 살아 있는 정규화 텍스트
 
     # 표준명별 최고 점수 집계: {std_name: (score, method, matched_token)}
     scores = {}
@@ -248,30 +368,32 @@ def match(db: Session, ocr_text: str, barcode: Optional[str] = None) -> dict:
             scores[std] = (score, method, token)
 
     exact_names = set()
-    for token in tokens:
-        nt = normalize(token)
+    for token, nt in zip(tokens, norm_tokens):
         if len(nt) < 3 and not _usable_short(nt):  # 짧은 노이즈 토큰 제외 (2자 한글은 허용)
             continue
+        generic = _is_generic(nt)
         # "토큰이 별칭의 일부" 규칙용: 이 토큰을 포함하는 별칭들의 표준명 집합.
         # 여러 표준명에 걸치면("acid" ⊂ 염산·질산·황산·아세트산) 정보가 없는
         # 조각이므로 해당 규칙을 적용하지 않는다 — boric acid → 염산 오탐 방지.
+        # 일반 단어("sodium", "hydrogen")는 표준명이 하나뿐이어도 근거가 못 된다.
         contained_stds = (
             {std for na, std in aliases if nt != na and nt in na}
-            if len(nt) >= 4 else set()
+            if len(nt) >= 4 and not generic else set()
         )
+        nt_core = _strip_form_suffix(nt)
         for na, std in aliases:
-            if nt == na:
-                # 토큰이 별칭과 정확히 일치 → 자동 확정 후보
+            if nt == na or nt_core == na:
+                # 토큰이 별칭과 정확히 일치("수산화나트륨용액" 도 수산화나트륨) → 자동 확정 후보
                 put(std, 0.95, "alias", token)
                 exact_names.add(std)
-            elif nt.startswith(na):
-                # 별칭이 더 긴 토큰의 접두("에탄올아민" 속 "에탄올") → 확인 필요.
-                # 임의 위치 부분 일치는 금지 — "methyl" 속 "ethyl" 같은 하이재킹 방지.
+            elif nt.startswith(na) and _prefix_remainder_ok(nt[len(na):]):
+                # 별칭 + 형태/농도 접미("탄산수소나트륨용액", "에탄올95") → 확인 필요.
+                # 다른 물질이 되는 접미("phenolphthalein", "에탄올아민")는 제안하지 않는다.
                 put(std, 0.7, "alias", token)
             elif len(nt) >= 4 and nt in na and len(contained_stds) == 1:
                 # 토큰이 별칭의 일부분일 때 (예: "hydrochloric" -> "hydrochloric acid")
                 put(std, 0.8, "alias", token)
-            elif len(na) >= 3 and len(nt) >= 3:
+            elif len(na) >= 3 and len(nt) >= 3 and not generic:
                 # 길이 차이가 너무 큰 조합의 오탐 방지 (예: 노이즈 3자 vs 별칭 8자)
                 if abs(len(na) - len(nt)) <= max(len(na), len(nt)) // 2:
                     ratio = SequenceMatcher(None, nt, na).ratio()
@@ -279,20 +401,30 @@ def match(db: Session, ocr_text: str, barcode: Optional[str] = None) -> dict:
                         # 유사도 매칭은 자동 확정 금지 (최대 0.85)
                         put(std, round(ratio * 0.85, 3), "fuzzy", token)
 
-    # 여러 토큰에 걸친 별칭("에탄올 95%", "sulfuric acid")은 전체 정규화 문자열에서 탐색
-    # (2~3자 한글 별칭도 허용 — OCR이 "황 산"처럼 띄어 읽어 토큰이 깨지는 경우 대비)
-    full_hits = [
-        (na, std) for na, std in aliases
-        if (len(na) >= 4 or _usable_short(na)) and na in norm_full
-    ]
-    for na, std in full_hits:
-        # 더 긴 다른 매칭 별칭에 통째로 포함되는 별칭은 무시 —
-        # "methylalcohol" 안의 "ethylalcohol"처럼 겹쳐 잡히는 오탐 방지
-        if any(na != nb and na in nb for nb, _ in full_hits):
+    # 여러 토큰에 걸친 별칭("에탄올 95%", "sulfuric acid", "황 산")은 인접 토큰을 이어 붙인
+    # 문자열과 통째로 비교한다. 전체 문자열 부분 일치는 쓰지 않는다 — "phenolphthalein" 속
+    # "phenol", "중탄산나트륨용액" 속 "탄산나트륨" 처럼 단어 중간에서 잡히는 오탐 방지.
+    runs = set()
+    for i in range(len(norm_tokens)):
+        if not norm_tokens[i]:
             continue
+        acc = ""
+        for j in range(i, min(i + 4, len(norm_tokens))):
+            if not norm_tokens[j]:
+                break
+            acc += norm_tokens[j]
+            if j > i:
+                runs.add(acc)
+                # 마지막 토큰이 형태 접미("용액")면 그 앞까지도 후보
+                for suf in ("용액", "수용액", "solution"):
+                    if acc.endswith(suf) and len(acc) > len(suf):
+                        runs.add(acc[:-len(suf)])
+    full_hits = [(na, std) for na, std in aliases if (len(na) >= 4 or _usable_short(na)) and na in runs]
+    for na, std in full_hits:
         put(std, max(scores.get(std, (0,))[0], 0.85), "alias", na)
 
-    _apply_confusable_guard(scores, norm_full)
+    _ingredient_demote(scores, ocr_text, aliases)
+    _apply_confusable_guard(scores, spaced_text)
 
     if not scores:
         return {
@@ -300,13 +432,20 @@ def match(db: Session, ocr_text: str, barcode: Optional[str] = None) -> dict:
             "confidence": 0.0, "candidates": [], "matched_token": None,
         }
 
-    ranked = sorted(scores.items(), key=lambda kv: kv[1][0], reverse=True)
+    # 점수 동률이면 등록된 재고 이름을 시드 표준명보다 앞세운다 ("에탄올" 등록 시 "에탄올 95%" 보다 우선)
+    ranked = sorted(scores.items(), key=lambda kv: (kv[1][0], kv[0] in registered), reverse=True)
     candidates = [{"name": std, "score": sc[0]} for std, sc in ranked[:3]]
     best_name, (best_score, best_method, best_token) = ranked[0]
 
-    # 서로 다른 시약이 동시에 정확 일치하면(라벨에 두 이름) 자동 확정하지 않음
-    # (혼동 가드가 오독 후보를 제거했으면 그 항목은 중복으로 세지 않는다)
-    ambiguous = len([n for n in exact_names if n in scores]) > 1
+    # 서로 다른 물질이 동시에 0.85 이상이면(라벨에 두 이름) 자동 확정하지 않음 — 성분표가
+    # 있는 라벨은 사용자 확인을 거친다. 농도·형태 표기만 다른 같은 물질("에탄올"/"에탄올 95%")은
+    # 하나로 센다. (혼동 가드·성분표 규칙이 낮춘 후보는 세지 않는다)
+    strong = [n for n, s in scores.items() if s[0] >= 0.85]
+    distinct = []
+    for n in strong:
+        if not any(_same_substance(n, m) for m in distinct):
+            distinct.append(n)
+    ambiguous = len(distinct) > 1
 
     if best_score >= AUTO_ACCEPT and not ambiguous:
         status = "matched"
@@ -342,7 +481,8 @@ def confirm(db: Session, chemical_name: str, barcode: Optional[str] = None,
         alias = normalize(matched_token)
         # 짧은 영문/숫자 조각("eth", "thy" 등)은 부분 일치 오탐의 씨앗이 되므로
         # 학습하지 않는다. 한글은 2자부터, 그 외는 5자부터 별칭으로 인정.
-        if _usable_short(alias) or len(alias) >= 5:
+        # 일반 단어("hydroxide", "sodium")와 숫자만인 토큰은 어떤 시약도 특정하지 못하므로 거부.
+        if (_usable_short(alias) or len(alias) >= 5) and not _is_generic(alias) and not alias.isdigit():
             row = db.query(models.ChemicalAlias).filter(models.ChemicalAlias.alias == alias).first()
             if not row:
                 db.add(models.ChemicalAlias(alias=alias, standard_name=chemical_name))

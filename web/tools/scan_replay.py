@@ -47,7 +47,7 @@ def build_db(inventory: list[tuple[str, str | None]]):
 
 def read_inventory(path: Path | None, gt: scan_eval.GroundTruth) -> list[tuple[str, str | None]]:
     if not path:
-        return [(n, None) for n in sorted(gt.names)]
+        return [(n.split("/")[0], None) for n in sorted(gt.names)]
     items = []
     for line in path.read_text(encoding="utf-8-sig").splitlines():
         line = line.strip()

@@ -72,9 +72,23 @@ def is_correct(expected: Optional[str], actual: Optional[str], strict: bool = Fa
         e = normalize(alt)
         if not e:
             continue
-        if e == a or (not strict and (a.startswith(e) or e.startswith(a))):
+        if e == a:
+            return True
+        if strict:
+            continue
+        # 확정 이름이 기대 이름에 농도·형태 표기만 덧붙인 경우만 정답 ("에탄올" ← "에탄올 95%", "염산 1M",
+        # "요오드 용액"). 기대 이름의 앞부분만 맞춘 짧은 이름("페놀프탈레인" ← "페놀")은 오답.
+        if a.startswith(e) and _remainder_ok(a[len(e):]):
             return True
     return False
+
+
+_SUFFIX_OK = {"", "용액", "수용액", "표준액", "액", "solution", "soln", "무수", "anhydrous"}
+
+
+def _remainder_ok(rem: str) -> bool:
+    rem = re.sub(r"^[0-9]+(m|n|w|v|mol|molar|pct|percent)?", "", rem)   # 농도 "95", "1m", "01m"
+    return rem in _SUFFIX_OK
 
 
 # ───────────────────────── 세션 구성 ─────────────────────────
