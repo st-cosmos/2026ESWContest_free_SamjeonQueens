@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- PIN 키패드 키: 기본 bg, 눌림 시 primary_soft -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/primary_soft" />
+            <corners android:radius="@dimen/radius_md" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/bg" />
+            <corners android:radius="@dimen/radius_md" />
+        </shape>
+    </item>
+</selector>

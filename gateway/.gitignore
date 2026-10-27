@@ -1,0 +1,7 @@
+# 로컬 환경 설정 (gateway.example.toml 을 복사해 만든 실제 설정)
+gateway.toml
+
+# Python
+__pycache__/
+*.pyc
+.venv/

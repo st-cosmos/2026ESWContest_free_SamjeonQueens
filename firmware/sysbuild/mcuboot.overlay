@@ -1,0 +1,47 @@
+/*
+ * MCUboot needs a CDC ACM instance of its own for serial recovery over USB.
+ * The application's UART pins are not usable on this module, so the DK UART is
+ * disabled here as well.
+ *
+ * This must be `sysbuild/mcuboot.overlay`, not `sysbuild/mcuboot/boards/*.overlay`:
+ * a `sysbuild/<image>/` directory makes sysbuild treat it as MCUboot's whole
+ * application config dir, which then requires a prj.conf and shadows MCUboot's
+ * own. See zephyr/share/sysbuild/cmake/modules/sysbuild_extensions.cmake:267.
+ *
+ * CRITICAL: sysbuild sets mcuboot_DTC_OVERLAY_FILE (not EXTRA_DTC_OVERLAY_FILE)
+ * to this file - see sysbuild_extensions.cmake:299. That *replaces* MCUboot's own
+ * boot/zephyr/app.overlay instead of adding to it, so everything app.overlay does
+ * has to be repeated here. Its only content is the code-partition chosen below.
+ * Drop that line and MCUboot links at slot0 (0xC000) instead of boot_partition
+ * (0x0): the application then overwrites the bootloader when flashed, nothing
+ * valid sits at the reset vector, and the board never boots.
+ */
+
+#include "../partitions.dtsi"
+
+/ {
+	chosen {
+		zephyr,code-partition = &boot_partition;
+		zephyr,console = &cdc_acm_uart0;
+		zephyr,uart-mcumgr = &cdc_acm_uart0;
+	};
+};
+
+/*
+ * Same as the application: this board has no DCCH inductor, so REG0's DC/DC
+ * must stay off or VDD collapses to 1.8 V. MCUboot runs the same SoC init
+ * (zephyr/soc/nordic/nrf52/soc.c:39), so it needs the override too.
+ */
+&reg0 {
+	status = "disabled";
+};
+
+&uart0 {
+	status = "disabled";
+};
+
+&zephyr_udc0 {
+	cdc_acm_uart0: cdc_acm_uart0 {
+		compatible = "zephyr,cdc-acm-uart";
+	};
+};

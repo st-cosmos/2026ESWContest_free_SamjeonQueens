@@ -1,0 +1,12 @@
+[project]
+name = "shelf-gateway"
+version = "0.1.0"
+description = "스마트 시약장 Thread 게이트웨이 - CoAP(메시) <-> FastAPI 웹 서버 브리지"
+requires-python = ">=3.11"
+dependencies = [
+    "aiohttp>=3.9",
+]
+
+# 패키지로 설치하지 않고 gateway.py 를 직접 실행하는 스크립트 프로젝트.
+[tool.uv]
+package = false

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 선반 그리드 사용 중 셀 -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/bg_deep" />
+    <corners android:radius="@dimen/radius_cell" />
+</shape>

@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- app-checkout-search (design-spec §3.10): 검색 결과 위치 안내 모달 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="390dp"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@drawable/shape_rounded_14"
+    android:padding="24dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="검색 결과"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_strong" />
+        <ImageView
+            android:id="@+id/btnCloseSearch"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_x"
+            android:contentDescription="닫기"
+            app:tint="@color/text_muted" />
+    </LinearLayout>
+
+    <!-- 시약 정보 스트립 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/shape_rounded_10"
+        android:backgroundTint="@color/bg"
+        android:padding="12dp">
+
+        <FrameLayout
+            android:layout_width="36dp"
+            android:layout_height="36dp"
+            android:background="@drawable/shape_rounded_10"
+            android:backgroundTint="@color/primary_soft">
+            <ImageView
+                android:layout_width="18dp"
+                android:layout_height="18dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_flask_conical"
+                android:contentDescription="시약"
+                app:tint="@color/primary" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="10dp"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/searchChemName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_strong"
+                tools:text="황산 0.1M (H₂SO₄)" />
+            <TextView
+                android:id="@+id/searchChemMeta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="2dp"
+                android:textSize="10sp"
+                android:textColor="@color/text_body"
+                tools:text="잔량 420 mL · 유통기한 2027-02-11" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/shape_pill"
+            android:backgroundTint="@color/primary"
+            android:paddingStart="10dp"
+            android:paddingEnd="10dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp">
+            <ImageView
+                android:layout_width="11dp"
+                android:layout_height="11dp"
+                android:src="@drawable/ic_map_pin"
+                android:contentDescription="위치"
+                app:tint="@color/white" />
+            <TextView
+                android:id="@+id/searchLocationText"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="@color/white"
+                tools:text="선반 A · 1행 2열" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 선반 미니맵 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:background="@drawable/shape_rounded_10"
+        android:backgroundTint="@color/bg_deep"
+        android:padding="12dp">
+
+        <LinearLayout
+            android:id="@+id/minimapGrid"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+            <View
+                android:layout_width="6dp"
+                android:layout_height="6dp"
+                android:background="@drawable/shape_circle"
+                android:backgroundTint="@color/primary" />
+            <TextView
+                android:id="@+id/searchCaption"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="5dp"
+                android:text="해당 선반의 LED가 점등되어 위치를 안내하고 있습니다"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_body" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 확인 버튼 -->
+    <LinearLayout
+        android:id="@+id/btnConfirmSearch"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/btn_height"
+        android:layout_marginTop="14dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:background="@drawable/bg_pill_primary"
+        android:elevation="3dp">
+        <ImageView
+            android:layout_width="13dp"
+            android:layout_height="13dp"
+            android:src="@drawable/ic_check"
+            android:contentDescription="확인"
+            app:tint="@color/white" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="5dp"
+            android:text="확인했어요"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="@color/white" />
+    </LinearLayout>
+</LinearLayout>

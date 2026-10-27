@@ -1,0 +1,140 @@
+#
+# Smart shelf application options
+#
+
+menu "Smart shelf application"
+
+comment "Power modes (docs/power-modes.md)"
+
+config SHELF_IDLE_POLL_PERIOD_MS
+	int "IDLE: Thread SED data poll period [ms]"
+	default 1000
+	help
+	  How often the sleeping radio polls its parent. This bounds how fast
+	  a gateway push (mode wake-up, LED) reaches an IDLE node, and is the
+	  dominant *radio* power knob - the load cell rail usually dominates
+	  overall, see SHELF_IDLE_MEASURE_INTERVAL_MS.
+
+config SHELF_IDLE_MEASURE_INTERVAL_MS
+	int "IDLE: load cell measurement period [ms]"
+	default 2000
+	help
+	  The rail is powered for ~575 ms per gated measurement (warm-up plus
+	  eleven 40 Hz conversions), so this duty cycle dominates the IDLE
+	  power budget. 2000 ms keeps the requested 1-2 s change detection;
+	  raise it if battery life matters more than idle responsiveness.
+
+config SHELF_ACTIVE_MEASURE_INTERVAL_MS
+	int "ACTIVE: load cell measurement period [ms]"
+	default 200
+	help
+	  ACTIVE is the mode where power is deliberately spent (rail already
+	  on, radio already listening), and one 640 Hz measurement only costs
+	  ~14 ms - so sample fast. Faster sampling also makes the settling
+	  filter converge sooner after something is placed on the shelf.
+
+config SHELF_SETTLE_THRESHOLD_G
+	int "Report only when consecutive measurements agree within this [g]"
+	default 10
+	help
+	  A change is reported only once the reading has settled: the current
+	  measurement differs from the previous one by no more than this many
+	  grams. This suppresses the mid-placement transients (0 -> 300 g ->
+	  500 g) that used to reach the server as two separate changes while a
+	  bottle was still being put down. Converted to raw counts at runtime
+	  using the stored calibration; heartbeats ignore it.
+
+config SHELF_ACTIVE_AVG_SAMPLES
+	int "ACTIVE: samples averaged per measurement (640 Hz)"
+	default 8
+	range 1 64
+	help
+	  ACTIVE keeps the rail powered and runs the CS1237 at 640 Hz, so a
+	  measurement is just this many conversions (~1.6 ms each). 640 Hz is
+	  noisier per sample than 40 Hz - verify SHELF_ADC_DELTA_THRESHOLD
+	  still clears the noise floor if you lower this.
+
+config SHELF_HEARTBEAT_IDLE_S
+	int "IDLE: force a report every N seconds (0 = never)"
+	default 30
+	help
+	  Keeps the gateway's node table (and its mode-mismatch repair) alive
+	  while nothing changes on the shelf. One NON report per interval.
+
+config SHELF_HEARTBEAT_ACTIVE_S
+	int "ACTIVE: force a report every N seconds (0 = never)"
+	default 10
+
+config SHELF_MODE_SYNC_INTERVAL_MS
+	int "ACTIVE: LED/gateway sync poll period [ms]"
+	default 5000
+	help
+	  Pushes are the fast path; this slow poll repairs a lost push and is
+	  the liveness probe behind SHELF_ACTIVE_FAILSAFE_S.
+
+config SHELF_ACTIVE_FAILSAFE_S
+	int "ACTIVE: drop to IDLE after this long without gateway contact [s]"
+	default 60
+	help
+	  Protects the battery when the gateway dies while the node is in
+	  ACTIVE mode. The gateway repairs the mode via the weight report's
+	  `md` field once it is back.
+
+comment "Load cell measurement"
+
+config SHELF_LOADCELL_WARMUP_MS
+	int "Load cell / CS1237 warm-up time [ms]"
+	default 300
+	help
+	  Delay between switching the load cell rail on and the first CS1237
+	  access. Needs to cover the bridge settling time and the CS1237
+	  power-on reset. Increase this if the first samples drift.
+
+config SHELF_ADC_DISCARD_SAMPLES
+	int "IDLE: samples discarded after power-up"
+	default 3
+
+config SHELF_ADC_AVG_SAMPLES
+	int "IDLE: samples averaged into one measurement (40 Hz)"
+	default 8
+	range 1 64
+
+config SHELF_ADC_DELTA_THRESHOLD
+	int "Raw count change that triggers a report"
+	default 500
+	help
+	  A measurement is only sent to the gateway when it differs from the
+	  last reported value by at least this many raw ADC counts. Set this
+	  above the peak-to-peak noise of your load cell or the node will
+	  transmit continuously.
+
+comment "Weight calibration"
+
+config SHELF_CAL_OFFSET
+	int "Raw counts at zero load (tare)"
+	default 0
+
+config SHELF_CAL_COUNTS_PER_KG
+	int "Raw counts per kilogram"
+	default 100000
+	help
+	  Only used to fill in the human readable "mg" field of the report.
+	  The change detection always works on raw counts.
+
+comment "Gateway communication"
+
+config SHELF_COAP_RESP_TIMEOUT_MS
+	int "CoAP response timeout [ms]"
+	default 400
+
+config SHELF_COAP_BASE_PATH
+	string "First CoAP URI path segment used for all resources"
+	default "shelf"
+
+module = SHELF
+module-str = Smart shelf
+source "subsys/logging/Kconfig.template.log_config"
+
+endmenu
+
+source "Kconfig.zephyr"

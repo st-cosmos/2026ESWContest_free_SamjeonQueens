@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- app-inventory (design.pen). 시약 리스트·필터 칩은 코드에서 동적 생성 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:paddingStart="@dimen/space_page"
+        android:paddingEnd="@dimen/space_page"
+        android:paddingTop="@dimen/space_top">
+
+        <!-- 헤더: 제목/요약 + 경고 pill -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="재고 관리"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_strong" />
+                <TextView
+                    android:id="@+id/invSummary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="데이터를 불러오는 중입니다..."
+                    android:textSize="9sp"
+                    android:textColor="@color/text_muted" />
+            </LinearLayout>
+
+            <!-- 유통기한 경고 pill (임박·초과) -->
+            <LinearLayout
+                android:id="@+id/expiryPill"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/shape_pill"
+                android:backgroundTint="@color/warning_soft"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp"
+                android:visibility="gone">
+                <ImageView
+                    android:layout_width="11dp"
+                    android:layout_height="11dp"
+                    android:src="@drawable/ic_clock_alert"
+                    android:contentDescription="유통기한 경고"
+                    app:tint="@color/warning" />
+                <TextView
+                    android:id="@+id/expiryPillText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:textSize="9sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/warning" />
+            </LinearLayout>
+
+            <!-- 인접 보관 금지 경고 pill -->
+            <LinearLayout
+                android:id="@+id/coPill"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/shape_pill"
+                android:backgroundTint="@color/danger_soft"
+                android:paddingStart="10dp"
+                android:paddingEnd="10dp"
+                android:paddingTop="5dp"
+                android:paddingBottom="5dp"
+                android:visibility="gone">
+                <ImageView
+                    android:layout_width="11dp"
+                    android:layout_height="11dp"
+                    android:src="@drawable/ic_triangle_alert"
+                    android:contentDescription="인접 보관 경고"
+                    app:tint="@color/danger" />
+                <TextView
+                    android:id="@+id/coPillText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    android:textSize="9sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/danger" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 검색 (Search/App: 필 라운드 + border) -->
+        <EditText
+            android:id="@+id/searchInput"
+            android:layout_width="match_parent"
+            android:layout_height="40dp"
+            android:layout_marginTop="10dp"
+            android:background="@drawable/bg_pill_outline"
+            android:drawableStart="@drawable/ic_search"
+            android:drawablePadding="7dp"
+            android:drawableTint="@color/text_muted"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:gravity="center_vertical"
+            android:hint="시약 이름·CAS 번호 검색"
+            android:textColorHint="@color/text_muted"
+            android:textColor="@color/text_strong"
+            android:textSize="11sp"
+            android:inputType="text"
+            android:imeOptions="actionSearch"
+            android:maxLines="1"
+            android:importantForAutofill="no" />
+
+        <!-- 필터 칩 (코드에서 생성) -->
+        <HorizontalScrollView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="10dp"
+            android:scrollbars="none"
+            android:overScrollMode="never">
+            <LinearLayout
+                android:id="@+id/filterChips"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal" />
+        </HorizontalScrollView>
+
+        <ScrollView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginTop="10dp"
+            android:overScrollMode="never"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:paddingBottom="8dp">
+
+                <TextView
+                    android:id="@+id/emptyText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:paddingTop="40dp"
+                    android:gravity="center"
+                    android:text="데이터를 불러오는 중입니다..."
+                    android:textSize="11sp"
+                    android:textColor="@color/text_muted"
+                    android:visibility="gone" />
+
+                <LinearLayout
+                    android:id="@+id/chemListLayout"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+            </LinearLayout>
+        </ScrollView>
+    </LinearLayout>
+
+    <include
+        android:id="@+id/bottomNav"
+        layout="@layout/component_bottom_nav" />
+</LinearLayout>

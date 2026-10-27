@@ -1,0 +1,21 @@
+# OpenThread POSIX 데몬 (nRF52840 RCP 동글).
+# 설치: gateway/README.md §2.2 참고
+#   sudo cp ot-daemon.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now ot-daemon
+#
+# 동글이 여러 개거나 다른 CDC 장치가 붙는 환경이면 /dev/ttyACM0 대신
+# /dev/serial/by-id/usb-Nordic_Semiconductor_ASA_Thread_Co-Processor_<SN>-if00
+# 으로 고정할 것.
+
+[Unit]
+Description=OpenThread POSIX daemon (nRF52840 RCP dongle)
+After=network.target
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/ot-daemon -v spinel+hdlc+uart:///dev/ttyACM0?uart-baudrate=115200
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

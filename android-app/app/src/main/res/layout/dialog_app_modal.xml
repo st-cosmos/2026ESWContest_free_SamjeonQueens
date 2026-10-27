@@ -1,0 +1,273 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Modal/App (design-spec §1.4). 톤(색)은 AppModal.show() 에서 지정한다. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="@dimen/modal_width"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:gravity="center_horizontal"
+    android:background="@drawable/shape_rounded_14"
+    android:paddingTop="28dp"
+    android:paddingBottom="28dp"
+    android:paddingStart="24dp"
+    android:paddingEnd="24dp">
+
+    <FrameLayout
+        android:id="@+id/modalIconWrap"
+        android:layout_width="56dp"
+        android:layout_height="56dp"
+        android:background="@drawable/shape_circle"
+        android:backgroundTint="@color/primary_soft">
+        <ImageView
+            android:id="@+id/modalIcon"
+            android:layout_width="26dp"
+            android:layout_height="26dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_triangle_alert"
+            android:contentDescription="상태 아이콘"
+            app:tint="@color/primary" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/modalTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="14dp"
+        android:textSize="17sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_strong"
+        tools:text="잘못된 위치에 놓였습니다" />
+
+    <TextView
+        android:id="@+id/modalMessage"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:lineSpacingExtra="4dp"
+        android:textSize="12sp"
+        android:textColor="@color/text_body"
+        tools:text="메시지 본문" />
+
+    <!-- 인식된 유통기한 강조 배지 (톤 색은 AppModal.show() 에서 지정) -->
+    <LinearLayout
+        android:id="@+id/modalDatePill"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/shape_pill"
+        android:backgroundTint="@color/primary_soft"
+        android:paddingStart="20dp"
+        android:paddingEnd="20dp"
+        android:paddingTop="9dp"
+        android:paddingBottom="9dp"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <ImageView
+            android:id="@+id/modalDateIcon"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_marginEnd="7dp"
+            android:src="@drawable/ic_calendar"
+            android:contentDescription="달력 아이콘"
+            app:tint="@color/primary" />
+
+        <TextView
+            android:id="@+id/modalDateText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:textStyle="bold"
+            android:textColor="@color/primary"
+            tools:text="2027-03-15" />
+    </LinearLayout>
+
+    <!-- 추천 위치 선반 시각화 (design.pen app-checkin-safe-location) -->
+    <LinearLayout
+        android:id="@+id/modalShelfVisual"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="vertical"
+        android:background="@drawable/shape_rounded_10"
+        android:backgroundTint="@color/bg"
+        android:padding="12dp"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <TextView
+                android:id="@+id/modalShelfName"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_strong"
+                tools:text="선반 C" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/shape_pill"
+                android:backgroundTint="@color/success_soft"
+                android:paddingStart="9dp"
+                android:paddingEnd="9dp"
+                android:paddingTop="4dp"
+                android:paddingBottom="4dp">
+
+                <ImageView
+                    android:layout_width="10dp"
+                    android:layout_height="10dp"
+                    android:layout_marginEnd="3dp"
+                    android:src="@drawable/ic_map_pin"
+                    android:contentDescription="추천 위치 핀"
+                    app:tint="@color/success" />
+
+                <TextView
+                    android:id="@+id/modalShelfCoord"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/success"
+                    tools:text="2행 3열" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 그리드 행들은 AppModal 에서 동적으로 추가 -->
+        <LinearLayout
+            android:id="@+id/modalShelfGrid"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:orientation="vertical" />
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+
+            <View
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:background="@drawable/bg_cell_recommend" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:text="추천 위치"
+                android:textSize="9sp"
+                android:textColor="@color/text_muted" />
+
+            <View
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_marginStart="10dp"
+                android:background="@drawable/bg_cell_occupied" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:text="사용 중"
+                android:textSize="9sp"
+                android:textColor="@color/text_muted" />
+
+            <View
+                android:layout_width="10dp"
+                android:layout_height="10dp"
+                android:layout_marginStart="10dp"
+                android:background="@drawable/bg_cell_free" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:text="빈 칸"
+                android:textSize="9sp"
+                android:textColor="@color/text_muted" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- 달력 날짜 선택 (유통기한 직접 입력용) -->
+    <DatePicker
+        android:id="@+id/modalDatePicker"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:datePickerMode="calendar"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
+    <!-- Input/App 스타일 입력 필드 (§1.5) -->
+    <EditText
+        android:id="@+id/modalInput"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/input_height"
+        android:layout_marginTop="12dp"
+        android:background="@drawable/bg_input"
+        android:drawableStart="@drawable/ic_calendar"
+        android:drawablePadding="7dp"
+        android:drawableTint="@color/text_muted"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:gravity="center_vertical"
+        android:inputType="datetime"
+        android:maxLines="1"
+        android:textSize="13sp"
+        android:textColor="@color/text_strong"
+        android:textColorHint="@color/text_muted"
+        android:visibility="gone"
+        tools:visibility="visible" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:orientation="horizontal">
+
+        <TextView
+            android:id="@+id/btnModalSecondary"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/btn_height"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:gravity="center"
+            android:background="@drawable/shape_pill"
+            android:backgroundTint="@color/bg"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_body"
+            tools:text="나중에 하기" />
+
+        <TextView
+            android:id="@+id/btnModalPrimary"
+            android:layout_width="0dp"
+            android:layout_height="@dimen/btn_height"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:background="@drawable/shape_pill"
+            android:backgroundTint="@color/primary"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:textColor="@color/white"
+            android:elevation="3dp"
+            tools:text="확인" />
+    </LinearLayout>
+</LinearLayout>

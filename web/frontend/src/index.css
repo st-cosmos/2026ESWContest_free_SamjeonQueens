@@ -1,0 +1,2120 @@
+/* ============================================================
+   Chemical Memory — 디자인 토큰 (design-spec-web.md §1)
+   ============================================================ */
+:root {
+  --bg: #F2F5FF;
+  --bg-deep: #D2DAEC;
+  --border: #E1E8F8;
+  --surface: #FFFFFF;
+  --primary: #3D6BF5;
+  --primary-press: #2B4ED4;
+  --primary-soft: #DFE8FF;
+  --danger: #ED5565;
+  --danger-soft: #FDE8EA;
+  --success: #27B876;
+  --success-soft: #DFF6EC;
+  --warning: #F5A623;
+  --warning-soft: #FFF3DC;
+  --overlay: #141C3E99;
+  --text-strong: #1E2A56;
+  --text-body: #44507E;
+  --text-muted: #8B97BE;
+
+  --radius-sm: 12px;
+  --radius-md: 20px;
+  --radius-lg: 28px;
+
+  --shadow-card: 0 8px 24px #1E2A560D;
+  --shadow-shelf: 0 10px 28px #1E2A560D;
+  --shadow-login: 0 16px 48px #1E2A5614;
+  --shadow-cta: 0 6px 18px #3D6BF540;
+  --shadow-pill: 0 8px 24px #3D6BF540;
+
+  --thead-bg: #F7F9FF;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  font-size: 14px;
+  background: var(--bg);
+  color: var(--text-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font-family: inherit;
+  border: none;
+  background: none;
+  padding: 0;
+  color: inherit;
+  cursor: pointer;
+}
+
+input,
+select {
+  font-family: inherit;
+}
+
+/* ============================================================
+   앱 레이아웃
+   ============================================================ */
+.app {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.page {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 24px;
+  overflow-y: auto;
+}
+
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.topbar-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.topbar-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.topbar-sub {
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+/* ============================================================
+   Button (§2.1, §2.2, §2.7)
+   ============================================================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 11px 22px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.btn-primary:active {
+  background: var(--primary-press);
+}
+
+.btn-outline {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-body);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* 48px 폼 CTA (로그인·사용자 등록 제출) */
+.btn-cta {
+  width: 100%;
+  height: 48px;
+  padding: 0;
+  font-size: 15px;
+  box-shadow: var(--shadow-cta);
+}
+
+/* App-Primary 대형 필 버튼 (선반 관리 "새 선반 추가") */
+/* 컴팩트 필 버튼 ("새 선반 추가" — design.pen web-shelf-manage-edit) */
+.btn-pill {
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 600;
+  box-shadow: var(--shadow-pill);
+}
+
+/* ============================================================
+   Badge (§2.3)
+   ============================================================ */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.badge-success { background: var(--success-soft); color: var(--success); }
+.badge-danger  { background: var(--danger-soft);  color: var(--danger); }
+.badge-warning { background: var(--warning-soft); color: var(--warning); }
+.badge-primary { background: var(--primary-soft); color: var(--primary); }
+
+/* ============================================================
+   Input (§2.4)
+   ============================================================ */
+.input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.input-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-body);
+}
+
+.input-field {
+  width: 100%;
+  height: 46px;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 14px;
+  color: var(--text-strong);
+  outline: none;
+}
+
+.input-field::placeholder {
+  color: var(--text-muted);
+}
+
+.input-field:focus {
+  border-color: var(--primary);
+}
+
+.input-field.input-error {
+  border-color: #ef4444;
+}
+
+.input-error-msg {
+  font-size: 12px;
+  color: #ef4444;
+  margin-top: -2px;
+}
+
+.input-hint-msg {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-top: -2px;
+}
+
+select.input-field {
+  cursor: pointer;
+}
+
+/* ============================================================
+   SearchBar (§2.5)
+   ============================================================ */
+.searchbar {
+  width: 300px;
+  height: 42px;
+  padding: 0 16px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.searchbar svg {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.searchbar input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+  color: var(--text-strong);
+}
+
+.searchbar input::placeholder {
+  color: var(--text-muted);
+}
+
+/* ============================================================
+   Sidebar (§2.6)
+   ============================================================ */
+.sidebar {
+  width: 264px;
+  flex-shrink: 0;
+  height: 100vh;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 28px 20px;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 8px 28px 8px;
+}
+
+.sidebar-logo-mark {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  background: var(--primary);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sidebar-logo-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.sidebar-logo-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.sidebar-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 13px 16px;
+  border-radius: 14px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-body);
+  text-align: left;
+}
+
+.sidebar-nav-item svg {
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.sidebar-nav-item.active {
+  background: var(--primary);
+  color: #ffffff;
+}
+
+.sidebar-nav-item.active svg {
+  color: #ffffff;
+}
+
+.sidebar-spacer {
+  flex: 1;
+}
+
+.sidebar-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+}
+
+.sidebar-user-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: var(--bg);
+  border: 1px solid transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.sidebar-user-card:hover {
+  background: var(--primary-soft);
+  border-color: rgba(37, 99, 235, 0.2);
+}
+
+.sidebar-user-card.active {
+  background: var(--primary-soft);
+  border-color: var(--primary);
+}
+
+.sidebar-user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar-user-name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidebar-user-role {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.sidebar-user-arrow {
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.sidebar-user-card:hover .sidebar-user-arrow {
+  color: var(--primary);
+  transform: translateX(2px);
+}
+
+.sidebar-logout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: none;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sidebar-logout-btn:hover {
+  background: #fef2f2;
+  color: #ef4444;
+  border-color: #fecaca;
+}
+
+.avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.avatar-sm {
+  width: 36px;
+  height: 36px;
+  font-size: 14px;
+}
+
+/* ============================================================
+   카드 / 테이블 공통
+   ============================================================ */
+.card {
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+}
+
+.table-card {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.t-head {
+  display: flex;
+  align-items: center;
+  background: var(--thead-bg);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.t-head .t-cell {
+  padding: 12px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.t-body {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.t-row {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.t-row .t-cell {
+  padding: 10px 16px;
+  font-size: 13px;
+  color: var(--text-body);
+}
+
+.t-row.clickable {
+  cursor: pointer;
+}
+
+.t-row.selected {
+  background: var(--primary-soft);
+}
+
+.t-row.checked {
+  background: var(--thead-bg);
+}
+
+.t-cell {
+  flex-shrink: 0;
+}
+
+.t-cell.grow {
+  flex: 1;
+  min-width: 0;
+}
+
+.cell-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cell-title-main {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.cell-title-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.t-empty {
+  padding: 40px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+/* ============================================================
+   프로그레스바 (잔량 바, §2.8)
+   ============================================================ */
+.progress {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.progress-track {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--bg-deep);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.progress-fill {
+  height: 6px;
+  border-radius: 3px;
+  background: var(--primary);
+}
+
+.progress-pct {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-body);
+}
+
+.progress.danger .progress-fill {
+  background: var(--danger);
+}
+
+.progress.danger .progress-pct {
+  color: var(--danger);
+}
+
+/* ============================================================
+   web-login (§3)
+   ============================================================ */
+.login-page {
+  display: flex;
+  height: 100vh;
+}
+
+.login-brand {
+  width: 640px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #3D6BF5 0%, #2B4ED4 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 64px;
+  color: #ffffff;
+}
+
+@media (max-width: 1100px) {
+  .login-brand {
+    display: none;
+  }
+}
+
+.login-brand-logo {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.login-brand-mark {
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  background: #FFFFFF2E;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-brand-name {
+  font-size: 24px;
+  font-weight: 700;
+}
+
+.login-headline {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.login-headline h2 {
+  font-size: 40px;
+  font-weight: 700;
+  line-height: 1.4;
+  white-space: pre-line;
+}
+
+.login-headline p {
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 1.7;
+  color: #FFFFFFB8;
+  white-space: pre-line;
+}
+
+.login-features {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.login-feature {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 15px;
+  color: #FFFFFFDE;
+}
+
+.login-feature-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: #FFFFFF24;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.login-form-side {
+  flex: 1;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.login-card {
+  width: 420px;
+  padding: 40px;
+  border-radius: 28px;
+  background: var(--surface);
+  box-shadow: var(--shadow-login);
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.login-card-head {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.login-card-head h1 {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.login-card-head p {
+  font-size: 14px;
+  color: var(--text-muted);
+}
+
+.login-options {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.login-remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-body);
+}
+
+.login-remember .checkbox {
+  width: 18px;
+  height: 18px;
+}
+
+.login-find-pw {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.login-foot {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+.form-error {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--danger);
+  background: var(--danger-soft);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.form-success {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--success);
+  background: var(--success-soft);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+/* ============================================================
+   체크박스 (주문·로그인 공용)
+   ============================================================ */
+.checkbox {
+  width: 16px;
+  height: 16px;
+  border-radius: 5px;
+  border: 1.5px solid var(--text-muted);
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #ffffff;
+  cursor: pointer;
+  padding: 0;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.checkbox.checked {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+/* ============================================================
+   web-inventory (§4) — 상세 패널
+   ============================================================ */
+.inventory-layout {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  overflow: hidden;
+}
+
+.detail-panel {
+  width: 360px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-left: 1px solid var(--border);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow-y: auto;
+}
+
+.detail-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.detail-head-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.detail-head-title h2 {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.detail-head-title p {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.detail-close {
+  color: var(--text-muted);
+  display: flex;
+  flex-shrink: 0;
+}
+
+.detail-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.info-card {
+  border-radius: 12px;
+  background: var(--bg);
+  padding: 6px 0;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+}
+
+.info-key {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.info-val {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-strong);
+  text-align: right;
+}
+
+.log-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.log-section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.log-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.log-chip {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.log-chip.out {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.log-chip.in {
+  background: var(--success-soft);
+  color: var(--success);
+}
+
+.log-item-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.log-item-main {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.log-item-time {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.loc-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.loc-cell svg {
+  color: var(--warning);
+  flex-shrink: 0;
+}
+
+.exp-cell {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12.5px;
+}
+
+.exp-cell.exp-danger {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+.exp-cell.exp-warning {
+  color: var(--warning);
+  font-weight: 600;
+}
+
+/* ============================================================
+   web-orders (§5)
+   ============================================================ */
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--surface);
+}
+
+.stepper-btn {
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+}
+
+.stepper-btn.plus {
+  color: var(--primary);
+}
+
+.stepper-count {
+  width: 34px;
+  height: 30px;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.footer-bar {
+  flex-shrink: 0;
+  width: 100%;
+  padding: 16px 24px;
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: var(--shadow-card);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px;
+}
+
+.footer-bar-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.footer-bar-summary svg {
+  color: var(--primary);
+}
+
+.footer-bar-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* ============================================================
+   web-user-register (§6)
+   ============================================================ */
+.register-layout {
+  display: flex;
+  gap: 20px;
+  flex: 1;
+  min-height: 0;
+}
+
+.form-card {
+  width: 420px;
+  flex-shrink: 0;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-self: flex-start;
+}
+
+.form-card-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.segment {
+  display: flex;
+  gap: 8px;
+}
+
+.segment button {
+  flex: 1;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-body);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.segment button.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #ffffff;
+}
+
+.user-list-card {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.user-list-head {
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.user-list-head h3 {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.user-list-body {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.user-row {
+  padding: 13px 24px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.user-row-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.user-row-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-strong);
+}
+
+.user-row-id {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.user-row-date {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.user-row-more-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.user-row-more {
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  padding: 6px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.user-row-more:hover {
+  background-color: rgba(0, 0, 0, 0.06);
+  color: var(--text-strong);
+}
+
+.user-menu-dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  background: #ffffff;
+  border: 1px solid var(--border-color, #e5e7eb);
+  border-radius: 10px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.05);
+  z-index: 50;
+  min-width: 120px;
+  padding: 4px;
+}
+
+.user-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #ef4444;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s ease;
+}
+
+.user-menu-item:hover {
+  background-color: #fef2f2;
+}
+
+/* ============================================================
+   web-shelf-manage (§7)
+   ============================================================ */
+.shelves-area {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+/* 카드 높이 고정 — 수정 모드에서 열 삭제 줄·행/열 추가 버튼이 생겨도
+   뷰포트(flex)가 줄어들 뿐 카드 크기는 변하지 않는다 (선반 간 높이 통일) */
+.shelf-card {
+  flex: 1;
+  min-width: 480px;
+  height: 454px;
+  border-radius: 28px;
+  background: var(--surface);
+  box-shadow: var(--shadow-shelf);
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.shelf-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 14px;
+}
+
+.shelf-card-head-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.shelf-card-title {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.shelf-size-pill {
+  border-radius: 999px;
+  background: var(--bg);
+  padding: 6px 16px;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-body);
+}
+
+.shelf-edit-btn {
+  color: var(--text-muted);
+  display: flex;
+}
+
+.shelf-grid-wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 12px;
+  position: relative;
+}
+
+/* 카드의 남는 세로 공간을 전부 쓰는 스크롤 뷰포트 (일반 3행 = 112px × 3 + 간격 12px × 2 = 360px).
+   수정 모드에서는 삭제 줄·추가 버튼만큼 자동으로 줄어든다 — 넘치는 행은 세로 스크롤 */
+.shelf-grid-viewport {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  overflow: auto;
+  border-radius: 16px;
+}
+
+.shelf-grid-viewport::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+.shelf-grid-viewport::-webkit-scrollbar-thumb {
+  background: var(--bg-deep);
+  border-radius: 999px;
+}
+
+.shelf-grid-viewport::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* 열은 항상 2개 폭 기준 — 3열 이상이면 가로 스크롤 (2×2가 카드에 꽉 차는 크기) */
+.shelf-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 2), calc((100% - 12px) / 2));
+  gap: 12px;
+}
+
+/* 2행이 뷰포트(약 364px)에 꽉 차는 높이 */
+.slot {
+  position: relative;
+  min-width: 0;
+  height: 176px;
+  border-radius: 16px;
+}
+
+/* 배지 구성: 상단(이름 좌 · 배터리 우) ↔ 하단(무게·위치 우측 정렬) */
+.slot-occupied {
+  background: var(--bg);
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+}
+
+.slot-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+/* 이름 + 그 바로 아래 위치 ID (좌측 정렬 묶음) */
+.slot-top-left {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.slot-top-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.slot-chem-row {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.slot-chem-name {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.slot-chem-more {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.slot-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  min-width: 0;
+}
+
+.slot-remain-val {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.slot-pos {
+  font-size: 11px;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.slot-meta-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-body);
+}
+
+.slot-meta-item svg {
+  color: var(--text-muted);
+}
+
+.slot-meta-item.battery svg {
+  color: var(--success);
+}
+
+.slot-meta-item.battery.low svg {
+  color: var(--danger);
+}
+
+.slot-meta-item.led svg {
+  color: var(--warning);
+}
+
+.slot-empty {
+  background: transparent;
+  border: 1.5px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 15px;
+  color: var(--text-muted);
+}
+
+.slot-drop {
+  background: var(--primary-soft);
+  border: 2px solid var(--primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--primary);
+  cursor: pointer;
+}
+
+.shelf-grid-empty {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px dashed var(--border);
+  border-radius: 16px;
+  font-size: 14px;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 0 24px;
+}
+
+/* 행/열 추가 — 그리드 아래 소형 버튼 (수납칸 크기에 영향 없음) */
+.add-line-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+.add-line-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--primary);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 18px;
+}
+
+.add-line-btn:hover {
+  background: var(--primary-soft);
+}
+
+/* ---------- 선반 수정 모드 (design.pen web-shelf-manage-edit) ---------- */
+
+.shelf-head-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.shelf-delete-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 18px;
+  white-space: nowrap;
+}
+
+.shelf-delete-btn:hover {
+  background: var(--danger);
+  color: #fff;
+}
+
+.shelf-edit-done {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 8px 18px;
+  white-space: nowrap;
+}
+
+/* 열 삭제 버튼 줄 — 그리드 뷰포트와 같은 폭으로 클리핑 (스크롤 동기화는 JS) */
+.col-del-row {
+  display: flex;
+  gap: 12px;
+}
+
+.col-del-clip {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.line-del-cell {
+  height: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 행/열 삭제 — 해당 줄을 따라 길게 놓인 '-' 바. 그 줄 전체가 지워짐을 형태로 보여준다 */
+.line-del-btn {
+  width: 70%;
+  height: 9px;
+  border-radius: 999px;
+  background: var(--danger-soft);
+  flex-shrink: 0;
+  transition: background-color 0.15s ease;
+}
+
+.line-del-btn:hover {
+  background: var(--danger);
+}
+
+/* 행 삭제 버튼 레일 — 카드 왼쪽 여백(패딩 22px)에 겹쳐 배치해
+   수납칸 크기에 영향을 주지 않는다. 뷰포트와 같은 높이로 클리핑 */
+.row-del-col {
+  position: absolute;
+  left: -22px;
+  top: 0;
+  width: 22px;
+  height: 100%;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.row-del-cell {
+  height: 176px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* 행 삭제 바는 세로로 길게 (왼쪽 여백 레일 안) */
+.row-del-cell .line-del-btn {
+  width: 9px;
+  height: 70%;
+}
+
+/* 셀 등록 해제 배지 (수정 모드에서 등록된 셀 우상단) */
+.slot-del-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
+  background: var(--danger);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.slot-del-btn:hover {
+  background: #d8404f;
+}
+
+/* 신규 등록 대기 기기 스트립 */
+.unreg-strip {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-radius: 20px;
+  background: var(--surface);
+  border: 1.5px solid var(--primary);
+  padding: 14px 20px;
+}
+
+.unreg-strip-texts {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.unreg-strip-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.unreg-strip-sub {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.unreg-strip-chips {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.unreg-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 12px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  font-size: 14px;
+  font-weight: 600;
+  padding: 10px 16px;
+}
+
+.unreg-chip-batt {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+/* 방금 리셋 버튼이 눌려 다시 잡힌 기기 — 주황으로 3번 깜빡인 뒤
+   기본(파란) 스타일로 돌아온다. 재렌더에도 같은 DOM 이 유지되어
+   애니메이션은 클래스가 처음 붙을 때 한 번만 재생된다. */
+@keyframes unreg-chip-blink {
+  0%,
+  100% {
+    background: var(--warning-soft);
+    color: var(--warning);
+    box-shadow: 0 0 0 0 rgb(245 166 35 / 45%);
+  }
+  50% {
+    background: #ffe4b3;
+    color: var(--warning);
+    box-shadow: 0 0 0 6px rgb(245 166 35 / 0%);
+  }
+}
+
+.unreg-chip-reset {
+  animation: unreg-chip-blink 0.7s ease-in-out 3;
+}
+
+.unreg-chip-reset-tag {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--warning);
+}
+
+/* ---------- 유통기한 후입력 · 기본값 설정 ---------- */
+
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.expiry-setting-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 999px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  color: var(--text-body);
+  font-size: 13px;
+  font-weight: 600;
+  padding: 9px 16px;
+  white-space: nowrap;
+}
+
+.expiry-setting-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.exp-missing {
+  color: var(--warning);
+  font-weight: 600;
+}
+
+.expiry-val {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.expiry-edit-link {
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 2px 10px;
+}
+
+.expiry-edit-link:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+}
+
+.expiry-editor {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.expiry-date-input {
+  border: 1.5px solid var(--border);
+  border-radius: 8px;
+  padding: 5px 8px;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--text-strong);
+  background: var(--surface);
+}
+
+.expiry-save-btn {
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 14px;
+}
+
+.expiry-save-btn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+/* ---------- 재고 관리 상태 필터 칩 (design.pen web-inventory) ---------- */
+
+.filter-chips {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.filter-chip {
+  border-radius: 999px;
+  padding: 10px 22px;
+  background: var(--surface);
+  border: 1.5px solid var(--border);
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-body);
+}
+
+.filter-chip:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.filter-chip.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+/* ---------- 슬롯 상세 모달 (design.pen web-shelf-manage-slot) ---------- */
+
+.slot-clickable {
+  cursor: pointer;
+}
+
+.slot-clickable:hover {
+  outline: 1.5px solid var(--primary);
+  outline-offset: -1.5px;
+}
+
+.slot-selected {
+  outline: 2px solid var(--primary);
+  outline-offset: -2px;
+}
+
+.slot-modal {
+  width: 480px;
+  gap: 16px;
+}
+
+.slot-modal-head {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.slot-modal-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.slot-modal-title-row svg {
+  color: var(--primary);
+  flex-shrink: 0;
+}
+
+.slot-modal-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.slot-chem-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.slot-chem-empty {
+  padding: 18px 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.slot-chem-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg);
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+
+.slot-chem-item-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: var(--primary-soft);
+  color: var(--primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.slot-chem-item-texts {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.slot-chem-item-name {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text-strong);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.slot-chem-item-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.slot-modal-confirm {
+  width: 100%;
+  height: 48px;
+  border-radius: 999px;
+  background: var(--primary);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8px 20px #3d6bf540;
+}
+
+.slot-modal-confirm:hover {
+  background: var(--primary-press);
+}
+
+/* ============================================================
+   모달
+   ============================================================ */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal {
+  width: 420px;
+  max-width: calc(100vw - 48px);
+  padding: 32px;
+  border-radius: 20px;
+  background: var(--surface);
+  box-shadow: var(--shadow-login);
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.modal-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.modal-sub {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: -12px;
+}
+
+.modal-help {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.modal-actions .btn {
+  flex: 1;
+}
+
+/* ============================================================
+   주문 관리 — 구매 링크 (web-order)
+   ============================================================ */
+.cell-title-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--primary);
+  text-decoration: none;
+}
+
+.cell-title-link:hover {
+  text-decoration: underline;
+}
+
+.link-chip,
+.link-add-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.link-chip {
+  background: var(--primary-soft);
+  color: var(--primary);
+}
+
+.link-chip:hover {
+  background: var(--primary);
+  color: #fff;
+}
+
+.link-add-chip {
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.link-add-chip:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+/* ============================================================
+   내 프로필 (web-profile-edit)
+   ============================================================ */
+.profile-card {
+  width: 480px;
+  flex-shrink: 0;
+  align-self: flex-start;
+  padding: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.avatar-lg {
+  width: 56px;
+  height: 56px;
+  font-size: 22px;
+}
+
+.profile-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.profile-head-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-head-name {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.profile-head-id {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.profile-divider {
+  border: none;
+  border-top: 1px solid var(--border);
+  margin: 0;
+}
+
+.profile-edit {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.profile-section-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-strong);
+}
+
+.profile-note {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* ============================================================
+   LLM 기반 혼재 금지 시약 & 인접 보관 위험 경고 카드
+   ============================================================ */
+.info-row.column {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+}
+
+.warning-text {
+  color: #d97706;
+  font-weight: 600;
+}
+
+.info-sub-text {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.4;
+  margin-top: 2px;
+}
+
+.co-alert-card {
+  margin-top: 12px;
+  padding: 14px;
+  border-radius: 12px;
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  color: #92400e;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.co-alert-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #b45309;
+}
+
+.co-alert-body {
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.co-alert-reason {
+  margin-top: 4px;
+  font-size: 11px;
+  color: #78350f;
+  background: rgba(251, 191, 36, 0.2);
+  padding: 6px 10px;
+  border-radius: 8px;
+}

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 아이콘 박스(24px→12dp) 배경. backgroundTint 로 색 지정. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/white" />
+    <corners android:radius="12dp" />
+</shape>

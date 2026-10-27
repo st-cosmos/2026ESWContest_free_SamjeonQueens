@@ -1,0 +1,18 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!--
+      앱 기본 테마.
+      폰트: 디자인 지정 서체는 Noto Sans KR. res/font 번들 대신 시스템 기본 sans-serif 를 사용한다.
+      (국내 기기 대부분이 한글 기본 서체로 Noto Sans CJK KR 를 탑재하므로 시각적으로 동일 계열.
+       필요 시 res/font 에 noto_sans_kr_*.ttf 4종(400/500/600/700)을 추가하고
+       android:fontFamily 를 교체하면 된다.)
+    -->
+    <style name="Theme.CameraMessage" parent="Theme.Material3.Light.NoActionBar">
+        <item name="colorPrimary">@color/primary</item>
+        <item name="colorOnPrimary">@color/white</item>
+        <item name="android:windowBackground">@color/bg</item>
+        <item name="android:statusBarColor">@color/bg</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:navigationBarColor">@color/bg</item>
+        <item name="android:fontFamily">sans-serif</item>
+    </style>
+</resources>

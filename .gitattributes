@@ -1,0 +1,4 @@
+# 파이에 그대로 복사되는 파일들 — Windows 체크아웃에서도 LF 를 유지해야
+# bash (`/bin/bash^M`) 와 systemd 가 깨지지 않는다.
+*.sh text eol=lf
+*.service text eol=lf

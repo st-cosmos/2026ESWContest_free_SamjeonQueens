@@ -1,0 +1,18 @@
+# Build output
+build/
+build-*/
+twister-out*/
+
+# west workspace metadata (this repo is the application, not the workspace)
+.west/
+
+# Python
+*.pyc
+__pycache__/
+
+# Editors / OS
+.vscode/
+*.swp
+*~
+.DS_Store
+Thumbs.db

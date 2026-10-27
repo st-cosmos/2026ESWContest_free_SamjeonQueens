@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 필(999) 라운드 배경. android:backgroundTint 로 색 지정. -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/white" />
+    <corners android:radius="999dp" />
+</shape>

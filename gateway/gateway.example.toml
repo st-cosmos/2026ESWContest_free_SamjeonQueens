@@ -1,0 +1,52 @@
+# 스마트 시약장 Thread 게이트웨이 설정.
+# 이 파일을 gateway.toml 로 복사한 뒤 환경에 맞게 수정하세요.
+#   cp gateway.example.toml gateway.toml
+# (여기 없는 항목은 gateway.py 의 DEFAULT_CONFIG 기본값이 쓰입니다.)
+
+[server]
+# smart-chemical-shelf 웹 서버(FastAPI) 주소.
+base_url = "http://192.168.0.8:8000"
+timeout_s = 3.0
+
+[coap]
+bind = "::"
+port = 5683
+# 노드의 게이트웨이 탐색 멀티캐스트 (펌웨어 GW_MCAST_ADDR 와 일치).
+multicast_group = "ff03::1"
+# ot-daemon 이 만드는 Thread 네트워크 인터페이스.
+interface = "wpan0"
+# wpan0 재생성(ot-daemon 재시작)에 대비한 멀티캐스트 재가입 주기.
+rejoin_interval_s = 10.0
+# 노드 펌웨어의 CONFIG_SHELF_COAP_BASE_PATH 와 일치해야 함.
+base_path = "shelf"
+
+[led]
+# 웹 서버 LED 상태 폴링 주기(초). 서버 쪽 하트비트를 겸하므로
+# 서버의 온라인 판정 창(15초)보다 충분히 짧아야 한다.
+poll_interval_s = 1.0
+# 이 시간 동안 CoAP 접촉이 없는 노드는 서버 폴링을 중단 (죽은 노드가
+# 웹에서 온라인으로 남지 않게 서버 온라인 창과 같은 15초 권장).
+node_ttl_s = 15.0
+# IDLE 세션(앱 로그인 없음)에서는 노드 접촉이 30초 하트비트뿐이라
+# 폴링을 늦추고 유지 시간을 늘린다 (docs/power-modes.md).
+idle_poll_interval_s = 5.0
+idle_node_ttl_s = 90.0
+
+[power]
+# 앱 세션 상태(GET /api/shelf-power) 폴링 주기 — 로그인 감지 지연의 상한.
+poll_interval_s = 2.0
+# 모드 불일치 노드 재푸시 최소 간격 (실패 시 자동 백오프, 최대 120초).
+push_retry_s = 5.0
+
+[status]
+# 게이트웨이 상태 조회 HTTP (JSON). curl http://<pi>:8080/status
+# 0 이면 비활성.
+bind = "0.0.0.0"
+port = 8080
+
+[nodes]
+# 노드 하드웨어 ID(16자리 hex, USB 셸 부팅 로그 또는 게이트웨이 로그의
+# "새 노드 ..." 라인에서 확인) -> 웹 서버 선반 ID 매핑.
+# 매핑이 없으면 하드웨어 ID 가 그대로 선반 ID 로 쓰이고, 웹 대시보드의
+# 미등록 기기 목록에 나타나 등록 절차를 밟을 수 있다.
+# "1e0582a6f932714e" = "SHELF-A1"

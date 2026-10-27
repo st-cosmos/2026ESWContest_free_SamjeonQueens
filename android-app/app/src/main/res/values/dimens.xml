@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- 디자인 원본은 1200x1920px. 태블릿 세로 기준 1px ≈ 0.5dp 로 환산해 적용한다. -->
+    <dimen name="radius_sm">6dp</dimen>    <!-- 12px -->
+    <dimen name="radius_md">10dp</dimen>   <!-- 20px -->
+    <dimen name="radius_lg">14dp</dimen>   <!-- 28px -->
+    <dimen name="radius_cell">8dp</dimen>  <!-- 16px -->
+
+    <dimen name="space_page">24dp</dimen>  <!-- 화면 좌우 패딩 48px -->
+    <dimen name="space_top">14dp</dimen>   <!-- 화면 상단 패딩 28px -->
+    <dimen name="space_lg">16dp</dimen>
+    <dimen name="space_md">12dp</dimen>
+    <dimen name="space_sm">8dp</dimen>
+    <dimen name="space_xs">4dp</dimen>
+
+    <dimen name="input_height">44dp</dimen>   <!-- 84px -->
+    <dimen name="btn_height">44dp</dimen>
+    <dimen name="header_btn">40dp</dimen>     <!-- 72px 원형 버튼 -->
+    <dimen name="modal_width">360dp</dimen>   <!-- 720px -->
+</resources>

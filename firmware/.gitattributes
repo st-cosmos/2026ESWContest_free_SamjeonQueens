@@ -1,0 +1,4 @@
+# Keep LF in the repository and in the working tree on every platform.
+# Zephyr sources, Kconfig fragments and devicetree overlays are LF everywhere;
+# letting Windows check them out as CRLF produces noisy whole-file diffs.
+* text=auto eol=lf

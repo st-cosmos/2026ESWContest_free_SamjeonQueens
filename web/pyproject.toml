@@ -1,0 +1,15 @@
+# uv 로 관리하는 프로젝트 설정입니다. (동아리 공통: 패키지·프로젝트·가상환경 관리 = uv)
+# - 의존성 추가:  uv add <패키지>
+# - 실행:        uv run uvicorn main:app --reload
+[project]
+name = "smart-chemical-shelf-web"
+version = "0.1.0"
+description = "스마트 화학 시약장 웹 대시보드"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "sqlalchemy>=2.0",
+    "psycopg2-binary",
+    "python-dotenv",
+]

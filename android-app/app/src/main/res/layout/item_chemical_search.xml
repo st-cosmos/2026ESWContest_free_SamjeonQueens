@@ -1,0 +1,66 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 반출 검색 결과 행 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:padding="10dp"
+    android:clickable="true"
+    android:focusable="true">
+
+    <FrameLayout
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:background="@drawable/shape_rounded_10"
+        android:backgroundTint="@color/primary_soft">
+        <ImageView
+            android:layout_width="15dp"
+            android:layout_height="15dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_flask_conical"
+            android:contentDescription="시약"
+            app:tint="@color/primary" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="10dp"
+        android:orientation="vertical">
+        <TextView
+            android:id="@+id/chemSearchName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_strong"
+            tools:text="황산 0.1M (H₂SO₄)" />
+        <TextView
+            android:id="@+id/chemSearchDetails"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="2dp"
+            android:textSize="9sp"
+            android:textColor="@color/text_muted"
+            tools:text="잔량 1.2 kg · 유통기한 2027-02-11" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/chemSearchLocation"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/shape_pill"
+        android:backgroundTint="@color/primary_soft"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:textSize="9sp"
+        android:textStyle="bold"
+        android:textColor="@color/primary"
+        tools:text="선반 A · 1행 2열" />
+</LinearLayout>

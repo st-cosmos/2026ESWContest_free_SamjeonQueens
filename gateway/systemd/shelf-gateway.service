@@ -1,0 +1,22 @@
+# 스마트 시약장 Thread 게이트웨이 (CoAP <-> 웹 서버 브리지).
+# 설치: gateway/README.md §4.3 참고. /opt/shelf-gateway 에 배치했다고 가정하며,
+# 다른 경로를 쓰면 WorkingDirectory / ExecStart 를 함께 수정할 것.
+#
+#   sudo cp shelf-gateway.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now shelf-gateway
+#   journalctl -u shelf-gateway -f
+
+[Unit]
+Description=Smart chemical shelf Thread gateway (CoAP to web-server bridge)
+After=network-online.target ot-daemon.service
+Wants=ot-daemon.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/shelf-gateway
+ExecStart=/opt/shelf-gateway/.venv/bin/python gateway.py -c /opt/shelf-gateway/gateway.toml
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

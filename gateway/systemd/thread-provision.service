@@ -1,0 +1,12 @@
+[Unit]
+Description=Provision Thread dataset after ot-daemon start
+After=ot-daemon.service
+Requires=ot-daemon.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/shelf-gateway/provision-thread.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

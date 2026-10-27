@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Button/App-Primary: 필 라운드, pressed 시 primary_press -->
+<selector xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:state_pressed="true">
+        <shape android:shape="rectangle">
+            <solid android:color="@color/primary_press" />
+            <corners android:radius="999dp" />
+        </shape>
+    </item>
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/primary" />
+            <corners android:radius="999dp" />
+        </shape>
+    </item>
+</selector>

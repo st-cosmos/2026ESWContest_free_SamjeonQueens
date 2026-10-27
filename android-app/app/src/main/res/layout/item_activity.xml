@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 홈 최근 활동 행 (design-spec §3.3-4) -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:paddingTop="7dp"
+    android:paddingBottom="7dp"
+    android:paddingStart="2dp"
+    android:paddingEnd="2dp">
+
+    <FrameLayout
+        android:id="@+id/activityIconWrap"
+        android:layout_width="28dp"
+        android:layout_height="28dp"
+        android:background="@drawable/shape_circle"
+        android:backgroundTint="@color/success_soft">
+        <ImageView
+            android:id="@+id/activityIcon"
+            android:layout_width="14dp"
+            android:layout_height="14dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_arrow_down_left"
+            android:contentDescription="활동" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="10dp"
+        android:orientation="vertical">
+        <TextView
+            android:id="@+id/activityChemicalName"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="12sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_strong"
+            tools:text="에탄올 95%" />
+        <TextView
+            android:id="@+id/activityOperatorInfo"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="1dp"
+            android:textSize="9sp"
+            android:textColor="@color/text_muted"
+            tools:text="김연구 · 방금 전" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/activityBadge"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="@drawable/shape_pill"
+        android:backgroundTint="@color/success_soft"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:paddingTop="4dp"
+        android:paddingBottom="4dp"
+        android:textSize="10sp"
+        android:textStyle="bold"
+        android:textColor="@color/success"
+        tools:text="반입" />
+</LinearLayout>

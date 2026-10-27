@@ -1,0 +1,298 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- app-home (design-spec §3.3) -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/bg">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:paddingStart="@dimen/space_page"
+        android:paddingEnd="@dimen/space_page"
+        android:paddingTop="@dimen/space_top">
+
+        <!-- Greet Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+                <TextView
+                    android:id="@+id/greetTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="안녕하세요"
+                    android:textSize="22sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_strong" />
+                <TextView
+                    android:id="@+id/greetSub"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="3dp"
+                    android:textSize="11sp"
+                    android:textColor="@color/text_muted" />
+            </LinearLayout>
+
+            <FrameLayout
+                android:id="@+id/btnHomeBell"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:background="@drawable/shape_circle"
+                android:elevation="2dp">
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_bell"
+                    android:contentDescription="알림"
+                    app:tint="@color/text_body" />
+            </FrameLayout>
+
+            <FrameLayout
+                android:id="@+id/homeAvatar"
+                android:layout_width="38dp"
+                android:layout_height="38dp"
+                android:layout_marginStart="8dp"
+                android:background="@drawable/shape_circle"
+                android:backgroundTint="@color/primary">
+                <TextView
+                    android:id="@+id/homeAvatarText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/white" />
+            </FrameLayout>
+        </LinearLayout>
+
+        <!-- 신규 선반 감지 배너 -->
+        <LinearLayout
+            android:id="@+id/unregisteredBanner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:background="@drawable/bg_banner_soft"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:paddingTop="11dp"
+            android:paddingBottom="11dp"
+            android:visibility="gone">
+
+            <FrameLayout
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:background="@drawable/shape_circle"
+                android:backgroundTint="@color/primary">
+                <ImageView
+                    android:layout_width="16dp"
+                    android:layout_height="16dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_radio"
+                    android:contentDescription="신규 기기"
+                    app:tint="@color/white" />
+            </FrameLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="10dp"
+                android:orientation="vertical">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="신규 선반 기기가 감지되었습니다"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_strong" />
+                <TextView
+                    android:id="@+id/bannerDeviceText"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textSize="10sp"
+                    android:textColor="@color/text_body" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:id="@+id/btnBannerGo"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_pill_primary"
+                android:paddingStart="12dp"
+                android:paddingEnd="10dp"
+                android:paddingTop="7dp"
+                android:paddingBottom="7dp">
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="등록하기"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/white" />
+                <ImageView
+                    android:layout_width="11dp"
+                    android:layout_height="11dp"
+                    android:layout_marginStart="3dp"
+                    android:src="@drawable/ic_chevron_right"
+                    android:contentDescription="이동"
+                    app:tint="@color/white" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Action Row -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:orientation="horizontal">
+
+            <LinearLayout
+                android:id="@+id/btnActionIn"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:background="@drawable/shape_rounded_14"
+                android:backgroundTint="@color/primary"
+                android:elevation="4dp"
+                android:padding="18dp">
+                <FrameLayout
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
+                    android:background="@drawable/shape_rounded_12"
+                    android:backgroundTint="@color/white_18">
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_package_plus"
+                        android:contentDescription="시약 반입"
+                        app:tint="@color/white" />
+                </FrameLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="시약 반입"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/white" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="카메라로 시약통을 스캔하여 입고"
+                    android:textSize="10sp"
+                    android:textColor="@color/white_79" />
+            </LinearLayout>
+
+            <Space
+                android:layout_width="12dp"
+                android:layout_height="1dp" />
+
+            <LinearLayout
+                android:id="@+id/btnActionOut"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:background="@drawable/shape_rounded_14"
+                android:elevation="2dp"
+                android:padding="18dp">
+                <FrameLayout
+                    android:layout_width="42dp"
+                    android:layout_height="42dp"
+                    android:background="@drawable/shape_rounded_12"
+                    android:backgroundTint="@color/primary_soft">
+                    <ImageView
+                        android:layout_width="22dp"
+                        android:layout_height="22dp"
+                        android:layout_gravity="center"
+                        android:src="@drawable/ic_package_minus"
+                        android:contentDescription="시약 반출"
+                        app:tint="@color/primary" />
+                </FrameLayout>
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="시약 반출"
+                    android:textSize="17sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_strong" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:text="검색으로 위치 확인 후 반출 스캔"
+                    android:textSize="10sp"
+                    android:textColor="@color/text_muted" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- 최근 활동 -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp"
+            android:orientation="vertical"
+            android:background="@drawable/shape_rounded_14"
+            android:elevation="2dp"
+            android:padding="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:text="최근 활동"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_strong" />
+                <TextView
+                    android:id="@+id/btnViewAll"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="전체 보기"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/primary" />
+            </LinearLayout>
+
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/activityRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"
+                android:layout_marginTop="8dp"
+                android:overScrollMode="never" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <include
+        android:id="@+id/bottomNav"
+        layout="@layout/component_bottom_nav" />
+</LinearLayout>

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- App/Header (design-spec §1.3): back 버튼 + 타이틀 + (옵션) bell 버튼 -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal"
+    android:gravity="center_vertical">
+
+    <FrameLayout
+        android:id="@+id/btnBack"
+        android:layout_width="@dimen/header_btn"
+        android:layout_height="@dimen/header_btn"
+        android:background="@drawable/shape_circle"
+        android:elevation="2dp">
+        <ImageView
+            android:layout_width="18dp"
+            android:layout_height="18dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_chevron_left"
+            android:contentDescription="뒤로"
+            app:tint="@color/text_strong" />
+    </FrameLayout>
+
+    <TextView
+        android:id="@+id/headerTitle"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="10dp"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        android:textColor="@color/text_strong"
+        tools:text="시약 반입" />
+
+    <FrameLayout
+        android:id="@+id/btnBell"
+        android:layout_width="@dimen/header_btn"
+        android:layout_height="@dimen/header_btn"
+        android:background="@drawable/shape_circle"
+        android:backgroundTint="@color/primary"
+        android:elevation="3dp">
+        <ImageView
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_bell"
+            android:contentDescription="알림"
+            app:tint="@color/white" />
+    </FrameLayout>
+</LinearLayout>

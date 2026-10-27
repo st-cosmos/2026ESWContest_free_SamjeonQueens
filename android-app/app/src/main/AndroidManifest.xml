@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-feature
+        android:name="android.hardware.camera.any"
+        android:required="false" />
+
+    <!-- 시약 라벨 OCR/바코드 스캔용 카메라 권한 -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <!-- FastAPI 서버 REST/WebSocket 통신용 인터넷 권한 -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- android:usesCleartextTraffic="true" : LAN 의 http:// 웹 서버(NetworkClient.BASE_URL) 접속 허용 -->
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.CameraMessage"
+        android:usesCleartextTraffic="true"
+        tools:targetApi="31">
+
+        <activity
+            android:name=".LoginActivity"
+            android:exported="true"
+            android:screenOrientation="portrait">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".HomeActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".CheckinActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".CheckoutActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <!-- 스캔 정확도 측정 화면 (실험용, 반입/반출 화면의 상태 칩 길게 누르기로 진입) -->
+        <activity
+            android:name=".ScanBenchActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".ShelfManageActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+        <activity
+            android:name=".InventoryActivity"
+            android:exported="false"
+            android:screenOrientation="portrait" />
+    </application>
+</manifest>

@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nav/BottomBar (design-spec §1.2). 활성 탭 스타일은 NavBar.setup() 에서 지정한다. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:paddingStart="@dimen/space_md"
+    android:paddingEnd="@dimen/space_md"
+    android:paddingBottom="@dimen/space_md">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:background="@drawable/shape_pill"
+        android:elevation="6dp"
+        android:padding="6dp">
+
+        <LinearLayout
+            android:id="@+id/navHome"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+            <ImageView
+                android:id="@+id/navHomeIcon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_house"
+                android:contentDescription="홈"
+                app:tint="@color/text_muted" />
+            <TextView
+                android:id="@+id/navHomeLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="홈"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_muted" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/navCheckin"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+            <ImageView
+                android:id="@+id/navCheckinIcon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_package_plus"
+                android:contentDescription="시약 반입"
+                app:tint="@color/text_muted" />
+            <TextView
+                android:id="@+id/navCheckinLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="시약 반입"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_muted" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/navCheckout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+            <ImageView
+                android:id="@+id/navCheckoutIcon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_package_minus"
+                android:contentDescription="시약 반출"
+                app:tint="@color/text_muted" />
+            <TextView
+                android:id="@+id/navCheckoutLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="시약 반출"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_muted" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/navShelf"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+            <ImageView
+                android:id="@+id/navShelfIcon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_layout_grid"
+                android:contentDescription="선반 관리"
+                app:tint="@color/text_muted" />
+            <TextView
+                android:id="@+id/navShelfLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="선반 관리"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_muted" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/navInventory"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical"
+            android:gravity="center"
+            android:paddingTop="8dp"
+            android:paddingBottom="8dp">
+            <ImageView
+                android:id="@+id/navInventoryIcon"
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:src="@drawable/ic_boxes"
+                android:contentDescription="재고 관리"
+                app:tint="@color/text_muted" />
+            <TextView
+                android:id="@+id/navInventoryLabel"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:text="재고 관리"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_muted" />
+        </LinearLayout>
+    </LinearLayout>
+</LinearLayout>

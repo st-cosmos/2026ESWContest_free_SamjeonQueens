@@ -1,0 +1,60 @@
+# VS Code
+.vscode/
+*.code-workspace
+.history/
+
+# Operating System Files
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+Icon?
+._*
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.lnk
+*.sys
+*.tmp
+
+# Android App Build and IDE Configs
+android-app/*.iml
+android-app/.gradle/
+android-app/local.properties
+android-app/.idea/
+android-app/build/
+android-app/captures/
+android-app/.externalNativeBuild/
+android-app/.cxx/
+android-app/app/build/
+android-app/*.apk
+
+# Firmware (Zephyr/NCS) — 빌드 산출물 등은 firmware/.gitignore 에서 관리
+firmware/build/
+
+# Python / FastAPI Web Server
+web/.venv/
+**/__pycache__/
+**/*.pyc
+web/*.db
+# 스캔 정확도 측정 로그·보관 프레임 (services/scan_log.py) — 실험 데이터는 커밋하지 않는다
+web/data/
+
+# Frontend
+web/frontend/node_modules/
+web/frontend/dist/
+
+# Claude Code (로컬 에이전트 설정·메모)
+.claude/
+CLAUDE.local.md
+
+# IDE (JetBrains 계열, 루트에서 열었을 때)
+.idea/
+
+# 로컬 임시 파일
+.git-diff-temp/
+.env
+

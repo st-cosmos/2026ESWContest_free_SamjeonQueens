@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 재고 관리 시약 카드 (design.pen app-inventory Row) -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="8dp"
+    android:orientation="vertical"
+    android:background="@drawable/shape_rounded_10"
+    android:backgroundTint="@color/surface"
+    android:elevation="2dp"
+    android:padding="12dp">
+
+    <!-- 상단: 아이콘 + 이름/화학식 + 상태 배지 -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <FrameLayout
+            android:id="@+id/invIconWrap"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:background="@drawable/shape_circle"
+            android:backgroundTint="@color/primary_soft">
+            <ImageView
+                android:id="@+id/invIcon"
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_flask_conical"
+                android:contentDescription="시약"
+                app:tint="@color/primary" />
+        </FrameLayout>
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="10dp"
+            android:orientation="vertical">
+            <TextView
+                android:id="@+id/invName"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="12sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_strong"
+                tools:text="에탄올" />
+            <TextView
+                android:id="@+id/invSub"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="1dp"
+                android:textSize="9sp"
+                android:textColor="@color/text_muted"
+                tools:text="C₂H₅OH · CAS 64-17-5" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/invBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:background="@drawable/shape_pill"
+            android:backgroundTint="@color/success_soft"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:paddingTop="4dp"
+            android:paddingBottom="4dp"
+            android:textSize="9sp"
+            android:textStyle="bold"
+            android:textColor="@color/success"
+            tools:text="비치중" />
+    </LinearLayout>
+
+    <!-- 하단: 위치 · 유통기한 · 잔량 바 · LED -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical">
+
+        <ImageView
+            android:id="@+id/invLocIcon"
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:src="@drawable/ic_map_pin"
+            android:contentDescription="위치"
+            app:tint="@color/text_muted" />
+        <TextView
+            android:id="@+id/invLoc"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="3dp"
+            android:textSize="9sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_body"
+            tools:text="A · 1행 2열" />
+        <ImageView
+            android:id="@+id/invCoWarn"
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:layout_marginStart="3dp"
+            android:src="@drawable/ic_triangle_alert"
+            android:contentDescription="인접 보관 주의"
+            android:visibility="gone"
+            app:tint="@color/warning"
+            tools:visibility="visible" />
+
+        <ImageView
+            android:id="@+id/invExpIcon"
+            android:layout_width="10dp"
+            android:layout_height="10dp"
+            android:layout_marginStart="10dp"
+            android:src="@drawable/ic_calendar"
+            android:contentDescription="유통기한"
+            app:tint="@color/text_muted" />
+        <TextView
+            android:id="@+id/invExpiry"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="3dp"
+            android:textSize="9sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_body"
+            tools:text="2027-03-15" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="1dp"
+            android:layout_weight="1" />
+
+        <FrameLayout
+            android:id="@+id/invTrack"
+            android:layout_width="72dp"
+            android:layout_height="6dp"
+            android:background="@drawable/shape_pill"
+            android:backgroundTint="@color/bg_deep">
+            <View
+                android:id="@+id/invFill"
+                android:layout_width="48dp"
+                android:layout_height="match_parent"
+                android:background="@drawable/shape_pill"
+                android:backgroundTint="@color/primary" />
+        </FrameLayout>
+        <TextView
+            android:id="@+id/invPct"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="6dp"
+            android:textSize="9sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_body"
+            tools:text="85%" />
+
+        <FrameLayout
+            android:id="@+id/invLedBtn"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginStart="10dp"
+            android:background="@drawable/shape_circle"
+            android:backgroundTint="@color/primary_soft"
+            android:clickable="true"
+            android:focusable="true">
+            <ImageView
+                android:id="@+id/invLedIcon"
+                android:layout_width="15dp"
+                android:layout_height="15dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_lightbulb"
+                android:contentDescription="위치 LED 점등"
+                app:tint="@color/primary" />
+        </FrameLayout>
+    </LinearLayout>
+</LinearLayout>

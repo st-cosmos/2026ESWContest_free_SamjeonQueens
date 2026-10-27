@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 스캔 라인 (primary, 글로우는 elevation 으로 근사) -->
+<shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
+    <solid android:color="@color/primary" />
+    <corners android:radius="1dp" />
+</shape>

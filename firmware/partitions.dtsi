@@ -1,0 +1,37 @@
+/*
+ * Flash layout, shared by the application and MCUboot.
+ *
+ * Both images MUST agree on this, so it lives in one file that each overlay
+ * includes. If they disagree, MCUboot validates the wrong region and the board
+ * either fails to boot or boots a stale image.
+ *
+ * The nRF52840 DK default gives boot_partition 48K, which is not enough for a
+ * MCUboot that carries the USB device stack + CDC ACM serial recovery (~60K).
+ * That overflow is silent until link time:
+ *
+ *     region `FLASH' overflowed by 11828 bytes
+ *
+ * 1 MB total:
+ *   boot     0x000000 +0x014000   80K   MCUboot
+ *   slot0    0x014000 +0x070000  448K   application (primary)
+ *   slot1    0x084000 +0x070000  448K   application (secondary, DFU staging)
+ *   storage  0x0f4000 +0x00c000   48K   settings
+ *
+ * slot0 and slot1 must stay the same size for MCUboot's swap to work.
+ */
+
+&boot_partition {
+	reg = <0x00000000 0x00014000>;
+};
+
+&slot0_partition {
+	reg = <0x00014000 0x00070000>;
+};
+
+&slot1_partition {
+	reg = <0x00084000 0x00070000>;
+};
+
+&storage_partition {
+	reg = <0x000f4000 0x0000c000>;
+};

@@ -1,0 +1,285 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- app-login-profiles / app-login (design-spec §3.1, §3.2) — 두 상태를 한 화면에서 전환 -->
+<androidx.core.widget.NestedScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/bg"
+    android:fillViewport="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal"
+        android:paddingStart="@dimen/space_page"
+        android:paddingEnd="@dimen/space_page"
+        android:paddingTop="32dp"
+        android:paddingBottom="24dp">
+
+        <!-- Logo Row -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+            <FrameLayout
+                android:layout_width="44dp"
+                android:layout_height="44dp"
+                android:background="@drawable/shape_rounded_12"
+                android:backgroundTint="@color/primary"
+                android:elevation="4dp">
+                <ImageView
+                    android:layout_width="23dp"
+                    android:layout_height="23dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/ic_flask_conical"
+                    android:contentDescription="로고"
+                    app:tint="@color/white" />
+            </FrameLayout>
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="10dp"
+                android:text="Chemical Memory"
+                android:textSize="24sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_strong" />
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/loginSubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="프로필을 선택하여 로그인을 진행해 주세요"
+            android:textSize="12sp"
+            android:textColor="@color/text_muted" />
+
+        <!-- 프로필 목록 상태 -->
+        <LinearLayout
+            android:id="@+id/profilesSection"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:orientation="vertical"
+            android:gravity="center_horizontal">
+            <androidx.recyclerview.widget.RecyclerView
+                android:id="@+id/profilesRecyclerView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:nestedScrollingEnabled="false"
+                android:overScrollMode="never"
+                android:scrollbars="vertical" />
+        </LinearLayout>
+
+        <!-- PIN 입력 상태 -->
+        <LinearLayout
+            android:id="@+id/pinSection"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:orientation="vertical"
+            android:gravity="center_horizontal"
+            android:visibility="gone">
+
+        <!-- 선택된 프로필 카드 -->
+            <LinearLayout
+                android:layout_width="110dp"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:background="@drawable/bg_profile_selected"
+                android:elevation="3dp"
+                android:paddingTop="16dp"
+                android:paddingBottom="16dp">
+                <FrameLayout
+                    android:layout_width="52dp"
+                    android:layout_height="52dp"
+                    android:background="@drawable/shape_circle"
+                    android:backgroundTint="@color/primary">
+                    <TextView
+                        android:id="@+id/selectedProfileInitial"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:textSize="20sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/white" />
+                </FrameLayout>
+                <TextView
+                    android:id="@+id/selectedProfileName"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="7dp"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_strong" />
+                <TextView
+                    android:id="@+id/selectedProfileRole"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:textSize="9sp"
+                    android:textColor="@color/text_muted" />
+            </LinearLayout>
+
+            <!-- PIN Card -->
+            <LinearLayout
+                android:layout_width="330dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:orientation="vertical"
+                android:gravity="center_horizontal"
+                android:background="@drawable/shape_rounded_14"
+                android:elevation="4dp"
+                android:paddingTop="22dp"
+                android:paddingBottom="22dp"
+                android:paddingStart="28dp"
+                android:paddingEnd="28dp">
+
+                <TextView
+                    android:id="@+id/pinTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_strong" />
+
+                <LinearLayout
+                    android:id="@+id/pinDotsRow"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:orientation="horizontal">
+                    <View
+                        android:id="@+id/pinDot1"
+                        android:layout_width="13dp"
+                        android:layout_height="13dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_marginEnd="6dp"
+                        android:background="@drawable/pin_dot_empty" />
+                    <View
+                        android:id="@+id/pinDot2"
+                        android:layout_width="13dp"
+                        android:layout_height="13dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_marginEnd="6dp"
+                        android:background="@drawable/pin_dot_empty" />
+                    <View
+                        android:id="@+id/pinDot3"
+                        android:layout_width="13dp"
+                        android:layout_height="13dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_marginEnd="6dp"
+                        android:background="@drawable/pin_dot_empty" />
+                    <View
+                        android:id="@+id/pinDot4"
+                        android:layout_width="13dp"
+                        android:layout_height="13dp"
+                        android:layout_marginStart="6dp"
+                        android:layout_marginEnd="6dp"
+                        android:background="@drawable/pin_dot_empty" />
+                </LinearLayout>
+
+                <!-- Keypad -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="16dp"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal">
+                        <TextView android:id="@+id/btn1" style="@style/PinKey" android:text="1" />
+                        <TextView android:id="@+id/btn2" style="@style/PinKey" android:layout_marginStart="9dp" android:text="2" />
+                        <TextView android:id="@+id/btn3" style="@style/PinKey" android:layout_marginStart="9dp" android:text="3" />
+                    </LinearLayout>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="9dp"
+                        android:orientation="horizontal">
+                        <TextView android:id="@+id/btn4" style="@style/PinKey" android:text="4" />
+                        <TextView android:id="@+id/btn5" style="@style/PinKey" android:layout_marginStart="9dp" android:text="5" />
+                        <TextView android:id="@+id/btn6" style="@style/PinKey" android:layout_marginStart="9dp" android:text="6" />
+                    </LinearLayout>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="9dp"
+                        android:orientation="horizontal">
+                        <TextView android:id="@+id/btn7" style="@style/PinKey" android:text="7" />
+                        <TextView android:id="@+id/btn8" style="@style/PinKey" android:layout_marginStart="9dp" android:text="8" />
+                        <TextView android:id="@+id/btn9" style="@style/PinKey" android:layout_marginStart="9dp" android:text="9" />
+                    </LinearLayout>
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="9dp"
+                        android:orientation="horizontal">
+                        <FrameLayout
+                            android:id="@+id/btnFinger"
+                            android:layout_width="0dp"
+                            android:layout_height="52dp"
+                            android:layout_weight="1">
+                            <ImageView
+                                android:layout_width="19dp"
+                                android:layout_height="19dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_fingerprint"
+                                android:contentDescription="지문"
+                                app:tint="@color/primary" />
+                        </FrameLayout>
+                        <TextView android:id="@+id/btn0" style="@style/PinKey" android:layout_marginStart="9dp" android:text="0" />
+                        <FrameLayout
+                            android:id="@+id/btnDelete"
+                            android:layout_width="0dp"
+                            android:layout_height="52dp"
+                            android:layout_weight="1"
+                            android:layout_marginStart="9dp">
+                            <ImageView
+                                android:layout_width="19dp"
+                                android:layout_height="19dp"
+                                android:layout_gravity="center"
+                                android:src="@drawable/ic_delete_key"
+                                android:contentDescription="삭제"
+                                app:tint="@color/text_body" />
+                        </FrameLayout>
+                    </LinearLayout>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- 돌아가기 -->
+            <LinearLayout
+                android:id="@+id/btnBackToProfiles"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:background="@drawable/bg_pill_outline"
+                android:paddingStart="22dp"
+                android:paddingEnd="22dp"
+                android:paddingTop="11dp"
+                android:paddingBottom="11dp">
+                <ImageView
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
+                    android:src="@drawable/ic_corner_up_left"
+                    android:contentDescription="돌아가기"
+                    app:tint="@color/text_body" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:text="돌아가기"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:textColor="@color/text_body" />
+            </LinearLayout>
+        </LinearLayout>
+    </LinearLayout>
+</androidx.core.widget.NestedScrollView>
