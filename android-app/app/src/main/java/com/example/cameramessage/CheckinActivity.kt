@@ -97,8 +97,16 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
         val prefs = getSharedPreferences("smart_shelf", Context.MODE_PRIVATE)
         currentUser = prefs.getString("username", "kim.lab") ?: "kim.lab"
 
-        scanner = ChemicalScanner(lifecycleScope, this)
+        scanner = ChemicalScanner(lifecycleScope, this, mode = "checkin")
         scanner.frameImageProvider = { frameCache.bestOrLatest() }
+        scanner.latestFrameProvider = { frameCache.latestBase64 }
+
+        // 스캔 정확도 측정: 상태 칩 길게 누르면 실험 모드·라벨 번호 설정
+        ScanExperiment.load(this)
+        binding.scanStatusText.setOnLongClickListener {
+            ScanExperiment.showDialog(this) { onScanStatus(ChemicalScanner.Phase.SCANNING, "스캔 중", "") }
+            true
+        }
 
         // Header: 반입/반출 화면에서는 Bell 버튼 숨김 (design-spec §1.3)
         binding.appHeader.headerTitle.text = "시약 반입"
@@ -236,8 +244,8 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
     // ---------- ChemicalScanner.Listener ----------
 
     override fun onScanStatus(phase: ChemicalScanner.Phase, chipText: String, guideText: String) {
-        binding.scanStatusText.text = chipText
-        if (binding.scanResultEmpty.visibility == View.VISIBLE) {
+        binding.scanStatusText.text = ScanExperiment.badge()?.let { "$it · $chipText" } ?: chipText
+        if (guideText.isNotEmpty() && binding.scanResultEmpty.visibility == View.VISIBLE) {
             binding.scanResultEmpty.text = guideText
             binding.btnManualSelect.visibility =
                 if (phase == ChemicalScanner.Phase.WEAK || phase == ChemicalScanner.Phase.FAILED)
@@ -245,9 +253,18 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
         }
     }
 
+    /** 측정 로그: 이번 스캔 세션의 최종 결정 (auto | confirm | llm | manual) */
+    private fun logDecision(name: String, source: String, result: MatchResult? = null) {
+        ScanExperiment.event(
+            scanner.sessionId, "decision", "checkin",
+            name = name, source = source, method = result?.method, confidence = result?.confidence
+        )
+    }
+
     override fun onMatched(result: MatchResult, ocrText: String, barcode: String?) {
         isScanned = true
         val name = result.chemical_name ?: run { resumeScanning(); return }
+        logDecision(name, "auto", result)
         // 바코드로 매칭된 경우는 이미 학습된 것 → 재학습 불필요
         requestScanIn(name, ocrText, barcode.takeIf { result.method != "barcode" }, learnToken = null)
     }
@@ -274,6 +291,7 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
                 resumeScanning(800)
             },
             onPrimary = {
+                logDecision(name, if (result.method == "llm") "llm" else "confirm", result)
                 // 사용자 확인 결과를 학습(별칭·바코드)해 다음부터 즉시 인식되게 한다
                 requestScanIn(
                     name, ocrText,
@@ -403,7 +421,7 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
         if (barcode == null && token == null) return
         lifecycleScope.launch {
             try {
-                NetworkClient.api.confirmMatch(MatchConfirmRequest(name, barcode, token))
+                NetworkClient.api.confirmMatch(MatchConfirmRequest(name, barcode, token, session_id = scanner.sessionId))
             } catch (e: Exception) {
                 // 학습 실패는 무시
             }
@@ -429,6 +447,7 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
             AlertDialog.Builder(this@CheckinActivity)
                 .setTitle("반입할 시약 직접 선택")
                 .setItems(names.toTypedArray()) { _, which ->
+                    logDecision(names[which], "manual")
                     requestScanIn(names[which], scanner.aggregatedText, scanner.activeBarcode, null)
                 }
                 .setNegativeButton("취소") { _, _ -> resumeScanning() }

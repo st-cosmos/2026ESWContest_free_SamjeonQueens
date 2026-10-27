@@ -18,7 +18,9 @@ import kotlinx.coroutines.launch
  */
 class ChemicalScanner(
     private val scope: CoroutineScope,
-    private val listener: Listener
+    private val listener: Listener,
+    /** 측정 로그에 남길 화면 구분 — "checkin" | "checkout" */
+    private val mode: String = "checkin"
 ) {
     enum class Phase { SCANNING, WEAK, FAILED, OFFLINE }
 
@@ -43,6 +45,15 @@ class ChemicalScanner(
 
     /** LLM 폴백에 라벨 사진을 첨부하기 위한 최신 프레임 JPEG(base64) 공급자 */
     var frameImageProvider: (() -> String?)? = null
+
+    /** 실험 모드에서 서버가 보관할 최신 프레임 공급자 (같은 프레임은 한 번만 보낸다) */
+    var latestFrameProvider: (() -> String?)? = null
+
+    /** 현재 스캔 세션 id — 병 하나를 스캔하기 시작해 결정이 날 때까지 유지, resume() 마다 새로 발급 */
+    var sessionId: String = newSessionId()
+        private set
+    private var sessionStarted = false
+    private var lastSentFrame: String? = null
 
     private val textWindow = ArrayDeque<String>()
     private var lastBarcode: String? = null
@@ -89,6 +100,11 @@ class ChemicalScanner(
         }
 
         if (struggleStartAt == 0L) struggleStartAt = now
+        if (!sessionStarted) {
+            // 글자/바코드가 처음 보인 순간 = 측정상 스캔 시작
+            sessionStarted = true
+            ScanExperiment.event(sessionId, "session_start", mode)
+        }
         val struggling = now - struggleStartAt
         setPhase(
             when {
@@ -106,9 +122,15 @@ class ChemicalScanner(
         lastMatchAt = now
         val ocr = aggregatedText
         val code = activeBarcode
+        val frame = experimentFrame()
         scope.launch {
             try {
-                val result = NetworkClient.api.matchChemical(MatchRequest(ocr_text = ocr, barcode = code))
+                val result = NetworkClient.api.matchChemical(
+                    MatchRequest(
+                        ocr_text = ocr, barcode = code,
+                        session_id = sessionId, label_id = ScanExperiment.activeLabelId, frame_b64 = frame
+                    )
+                )
                 offline = false
                 if (frozen) return@launch
                 val name = result.chemical_name
@@ -151,7 +173,10 @@ class ChemicalScanner(
         scope.launch {
             try {
                 val result = NetworkClient.api.matchChemicalLlm(
-                    MatchRequest(ocr_text = ocr, barcode = code, image_b64 = image)
+                    MatchRequest(
+                        ocr_text = ocr, barcode = code, image_b64 = image,
+                        session_id = sessionId, label_id = ScanExperiment.activeLabelId
+                    )
                 )
                 llmAnswered = true  // 응답을 받았으면(no_match 포함) 이번 세션엔 재호출 안 함
                 if (frozen) return@launch
@@ -171,7 +196,20 @@ class ChemicalScanner(
     /** 사용자가 "아니요"한 후보를 잠시 다시 제안하지 않는다. */
     fun declineCandidate(name: String) {
         declined[name] = SystemClock.elapsedRealtime()
+        ScanExperiment.event(sessionId, "decision", mode, name = name, source = "decline")
     }
+
+    /** 실험 모드일 때만, 아직 보내지 않은 최신 프레임을 돌려준다 */
+    private fun experimentFrame(): String? {
+        if (!ScanExperiment.enabled) return null
+        val frame = latestFrameProvider?.invoke() ?: return null
+        if (frame === lastSentFrame) return null
+        lastSentFrame = frame
+        return frame
+    }
+
+    private fun newSessionId(): String =
+        "s" + java.util.UUID.randomUUID().toString().replace("-", "").substring(0, 16)
 
     private fun isDeclined(name: String): Boolean {
         val at = declined[name] ?: return false
@@ -192,6 +230,9 @@ class ChemicalScanner(
         lastPhase = null
         frozen = false
         llmAnswered = false  // 새 병 스캔에는 LLM 기회를 다시 준다 (거절 쿨다운은 별도 유지)
+        sessionId = newSessionId()  // 다음 병은 새 측정 세션
+        sessionStarted = false
+        lastSentFrame = null
         setPhase(Phase.SCANNING)
     }
 

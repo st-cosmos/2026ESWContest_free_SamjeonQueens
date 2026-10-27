@@ -94,7 +94,23 @@ data class MatchRequest(
     val ocr_text: String,
     val barcode: String? = null,
     // LLM 폴백용 라벨 사진 (JPEG base64) — 비전 모델이 OCR 오독을 바로잡는다
-    val image_b64: String? = null
+    val image_b64: String? = null,
+    // 스캔 정확도 측정용 (ScanExperiment): 스캔 세션 id, 실험 라벨 번호, 보관용 프레임
+    val session_id: String? = null,
+    val label_id: String? = null,
+    val frame_b64: String? = null
+)
+
+// 측정 로그 전용 이벤트 (POST /api/chemicals/match/event) — 인식 동작에는 영향 없음
+data class ScanEventRequest(
+    val session_id: String,
+    val event: String,              // session_start | decision
+    val label_id: String? = null,
+    val chemical_name: String? = null,
+    val source: String? = null,     // auto | confirm | llm | manual | decline
+    val method: String? = null,
+    val confidence: Double? = null,
+    val mode: String? = null        // checkin | checkout
 )
 
 // --- 병별 용량(가득 총 무게) 추정 (POST /api/chemicals/estimate-capacity) ---
@@ -130,7 +146,8 @@ data class MatchResult(
 data class MatchConfirmRequest(
     val chemical_name: String,
     val barcode: String? = null,
-    val matched_token: String? = null
+    val matched_token: String? = null,
+    val session_id: String? = null   // 측정 로그용
 )
 
 // scan-out 은 즉시 확정하지 않고 반출 세션을 시작한다 (status = "pending").
