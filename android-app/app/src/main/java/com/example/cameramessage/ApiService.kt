@@ -68,6 +68,10 @@ interface ApiService {
     @POST("api/chemicals/match/confirm")
     suspend fun confirmMatch(@Body request: MatchConfirmRequest): Map<String, Any>
 
+    // 스캔 정확도 측정 이벤트 (세션 시작·사용자 결정) — 서버 로그에만 남는다
+    @POST("api/chemicals/match/event")
+    suspend fun scanEvent(@Body request: ScanEventRequest): Map<String, Any>
+
     // 반입 스캔 직후 라벨 OCR/사진으로 병의 가득 총 무게(잔량 % 분모)를 추정
     @POST("api/chemicals/estimate-capacity")
     suspend fun estimateCapacity(@Body request: CapacityEstimateRequest): CapacityEstimateResponse

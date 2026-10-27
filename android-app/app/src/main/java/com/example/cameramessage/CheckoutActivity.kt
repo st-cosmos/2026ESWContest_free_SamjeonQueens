@@ -111,8 +111,16 @@ class CheckoutActivity : AppCompatActivity(), ChemicalScanner.Listener {
         setContentView(binding.root)
 
         exceptionHelper = ExceptionDialogHelper(this)
-        scanner = ChemicalScanner(lifecycleScope, this)
+        scanner = ChemicalScanner(lifecycleScope, this, mode = "checkout")
         scanner.frameImageProvider = { frameCache.bestOrLatest() }
+        scanner.latestFrameProvider = { frameCache.latestBase64 }
+
+        // 스캔 정확도 측정: 상태 칩 길게 누르면 실험 모드·라벨 번호 설정
+        ScanExperiment.load(this)
+        binding.scanStatusText.setOnLongClickListener {
+            ScanExperiment.showDialog(this) { onScanStatus(ChemicalScanner.Phase.SCANNING, "스캔 중", "") }
+            true
+        }
 
         val prefs = getSharedPreferences("smart_shelf", Context.MODE_PRIVATE)
         currentUser = prefs.getString("username", "kim.lab") ?: "kim.lab"
@@ -411,8 +419,8 @@ class CheckoutActivity : AppCompatActivity(), ChemicalScanner.Listener {
     // ---------- ChemicalScanner.Listener ----------
 
     override fun onScanStatus(phase: ChemicalScanner.Phase, chipText: String, guideText: String) {
-        binding.scanStatusText.text = chipText
-        if (binding.scanResultEmpty.visibility == View.VISIBLE) {
+        binding.scanStatusText.text = ScanExperiment.badge()?.let { "$it · $chipText" } ?: chipText
+        if (guideText.isNotEmpty() && binding.scanResultEmpty.visibility == View.VISIBLE) {
             binding.scanResultEmpty.text = guideText
             binding.btnManualSelect.visibility =
                 if (phase == ChemicalScanner.Phase.WEAK || phase == ChemicalScanner.Phase.FAILED)
@@ -420,9 +428,18 @@ class CheckoutActivity : AppCompatActivity(), ChemicalScanner.Listener {
         }
     }
 
+    /** 측정 로그: 이번 스캔 세션의 최종 결정 (auto | confirm | llm | manual) */
+    private fun logDecision(name: String, source: String, result: MatchResult? = null) {
+        ScanExperiment.event(
+            scanner.sessionId, "decision", "checkout",
+            name = name, source = source, method = result?.method, confidence = result?.confidence
+        )
+    }
+
     override fun onMatched(result: MatchResult, ocrText: String, barcode: String?) {
         isScanned = true
         val name = result.chemical_name ?: run { resumeScanning(); return }
+        logDecision(name, "auto", result)
         requestScanOut(name, ocrText, barcode.takeIf { result.method != "barcode" }, learnToken = null)
     }
 
@@ -445,9 +462,10 @@ class CheckoutActivity : AppCompatActivity(), ChemicalScanner.Listener {
                 Toast.makeText(
                     this, "다시 비춰주세요. 계속 안 되면 '직접 선택'을 이용하세요.", Toast.LENGTH_SHORT
                 ).show()
-                resumeScanning(800)
+                resumeScanning(800, sameBottle = true)
             },
             onPrimary = {
+                logDecision(name, if (result.method == "llm") "llm" else "confirm", result)
                 requestScanOut(
                     name, ocrText,
                     barcode.takeIf { result.method != "barcode" },
@@ -631,7 +649,7 @@ class CheckoutActivity : AppCompatActivity(), ChemicalScanner.Listener {
         if (barcode == null && token == null) return
         lifecycleScope.launch {
             try {
-                NetworkClient.api.confirmMatch(MatchConfirmRequest(name, barcode, token))
+                NetworkClient.api.confirmMatch(MatchConfirmRequest(name, barcode, token, session_id = scanner.sessionId))
             } catch (e: Exception) {
                 // 학습 실패는 무시
             }
@@ -656,6 +674,7 @@ class CheckoutActivity : AppCompatActivity(), ChemicalScanner.Listener {
         AlertDialog.Builder(this)
             .setTitle("반출할 시약 직접 선택")
             .setItems(labels.toTypedArray()) { _, which ->
+                logDecision(stocked[which].name, "manual")
                 requestScanOut(
                     stocked[which].name, scanner.aggregatedText, scanner.activeBarcode, null,
                     chemicalId = stocked[which].id
@@ -666,10 +685,10 @@ class CheckoutActivity : AppCompatActivity(), ChemicalScanner.Listener {
             .show()
     }
 
-    private fun resumeScanning(cooldownMs: Long = 0L) {
+    private fun resumeScanning(cooldownMs: Long = 0L, sameBottle: Boolean = false) {
         isScanned = false
         frameCache.clear()  // 이전 병의 best 프레임이 새 스캔에 섞이지 않게
-        scanner.resume(cooldownMs)
+        scanner.resume(cooldownMs, newSession = !sameBottle)
     }
 
     // ---------- 결과 카드 ----------

@@ -47,27 +47,60 @@ def get_known_names(db: Session = Depends(get_db)):
 def match_chemical(req: schemas.MatchRequest, db: Session = Depends(get_db)):
     """스캔 중 인식 시도. 바코드 > CAS > 별칭 > 유사도 순으로 매칭하고
     확신이 없으면 needs_confirmation 으로 후보를 돌려준다."""
-    return matching.match(db, req.ocr_text, req.barcode)
+    import services.scan_log as scan_log
+    t0 = time.perf_counter()
+    result = matching.match(db, req.ocr_text, req.barcode)
+    scan_log.record(
+        "match", req.session_id, req.label_id,
+        ocr_text=req.ocr_text, barcode=req.barcode,
+        latency_ms=round((time.perf_counter() - t0) * 1000, 1),
+        frame=scan_log.save_frame(req.session_id, req.frame_b64),
+        result=scan_log.summarize_result(result),
+    )
+    return result
 
 @router.post("/match/llm")
 def match_chemical_llm(req: schemas.MatchRequest, db: Session = Depends(get_db)):
     """사전 매칭 실패가 지속될 때의 LLM 폴백 — 결과는 항상 사용자 확인을 거친다.
     확인되면 /match/confirm 이 label 문구를 별칭으로 학습해 다음부터 즉시 인식된다."""
+    import services.scan_log as scan_log
+    t0 = time.perf_counter()
     result = llm_match.identify_chemical_from_ocr(
         req.ocr_text, matching.known_names(db), image_b64=req.image_b64
     )
     if not result:
-        return {
+        response = {
             "status": "no_match", "method": "llm", "chemical_name": None,
             "confidence": 0.0, "candidates": [], "matched_token": None,
         }
-    name = result["name"]
-    return {
-        "status": "needs_confirmation", "method": "llm",
-        "chemical_name": name, "confidence": 0.75,
-        "candidates": [{"name": name, "score": 0.75}],
-        "matched_token": result.get("label_text"),
-    }
+    else:
+        name = result["name"]
+        response = {
+            "status": "needs_confirmation", "method": "llm",
+            "chemical_name": name, "confidence": 0.75,
+            "candidates": [{"name": name, "score": 0.75}],
+            "matched_token": result.get("label_text"),
+        }
+    scan_log.record(
+        "match_llm", req.session_id, req.label_id,
+        ocr_text=req.ocr_text, barcode=req.barcode, has_image=bool(req.image_b64),
+        latency_ms=round((time.perf_counter() - t0) * 1000, 1),
+        frame=scan_log.save_frame(req.session_id, req.image_b64 if req.frame_b64 is None else req.frame_b64),
+        result=scan_log.summarize_result(response),
+    )
+    return response
+
+@router.post("/match/event")
+def scan_event(req: schemas.ScanEventRequest):
+    """앱이 보내는 스캔 이벤트(세션 시작·사용자 결정·거절)를 측정 로그에만 남긴다.
+    인식·재고 동작에는 아무 영향이 없다."""
+    import services.scan_log as scan_log
+    scan_log.record(
+        req.event, req.session_id, req.label_id,
+        chemical_name=req.chemical_name, source=req.source, method=req.method,
+        confidence=req.confidence, mode=req.mode,
+    )
+    return {"status": "success", "logging": scan_log.enabled()}
 
 
 @router.post("/estimate-capacity")
@@ -98,6 +131,12 @@ def estimate_capacity(req: schemas.CapacityEstimateRequest, db: Session = Depend
 def confirm_match(req: schemas.MatchConfirmRequest, db: Session = Depends(get_db)):
     """확정된 (바코드/토큰 → 시약) 매핑을 학습해 다음 스캔부터 즉시 인식되게 한다."""
     learned = matching.confirm(db, req.chemical_name, req.barcode, req.matched_token)
+    import services.scan_log as scan_log
+    scan_log.record(
+        "confirm_learn", req.session_id, None,
+        chemical_name=req.chemical_name, barcode=req.barcode,
+        matched_token=req.matched_token, learned=learned,
+    )
     return {"status": "success", "learned": learned}
 
 @router.post("/scan-in")

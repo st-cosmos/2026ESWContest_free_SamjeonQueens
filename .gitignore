@@ -40,6 +40,8 @@ web/.venv/
 **/__pycache__/
 **/*.pyc
 web/*.db
+# 스캔 정확도 측정 로그·보관 프레임 (services/scan_log.py) — 실험 데이터는 커밋하지 않는다
+web/data/
 
 # Frontend
 web/frontend/node_modules/

@@ -8,6 +8,8 @@
 import json
 import logging
 import os
+import time
+import urllib.error
 import urllib.request
 from typing import Optional
 
@@ -42,10 +44,16 @@ def identify_chemical_from_ocr(ocr_text: str, known_names: list,
 
 규칙:
 1. 아래 '연구실 보유 시약 목록'의 시약에 해당하면 반드시 목록의 표기를 그대로 name 으로 사용해.
-2. 목록에 없는 시약이면 널리 쓰이는 한국어 시약명을 name 으로 사용해.
+   농도·형태만 다른 같은 물질(예: 목록 '염화나트륨', 라벨 '염화나트륨용액 10%')도 목록 표기를 써.
+2. 목록에 없는 시약이면 라벨에 인쇄된 이름을 근거로 널리 쓰이는 한국어 시약명을 name 으로 써.
+   (예: 'Sodium silicate solution' → '규산나트륨', 'Phenolphthalein' → '페놀프탈레인', 'Iodine' → '아이오딘')
+   라벨에 한글 시약명이 읽히면 그 이름을 그대로 쓰면 된다. 오타가 섞인 글자는 가장 가까운 시약명으로 교정해.
 3. label_text 에는 OCR 텍스트에서 시약명을 나타내는 원문 문구를 그대로 담아줘. (별칭 학습용)
-4. 시약명을 확실히 식별할 수 없으면 name 을 null 로 해. 추측으로 아무 시약이나 답하지 마.
+4. 시약명을 전혀 짐작할 수 없을 때만 name 을 null 로 해. 라벨에 시약 이름으로 보이는 단어가 있으면 답해.
+   결과는 사용자가 확인하므로 확신이 60% 정도여도 답하는 편이 낫다.
 5. 메탄올/에탄올처럼 한 글자 차이 이름은 특히 주의해서 구분해. (methanol=메탄올, ethanol=에탄올)
+6. 성분표(예: 'with 15% Methanol', 'COMPONENTS')에 적힌 물질은 이 병의 이름이 아니다. 제목처럼 크게
+   적힌 이름이 병의 시약명이다.
 
 연구실 보유 시약 목록: {json.dumps(known_names, ensure_ascii=False)}
 
@@ -66,25 +74,33 @@ def identify_chemical_from_ocr(ocr_text: str, known_names: list,
         },
     }
 
-    try:
-        req = urllib.request.Request(
-            url,
-            data=json.dumps(payload).encode("utf-8"),
-            headers={"Content-Type": "application/json"},
-            method="POST",
-        )
-        # 앱은 이 호출을 스캔과 병행해 백그라운드로 기다리므로 여유 있게 잡는다
-        with urllib.request.urlopen(req, timeout=25) as resp:
-            res_json = json.loads(resp.read().decode("utf-8"))
-            raw_text = res_json["candidates"][0]["content"]["parts"][0]["text"]
-            data = json.loads(raw_text)
-            name = (data.get("name") or "").strip() if isinstance(data, dict) else ""
-            if name:
-                return {
-                    "name": name,
-                    "label_text": (data.get("label_text") or "").strip() or None,
-                }
-    except Exception as e:
-        logger.warning(f"LLM 시약 식별 호출 실패: {e}")
+    body = json.dumps(payload).encode("utf-8")
+    # 503(일시 과부하)은 실측에서 드물지 않게 나온다 — 한 번은 짧게 쉬고 다시 시도한다
+    for attempt in range(2):
+        try:
+            req = urllib.request.Request(
+                url, data=body, headers={"Content-Type": "application/json"}, method="POST",
+            )
+            # 앱은 이 호출을 스캔과 병행해 백그라운드로 기다리므로 여유 있게 잡는다
+            with urllib.request.urlopen(req, timeout=25) as resp:
+                res_json = json.loads(resp.read().decode("utf-8"))
+                raw_text = res_json["candidates"][0]["content"]["parts"][0]["text"]
+                data = json.loads(raw_text)
+                name = (data.get("name") or "").strip() if isinstance(data, dict) else ""
+                if name:
+                    return {
+                        "name": name,
+                        "label_text": (data.get("label_text") or "").strip() or None,
+                    }
+                return None
+        except urllib.error.HTTPError as e:
+            logger.warning(f"LLM 시약 식별 호출 실패: {e}")
+            if e.code >= 500 and attempt == 0:
+                time.sleep(1.0)
+                continue
+            return None
+        except Exception as e:
+            logger.warning(f"LLM 시약 식별 호출 실패: {e}")
+            return None
 
     return None
