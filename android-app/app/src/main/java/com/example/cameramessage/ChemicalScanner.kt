@@ -221,18 +221,22 @@ class ChemicalScanner(
         frozen = true
     }
 
-    /** 스캔 재개. cooldownMs 동안은 매칭 호출을 쉬어 실패 직후 연타를 방지한다. */
-    fun resume(cooldownMs: Long = 0L) {
+    /** 스캔 재개. cooldownMs 동안은 매칭 호출을 쉬어 실패 직후 연타를 방지한다.
+     *  newSession=false 는 같은 병을 계속 스캔하는 경우(후보 거절 뒤)로, 측정 세션 id 와
+     *  "인식이 안 되기 시작한 시각"을 유지해 LLM 폴백 타이머가 처음부터 다시 돌지 않게 한다. */
+    fun resume(cooldownMs: Long = 0L, newSession: Boolean = true) {
         textWindow.clear()
         lastBarcode = null
-        struggleStartAt = 0L
+        if (newSession) struggleStartAt = 0L
         lastMatchAt = SystemClock.elapsedRealtime() - MATCH_INTERVAL_MS + cooldownMs
         lastPhase = null
         frozen = false
-        llmAnswered = false  // 새 병 스캔에는 LLM 기회를 다시 준다 (거절 쿨다운은 별도 유지)
-        sessionId = newSessionId()  // 다음 병은 새 측정 세션
-        sessionStarted = false
-        lastSentFrame = null
+        if (newSession) {
+            llmAnswered = false  // 새 병 스캔에는 LLM 기회를 다시 준다 (거절 쿨다운은 별도 유지)
+            sessionId = newSessionId()  // 다음 병은 새 측정 세션
+            sessionStarted = false
+            lastSentFrame = null
+        }
         setPhase(Phase.SCANNING)
     }
 

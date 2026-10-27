@@ -119,6 +119,8 @@ class ScanBenchActivity : AppCompatActivity(), ChemicalScanner.Listener {
         sessionStartedAt = System.currentTimeMillis()
         binding.resultText.text = "라벨 #${currentLabel()} 스캔 중…"
         scanner.resume()
+        // 버튼을 누른 시점 — 조준 시간을 포함한 인식 소요 시간의 기준점
+        ScanExperiment.event(scanner.sessionId, "bench_start", "bench")
         updateButtons()
     }
 
@@ -162,7 +164,7 @@ class ScanBenchActivity : AppCompatActivity(), ChemicalScanner.Listener {
     }
 
     override fun onNeedsConfirmation(result: MatchResult, ocrText: String, barcode: String?) {
-        val name = result.chemical_name ?: run { scanner.resume(); return }
+        val name = result.chemical_name ?: run { scanner.resume(newSession = false); return }
         val percent = (result.confidence * 100).toInt()
         val message = if (result.method == "llm") "AI 분석 결과: $name" else "인식 결과: $name\n(일치율 ${percent}%)"
         AppModal.show(
@@ -170,7 +172,7 @@ class ScanBenchActivity : AppCompatActivity(), ChemicalScanner.Listener {
             "이 시약이 맞나요?", message, "아니요", "맞아요",
             onSecondary = {
                 scanner.declineCandidate(name)     // decline 이벤트는 scanner 가 보낸다
-                scanner.resume(800)
+                scanner.resume(800, newSession = false)  // 같은 병 계속 — 세션·LLM 타이머 유지
             },
             onPrimary = {
                 // 운영 앱과 동일하게 확인 결과를 학습한다 (두 번째 스캔의 즉시 인식 효과 측정)
@@ -198,14 +200,14 @@ class ScanBenchActivity : AppCompatActivity(), ChemicalScanner.Listener {
             val names = try { NetworkClient.api.getKnownNames() } catch (e: Exception) { emptyList() }
             if (names.isEmpty()) {
                 Toast.makeText(this@ScanBenchActivity, "시약 목록을 불러오지 못했습니다.", Toast.LENGTH_SHORT).show()
-                scanner.resume(500)
+                scanner.resume(500, newSession = false)
                 return@launch
             }
             AlertDialog.Builder(this@ScanBenchActivity)
                 .setTitle("직접 선택")
                 .setItems(names.toTypedArray()) { _, which -> finishSession(names[which], "manual", null) }
-                .setNegativeButton("취소") { _, _ -> scanner.resume() }
-                .setOnCancelListener { scanner.resume() }
+                .setNegativeButton("취소") { _, _ -> scanner.resume(newSession = false) }
+                .setOnCancelListener { scanner.resume(newSession = false) }
                 .show()
         }
     }

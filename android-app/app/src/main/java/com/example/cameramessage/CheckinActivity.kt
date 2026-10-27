@@ -288,7 +288,7 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
                 Toast.makeText(
                     this, "다시 비춰주세요. 계속 안 되면 '직접 선택'을 이용하세요.", Toast.LENGTH_SHORT
                 ).show()
-                resumeScanning(800)
+                resumeScanning(800, sameBottle = true)
             },
             onPrimary = {
                 logDecision(name, if (result.method == "llm") "llm" else "confirm", result)
@@ -456,10 +456,10 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
         }
     }
 
-    private fun resumeScanning(cooldownMs: Long = 0L) {
+    private fun resumeScanning(cooldownMs: Long = 0L, sameBottle: Boolean = false) {
         isScanned = false
         frameCache.clear()  // 이전 병의 best 프레임이 새 스캔에 섞이지 않게
-        scanner.resume(cooldownMs)
+        scanner.resume(cooldownMs, newSession = !sameBottle)
     }
 
     // ---------- 결과 카드 / 세션 ----------

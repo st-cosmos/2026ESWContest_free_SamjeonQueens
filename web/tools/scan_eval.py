@@ -63,13 +63,18 @@ class GroundTruth:
 
 
 def is_correct(expected: Optional[str], actual: Optional[str], strict: bool = False) -> Optional[bool]:
-    """기대 이름과 확정 이름 비교. 느슨 모드에서는 '에탄올' ↔ '에탄올 95%' 처럼 한쪽이 다른 쪽의 접두면 정답."""
+    """기대 이름과 확정 이름 비교. 기대 이름은 "아이오딘/요오드" 처럼 대체 표기를 '/' 로 나열할 수 있다.
+    느슨 모드에서는 '에탄올' ↔ '에탄올 95%' 처럼 한쪽이 다른 쪽의 접두면 정답."""
     if expected is None or actual is None:
         return None
-    e, a = normalize(expected), normalize(actual)
-    if strict:
-        return e == a
-    return e == a or a.startswith(e) or e.startswith(a)
+    a = normalize(actual)
+    for alt in expected.split("/"):
+        e = normalize(alt)
+        if not e:
+            continue
+        if e == a or (not strict and (a.startswith(e) or e.startswith(a))):
+            return True
+    return False
 
 
 # ───────────────────────── 세션 구성 ─────────────────────────
@@ -88,13 +93,37 @@ def load_events(paths: Iterable[Path]) -> list[dict]:
     return rows
 
 
-def group_sessions(rows: list[dict]) -> dict[str, list[dict]]:
+def group_sessions(rows: list[dict], merge_same_label: bool = True) -> dict[str, list[dict]]:
+    """session_id 별로 묶는다. merge_same_label 이면 같은 label_id 가 연속되고 앞 세션이 결정 없이
+    (거절만 하고) 끝난 경우 한 병의 시도로 합친다 — 앱이 거절 뒤 resume() 하며 세션 id 를 새로 발급하던
+    버전의 로그를 보정하기 위함. '미결 처리(skip)' 로 끝난 세션은 별도 시도로 남긴다."""
+    order: list[str] = []
     sessions: dict[str, list[dict]] = defaultdict(list)
     for r in rows:
         sid = r.get("session_id")
         if sid:
+            if sid not in sessions:
+                order.append(sid)
             sessions[sid].append(r)
-    return sessions
+    if not merge_same_label:
+        return sessions
+    merged: dict[str, list[dict]] = {}
+    carry: Optional[str] = None     # 아직 결정이 안 난 같은 라벨 세션의 id
+    for sid in order:
+        ev = sessions[sid]
+        label = next((e.get("label_id") for e in ev if e.get("label_id")), None)
+        if carry is not None:
+            prev = merged[carry]
+            prev_label = next((e.get("label_id") for e in prev if e.get("label_id")), None)
+            if label and label == prev_label:
+                prev.extend(e for e in ev if e.get("event") != "session_start")
+                if any(e.get("event") == "decision" and e.get("source") != "decline" for e in ev):
+                    carry = None
+                continue
+        merged[sid] = list(ev)
+        decided = any(e.get("event") == "decision" and e.get("source") != "decline" for e in ev)
+        carry = None if decided else sid
+    return merged
 
 
 def suggestions(events: list[dict]) -> list[tuple[int, dict]]:
@@ -112,7 +141,9 @@ def evaluate_session(sid: str, events: list[dict], gt: GroundTruth, strict: bool
     label_id = next((e.get("label_id") for e in events if e.get("label_id")), None)
     expected = gt.expected(label_id)
     mode = next((e.get("mode") for e in events if e.get("mode")), None)
-    t_start = next((e["t_ms"] for e in events if e.get("event") == "session_start"), None)
+    t_start = next((e["t_ms"] for e in events if e.get("event") == "bench_start"), None)
+    if t_start is None:
+        t_start = next((e["t_ms"] for e in events if e.get("event") == "session_start"), None)
     if t_start is None:
         t_start = next((e["t_ms"] for e in events if e.get("event") == "match"), events[0]["t_ms"])
 
@@ -127,7 +158,8 @@ def evaluate_session(sid: str, events: list[dict], gt: GroundTruth, strict: bool
     first_ok = is_correct(expected, first.get("chemical_name") if first else None, strict)
     wrong_suggestions = sum(1 for _, r in sugg if is_correct(expected, r.get("chemical_name"), strict) is False)
 
-    first_attempt = bool(final and first_ok and final_ok and not declines and final.get("source") in ("auto", "confirm"))
+    # 초회 성공: 첫 제안이 정답이고 거절 없이 그 제안으로 끝남 (LLM 이 첫 제안이었어도 인정, 직접 선택은 제외)
+    first_attempt = bool(final and first_ok and final_ok and not declines and final.get("source") in ("auto", "confirm", "llm"))
     return {
         "session_id": sid, "label_id": label_id, "expected": expected, "mode": mode,
         "n_match": sum(1 for e in events if e.get("event") == "match"),
@@ -206,10 +238,20 @@ def main() -> None:
     ap.add_argument("--manifest", type=Path, help="labels_manifest.csv (정답표)")
     ap.add_argument("--csv", type=Path, help="세션별 결과 CSV 저장")
     ap.add_argument("--strict", action="store_true", help="이름 완전 일치만 정답으로 인정")
+    ap.add_argument("--no-merge", action="store_true", help="같은 라벨의 연속 세션을 합치지 않음")
+    ap.add_argument("--labels", help="집계할 라벨 번호 범위, 예: 1-24 또는 25-")
     a = ap.parse_args()
 
     gt = GroundTruth(a.manifest)
-    sessions = group_sessions(load_events(Path(p) for p in a.logs))
+    sessions = group_sessions(load_events(Path(p) for p in a.logs), merge_same_label=not a.no_merge)
+    if a.labels:
+        lo, _, hi = a.labels.partition("-")
+        lo_n, hi_n = int(lo or 0), int(hi) if hi else 10**9
+        def _num(ev):
+            lab = next((e.get("label_id") for e in ev if e.get("label_id")), "") or ""
+            m = re.match(r"(\d+)", lab)
+            return int(m.group(1)) if m else -1
+        sessions = {k: v for k, v in sessions.items() if lo_n <= _num(v) <= hi_n}
     if not sessions:
         sys.exit("세션이 없습니다 — session_id 가 있는 로그인지 확인하세요.")
     results = [evaluate_session(sid, ev, gt, a.strict) for sid, ev in sessions.items()]
