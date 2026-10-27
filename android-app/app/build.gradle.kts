@@ -59,7 +59,7 @@ dependencies {
     // ML Kit 바코드/QR 인식 — 병에 이미 붙어 있는 코드를 기회적으로 활용
     implementation("com.google.mlkit:barcode-scanning:17.3.0")
 
-    // 인식 결과를 LED 서버로 보내기 — 코루틴 + Retrofit (예제 2와 동일)
+    // 서버 통신 — 코루틴 + Retrofit(REST) + OkHttp(WebSocket, Retrofit 의 전이 의존성으로 포함)
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.4")
     implementation("com.squareup.retrofit2:retrofit:2.11.0")
     implementation("com.squareup.retrofit2:converter-gson:2.11.0")

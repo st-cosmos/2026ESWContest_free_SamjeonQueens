@@ -2,7 +2,6 @@ package com.example.cameramessage
 
 import android.app.Activity
 import android.content.Intent
-import android.widget.Toast
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -12,10 +11,12 @@ import kotlinx.coroutines.launch
 
 /**
  * app-exception-modals (design-spec §3.11)
- * GET /api/chemicals/alerts 로 3종 예외 모달을 Modal/App 스타일로 표시한다.
+ * GET /api/chemicals/alerts 로 예외 모달을 Modal/App 스타일로 표시한다.
  *  1) 반출 스캔 미완료 (danger / clipboard-list)
- *  2) 유통기한 경과 (warning / clock-alert)
- *  3) 인접 보관 위험 (danger / shield-alert)
+ *  2) 인접 보관 위험 (danger / shield-alert)
+ * 유통기한 경과·임박 경고는 여기서 폴링 알림으로 띄우지 않고, 반출 완료 시점
+ * (CheckoutActivity.showExpiryDisposalModal)과 재고 카드 길게 누르기
+ * (InventoryActivity)의 폐기 등록 플로우로 처리한다.
  *
  * 서버는 선반 무게가 바뀔 때마다 WebSocket(weight_update)을 즉시 브로드캐스트한다.
  * 그 신호를 받으면 5초 폴링을 기다리지 않고 바로 alerts 를 재조회해, 무단 반출
@@ -75,18 +76,7 @@ class ExceptionDialogHelper(private val activity: Activity) {
             }
         }
 
-        // 2. 유통기한 경과 (추후 구현 예정으로 알림 팝업 트리거 일시 중단)
-        /*
-        val expired = alerts.expired_chemicals.firstOrNull { it.days_over > 0 }
-        if (expired != null) {
-            val alertId = "expired_${expired.chemical_id}"
-            if (shownAlertIds.add(alertId)) {
-                showExpiredWarningDialog(expired)
-            }
-        }
-        */
-
-        // 3. 인접 보관 위험
+        // 2. 인접 보관 위험
         if (alerts.co_storage_warnings.isNotEmpty()) {
             val co = alerts.co_storage_warnings.first()
             val alertId = "costorage_${co.chemical_1_id}_${co.chemical_2_id}"
@@ -107,22 +97,7 @@ class ExceptionDialogHelper(private val activity: Activity) {
                     "반출 스캔이 완료되지 않았습니다.\n${chemicalNames.joinToString(" · ")}",
             "나중에 하기", "지금 스캔하기",
             onPrimary = {
-                if (activity !is CheckoutActivity) {
-                    activity.startActivity(Intent(activity, CheckoutActivity::class.java))
-                }
-            }
-        )
-    }
-
-    private fun showExpiredWarningDialog(expired: ExpiredChemical) {
-        AppModal.show(
-            activity, AppModal.Tone.WARNING, R.drawable.ic_clock_alert,
-            "유통기한 경과 시약",
-            "${expired.chemical_name}의 유통기한(${expired.expiration_date})이 " +
-                    "${expired.days_over}일 경과했습니다.\n사용을 중단하고 폐기 절차를 권장합니다.",
-            "그래도 반출", "폐기 등록",
-            onPrimary = {
-                Toast.makeText(activity, "폐기 절차가 접수되었습니다.", Toast.LENGTH_SHORT).show()
+                activity.startActivity(Intent(activity, CheckoutActivity::class.java))
             }
         )
     }

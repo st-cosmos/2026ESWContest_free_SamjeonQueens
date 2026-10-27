@@ -6,13 +6,13 @@
         android:name="android.hardware.camera.any"
         android:required="false" />
 
-    <!-- 카메라로 글자를 비추기 위한 카메라 권한 -->
+    <!-- 시약 라벨 OCR/바코드 스캔용 카메라 권한 -->
     <uses-permission android:name="android.permission.CAMERA" />
 
-    <!-- 인식 결과를 LED 서버로 보내기 위한 인터넷 권한 -->
+    <!-- FastAPI 서버 REST/WebSocket 통신용 인터넷 권한 -->
     <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- android:usesCleartextTraffic="true" : http:// (암호화되지 않은) 실습 서버 접속 허용 -->
+    <!-- android:usesCleartextTraffic="true" : LAN 의 http:// 웹 서버(NetworkClient.BASE_URL) 접속 허용 -->
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
