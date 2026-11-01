@@ -2,7 +2,7 @@ import json
 import re
 import time
 from datetime import datetime
-from typing import Dict, List
+from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -370,7 +370,9 @@ def dispose_chemical(chem_id: str, req: Dict[str, str], db: Session = Depends(ge
             "removed_logs": str(removed_logs)}
 
 @router.get("/alerts")
-def get_alerts(db: Session = Depends(get_db)):
+def get_alerts(db: Session = Depends(get_db), placed_chemical_id: Optional[str] = None):
+    # placed_chemical_id: 반입 직후 확인에서 방금 놓은 병. 그 병이 낀 혼재 경고는 그 병을
+    # 옮길 병으로 보고 추천 칸을 고른다 (없으면 기존대로 경고 쌍의 첫 병 기준).
     # 1. Un-scanned checkouts:
     # A chemical with status "비치중" but its shelf weight is near 0
     unscanned_checkouts = []
@@ -471,7 +473,10 @@ def get_alerts(db: Session = Depends(get_db)):
                 c1.name, incomp1, c2.name, incomp2)
 
             if is_incompatible:
-                safe_id, safe_desc = llm_safety.find_recommended_safe_shelf(c1, db)
+                # 옮길 병: 방금 놓은 병이 이 쌍에 있으면 그 병, 아니면 첫 병. 예전에는 늘 첫 병
+                # 기준이라, 방금 놓은 병은 갈 곳이 있어도 상대 병이 갈 곳이 없으면 '선반 C'가 떴다
+                mover = c2 if placed_chemical_id and c2.id == placed_chemical_id else c1
+                safe_id, safe_desc = llm_safety.find_recommended_safe_shelf(mover, db)
                 s1_desc = f"{shelf1.parent_shelf}·{shelf1.row}행{shelf1.col}열"
                 s2_desc = f"{shelf2.parent_shelf}·{shelf2.row}행{shelf2.col}열"
                 co_storage_warnings.append({
@@ -483,7 +488,9 @@ def get_alerts(db: Session = Depends(get_db)):
                     "message": f"🚨 [혼재 위험] {c1.name}와(과) {c2.name}은(는) 인접 보관 금지 시약입니다.",
                     "reason": fixed_reason or c1.incompatible_reason or c2.incompatible_reason or "인접 보관 시 격렬한 반응, 유독가스 또는 화재/폭발 위험",
                     "recommended_safe_shelf_id": safe_id,
-                    "recommended_safe_shelf_desc": safe_desc
+                    "recommended_safe_shelf_desc": safe_desc,
+                    "move_chemical_id": mover.id,
+                    "move_chemical_name": mover.name,
                 })
 
     return {

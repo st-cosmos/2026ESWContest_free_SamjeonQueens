@@ -409,7 +409,7 @@ def _handle_checkin_increase(db: Session, shelf: models.Shelf, delta_kg: float):
     # 반입 직후 인접 수납칸 혼재 금지 시약 배치 여부 검사
     safe_id, safe_desc = llm_safety.find_recommended_safe_shelf(chem, db)
     co_warning = None
-    alerts = chemical_routes.get_alerts(db)
+    alerts = chemical_routes.get_alerts(db, placed_chemical_id=chem.id)
     for warning in alerts.get("co_storage_warnings", []):
         if warning["chemical_1_id"] == chem.id or warning["chemical_2_id"] == chem.id:
             co_warning = warning
