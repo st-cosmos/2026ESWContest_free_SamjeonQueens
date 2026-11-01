@@ -8,6 +8,7 @@ import models
 import routes.chemicals as chemical_routes
 import schemas
 import services.llm_safety as llm_safety
+import unscanned_alert
 from session_store import checkin_session, reset_checkin
 from datetime import datetime
 import time
@@ -180,22 +181,78 @@ def delete_config_col(shelf_id: str, req: Dict[str, int], db: Session = Depends(
 MIN_EVENT_DELTA_KG = 0.05
 
 
-# '지정 위치로 옮기기' 버튼을 누르기 전에 병을 먼저 옮겨 놓는 순서 지원:
-# 반입 세션 없이 발생한 무게 증가를 칸별로 기억해 두고, 이 시간 안에 온
-# 위치 이동 요청(routes/session.relocate_checkin)이 청구하면 즉시 확정한다.
+# 반입 세션 없이 발생한 무게 증가(= 스캔 없이 올려진 병)를 칸별로 기억해 두고, 뒤따르는
+# 요청이 청구(claim)하면 다시 들었다 놓을 필요 없이 즉시 확정한다.
+#  - 위치 이동 요청(routes/session.relocate_checkin): UNCLAIMED_RISE_TTL_S 안의 증가만
+#  - 반입 스캔(routes/chemicals.scan_in): 무단 반입 알림을 보고 스캔하러 오기까지
+#    시간이 걸리므로 UNCLAIMED_RISE_KEEP_S 까지 청구 가능
+# 스캔 없는 적재는 절차 위반이므로 유예 없이 즉시 무단 반입으로 경보된다 (unscanned_alert).
 UNCLAIMED_RISE_TTL_S = 60.0
+UNCLAIMED_RISE_KEEP_S = 15 * 60.0
+# 병을 놓는 동안 무게가 여러 단계로 보고되면(300 g → 500 g, 손 떼기) 같은 적재로 합친다.
+# 이 시간 안에 같은 칸에 또 증가가 오면 새 적재가 아니라 이어지는 단계로 보고 합산한다.
+RISE_MERGE_WINDOW_S = 30.0
 _unclaimed_rises: dict = {}  # shelf_id -> (delta_kg, timestamp)
 
 
-def claim_recent_rise(shelf_id):
-    """이 칸의 최근 미청구 증가량을 소비하고 반환한다. 없으면 None."""
+def _record_rise(shelf_id: str, delta_kg: float):
+    """미청구 증가를 기록하고, 이번 보고로 적재가 '처음 경보 대상이 된' 경우에만
+    (delta_kg, timestamp) 를 돌려준다. 그 외(합산만 됐거나 아직 가벼움)는 None.
+
+    합산 시 timestamp 는 첫 단계의 것을 유지한다 — 앱이 `since` 로 같은 경보를 다시
+    띄우지 않도록 식별하고, 한 번의 적재에 경보가 한 번만 나가게 하기 위해서다."""
+    now = time.time()
+    prev = _unclaimed_rises.get(shelf_id)
+    if prev is not None and now - prev[1] <= RISE_MERGE_WINDOW_S:
+        total, ts = round(prev[0] + delta_kg, 2), prev[1]
+        was_alertable = prev[0] >= unscanned_alert.MIN_RISE_KG
+    else:
+        total, ts = round(delta_kg, 2), now
+        was_alertable = False
+    entry = (total, ts)
+    _unclaimed_rises[shelf_id] = entry
+    if not was_alertable and total >= unscanned_alert.MIN_RISE_KG:
+        return entry
+    return None
+
+
+def _absorb_drop_into_rise(shelf_id: str, drop_kg: float) -> bool:
+    """감소를 이 칸의 미청구 증가에서 차감한다. 방금 놓은 병에서 손을 떼거나 자리를 고쳐
+    무게가 조금 줄어도 적재 기록(과 '지금 스캔하기' 청구)이 사라지지 않게 한다.
+
+    감소가 이 증가로 설명되면 True (반출 쪽 미청구 감소로 남기지 않는다). 증가분을 넘는
+    큰 감소는 기록돼 있던 다른 병까지 들린 것일 수 있으므로 False 를 돌려 반출 판정에 맡긴다."""
+    entry = _unclaimed_rises.get(shelf_id)
+    if entry is None:
+        return False
+    rise, ts = entry
+    net = round(rise - drop_kg, 2)
+    if net >= MIN_EVENT_DELTA_KG:
+        _unclaimed_rises[shelf_id] = (net, ts)
+        return True
+    # 놓았던 병을 도로 들어 올렸다 — 적재 자체가 무효
+    _unclaimed_rises.pop(shelf_id, None)
+    return drop_kg <= rise + MIN_EVENT_DELTA_KG
+
+
+def claim_recent_rise(shelf_id, max_age: float = UNCLAIMED_RISE_TTL_S):
+    """이 칸의 최근 미청구 증가량을 소비하고 반환한다. 없거나 너무 오래됐으면 None."""
     entry = _unclaimed_rises.pop(shelf_id, None)
     if entry is None:
         return None
     delta, at = entry
-    if time.time() - at > UNCLAIMED_RISE_TTL_S:
+    if time.time() - at > max_age:
         return None
     return delta
+
+
+def pending_rises(min_age: float = 0.0, min_kg: float = 0.0) -> list:
+    """아직 청구되지 않은 증가 [(shelf_id, delta_kg, timestamp)]. 보관 기한이 지난 것은 버린다."""
+    now = time.time()
+    for sid in [s for s, (_d, t) in _unclaimed_rises.items() if now - t > UNCLAIMED_RISE_KEEP_S]:
+        _unclaimed_rises.pop(sid, None)
+    return [(sid, d, t) for sid, (d, t) in _unclaimed_rises.items()
+            if now - t >= min_age and d >= min_kg]
 
 
 def _relocating_from(db: Session, shelf: models.Shelf) -> bool:
@@ -336,8 +393,8 @@ def _handle_checkin_increase(db: Session, shelf: models.Shelf, delta_kg: float):
             break
 
     reset_checkin()
-    # 이 안착 이전의 증가 기록은 방금 확정된 병과 무관하다
-    _unclaimed_rises.clear()
+    # 이 칸의 미청구 증가는 방금 확정된 안착으로 소비됐다 (다른 칸의 무단 반입 대기는 유지)
+    _unclaimed_rises.pop(shelf.id, None)
     db.commit()
 
     return {
@@ -374,28 +431,37 @@ def update_weight(shelf_id: str, req: schemas.WeightUpdate, db: Session = Depend
 
     # 무게 변화량으로 반입(증가)/반출(감소) 세션을 진행시킨다
     session_result = None
+    unclaimed_drop = False
+    unclaimed_rise = None
     delta = req.weight - prev_w
     if delta >= MIN_EVENT_DELTA_KG:
         session_result = _handle_checkin_increase(db, shelf, delta)
         if session_result is None:
-            # 세션이 소비하지 않은 증가 — 곧이어 올 위치 이동 요청이 청구할 수 있다
-            _unclaimed_rises[shelf.id] = (round(delta, 2), time.time())
+            # 세션이 소비하지 않은 증가 = 스캔 없이 올려진 병. 위치 이동 요청·반입 스캔이
+            # 청구할 수 있도록 기록하고, 경보 대상이 되는 순간 즉시 무단 반입으로 알린다
+            # (unscanned_alert.notify_rise — 반출과 달리 유예 없음).
+            unclaimed_rise = _record_rise(shelf.id, delta)
         # 병이 다시 올라왔으면 직전의 미청구 감소 기록은 무효
         checkout_flow.clear_unclaimed_drop(shelf.id)
     elif delta <= -MIN_EVENT_DELTA_KG:
-        _unclaimed_rises.pop(shelf.id, None)
+        # 방금 스캔 없이 놓인 병이 있으면 그 증가에서 먼저 차감한다 (손 떼기·자리 고치기)
+        absorbed = _absorb_drop_into_rise(shelf.id, -delta)
         session_result = checkout_flow.handle_weight_drop(db, shelf, -delta)
-        if session_result is None and not _relocating_from(db, shelf):
+        if session_result is None and not absorbed and not _relocating_from(db, shelf):
             # 반출 세션이 소비하지 않은 감소 — 사용자가 병을 먼저 들고 온
             # 경우다. 곧이어 올 스캔이 이 감소를 청구해 즉시 확정한다.
+            # 유예 시간 안에 스캔이 없으면 무단 반출로 확정된다 (unscanned_alert).
             checkout_flow.note_unclaimed_drop(shelf.id, -delta)
+            unclaimed_drop = True
 
     db.commit()
     db.refresh(shelf)
     return {
         "status": "success",
         "shelf": shelf,
-        "session_result": session_result
+        "session_result": session_result,
+        "unclaimed_drop": unclaimed_drop,
+        "unclaimed_rise": unclaimed_rise,
     }
 
 @router.post("/{shelf_id}/led")

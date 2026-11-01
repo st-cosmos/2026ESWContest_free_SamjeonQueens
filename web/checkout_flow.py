@@ -39,6 +39,11 @@ def clear_unclaimed_drop(shelf_id: str):
     _unclaimed_drops.pop(shelf_id, None)
 
 
+def peek_unclaimed_drop(shelf_id):
+    """소비하지 않고 (delta_kg, timestamp) 를 들여다본다 — 알림 식별용."""
+    return _unclaimed_drops.get(shelf_id) if shelf_id else None
+
+
 def claim_recent_drop(shelf_id):
     """이 칸의 최근(180초 이내) 미청구 감소량을 소비하고 반환한다. 없으면 None."""
     if not shelf_id:
