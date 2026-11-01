@@ -14,6 +14,7 @@ import Button from '../components/Button';
 import ProgressBar from '../components/ProgressBar';
 import { getJSON, postJSON } from '../api';
 import type { Alerts, Chemical, SessionUser, ShelfDevice, TransactionLog, User } from '../types';
+import { displayKg } from '../weight';
 import { useWebSocket } from '../useWebSocket';
 
 interface InventoryProps {
@@ -381,7 +382,7 @@ export default function Inventory({ alerts, refreshAlerts, user }: InventoryProp
                       </div>
                     </div>
                     <div className="t-cell" style={{ width: COL.weight }}>
-                      {chem.weight.toFixed(1)} kg
+                      {displayKg(chem.weight).toFixed(1)} kg
                     </div>
                     <div className="t-cell" style={{ width: COL.location }}>
                       <div className="loc-cell" title={co?.message}>
@@ -449,7 +450,7 @@ export default function Inventory({ alerts, refreshAlerts, user }: InventoryProp
           <div className="info-card">
             <div className="info-row">
               <span className="info-key">무게</span>
-              <span className="info-val">{selected.weight.toFixed(1)} kg</span>
+              <span className="info-val">{displayKg(selected.weight).toFixed(1)} kg</span>
             </div>
             <div className="info-row">
               <span className="info-key">보관 위치</span>
@@ -460,7 +461,7 @@ export default function Inventory({ alerts, refreshAlerts, user }: InventoryProp
               {!capEditing ? (
                 <span className="info-val expiry-val">
                   {percentOf(selected.weight, selected.capacity_kg)}% (
-                  {Math.round(selected.weight * 1000)}g / 가득{' '}
+                  {Math.round(displayKg(selected.weight) * 1000)}g / 가득{' '}
                   {Math.round((selected.capacity_kg || CAPACITY_KG) * 1000)}g)
                   <button
                     className="expiry-edit-link"
