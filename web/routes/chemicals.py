@@ -318,28 +318,21 @@ def set_chemical_capacity(chem_id: str, req: schemas.CapacityUpdateRequest,
 
 @router.post("/{chem_id}/dispose")
 def dispose_chemical(chem_id: str, req: Dict[str, str], db: Session = Depends(get_db)):
-    """폐기 등록: 유통기한 경고 시약을 재고에서 삭제하고 '폐기' 로그를 남긴다.
-    행 자체가 삭제되므로 재고 리스트·유통기한/혼재 경고에서 함께 사라진다."""
+    """폐기: 시약을 재고에서 삭제하고, 그 시약의 반입·반출 기록도 모두 지운다.
+    행 자체가 삭제되므로 재고 리스트·유통기한/혼재 경고·입출고 기록에서 함께 사라진다.
+    (로그는 시약 id 로 묶여 있어 같은 이름의 다른 병 기록은 남는다)"""
     chem = db.query(models.Chemical).filter(models.Chemical.id == chem_id).first()
     if not chem:
         raise HTTPException(status_code=404, detail="시약을 찾을 수 없습니다.")
 
-    username = req.get("username", "")
-    user = db.query(models.User).filter(models.User.username == username).first()
-    operator_name = user.nickname if user else (username or "알수없음")
     chem_name = chem.name
-
-    db.add(models.Log(
-        chemical_id=chem.id,
-        chemical_name=chem_name,
-        action="폐기",
-        operator_name=operator_name,
-        details=f"유통기한 경고에 따른 폐기 등록 — 재고 목록에서 삭제됨 "
-                f"(유통기한 {chem.expiration_date or '-'})",
-    ))
+    removed_logs = db.query(models.Log).filter(
+        models.Log.chemical_id == chem.id
+    ).delete(synchronize_session=False)
     db.delete(chem)
     db.commit()
-    return {"status": "success", "chemical_id": chem_id, "chemical_name": chem_name}
+    return {"status": "success", "chemical_id": chem_id, "chemical_name": chem_name,
+            "removed_logs": str(removed_logs)}
 
 @router.get("/alerts")
 def get_alerts(db: Session = Depends(get_db)):
