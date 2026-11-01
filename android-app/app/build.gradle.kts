@@ -47,7 +47,10 @@ dependencies {
     implementation("androidx.recyclerview:recyclerview:1.3.2")
 
     // CameraX — 카메라 미리보기 + 프레임 분석
-    val cameraxVersion = "1.3.4"
+    // 1.4.x 부터 네이티브 라이브러리(libimage_processing_util_jni.so)가 16KB 페이지 정렬 —
+    // 1.3.4 는 4KB 정렬이라 Android 16KB 호환성 경고의 유일한 실제 원인이었다.
+    // 1.5.x 는 compileSdk 35, 1.6.x 는 compileSdk 36 이 필요하므로 1.4 계열의 마지막 버전을 쓴다.
+    val cameraxVersion = "1.4.2"
     implementation("androidx.camera:camera-core:$cameraxVersion")
     implementation("androidx.camera:camera-camera2:$cameraxVersion")
     implementation("androidx.camera:camera-lifecycle:$cameraxVersion")
