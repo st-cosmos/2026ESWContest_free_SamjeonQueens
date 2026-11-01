@@ -318,7 +318,7 @@ class CheckoutActivity : AppCompatActivity(), ChemicalScanner.Listener {
         val formula = chem.formula?.let { " ($it)" } ?: ""
         b.searchChemName.text = "${chem.name}$formula"
         b.searchChemMeta.text =
-            "잔량 ${chem.weight} kg · 유통기한 ${chem.expiration_date ?: "-"}"
+            "잔량 ${displayKg(chem.weight)} kg · 유통기한 ${chem.expiration_date ?: "-"}"
         b.searchLocationText.text =
             "선반 ${response.parent_shelf} · ${response.row}행 ${response.col}열"
 
@@ -738,7 +738,7 @@ class CheckoutActivity : AppCompatActivity(), ChemicalScanner.Listener {
             color(if (weightVerified == false) R.color.warning else R.color.success)
         )
         binding.statusSub.text = when (weightVerified) {
-            true -> "무게 검증 완료 (${measuredDelta ?: "-"}kg 감소)"
+            true -> "무게 검증 완료 (${measuredDelta?.let { displayKg(it) } ?: "-"}kg 감소)"
             false -> "무게 불일치 주의"
             else -> "무게 확인 없이 기록"
         }
@@ -753,8 +753,8 @@ class CheckoutActivity : AppCompatActivity(), ChemicalScanner.Listener {
                     this, AppModal.Tone.WARNING, R.drawable.ic_triangle_alert,
                     "반출 완료 — 무게 불일치 주의",
                     "[${chemical.name}] 반출이 기록되었습니다.\n" +
-                            "다만 기록된 병 무게 ${chemical.weight}kg 대비 " +
-                            "실제 감소량이 ${measuredDelta ?: "-"}kg입니다.\n" +
+                            "다만 기록된 병 무게 ${displayKg(chemical.weight)}kg 대비 " +
+                            "실제 감소량이 ${measuredDelta?.let { displayKg(it) } ?: "-"}kg입니다.\n" +
                             "맞는 병을 가져갔는지 확인해 주세요.",
                     null, "확인",
                     onPrimary = {
@@ -766,7 +766,7 @@ class CheckoutActivity : AppCompatActivity(), ChemicalScanner.Listener {
             expiry != null -> showExpiryDisposalModal(chemical, expiry)
             else -> {
                 val verifiedNote =
-                    if (weightVerified == true) "무게 검증 완료 (${measuredDelta ?: "-"}kg 감소)"
+                    if (weightVerified == true) "무게 검증 완료 (${measuredDelta?.let { displayKg(it) } ?: "-"}kg 감소)"
                     else "(무게 확인 없이 기록)"
                 AppModal.show(
                     this, AppModal.Tone.SUCCESS, R.drawable.ic_check,
@@ -875,7 +875,7 @@ class CheckoutActivity : AppCompatActivity(), ChemicalScanner.Listener {
             val formula = item.formula?.let { " ($it)" } ?: ""
             holder.b.chemSearchName.text = "${item.name}$formula"
             holder.b.chemSearchDetails.text =
-                "잔량 ${item.weight} kg · 유통기한 ${item.expiration_date ?: "-"}"
+                "잔량 ${displayKg(item.weight)} kg · 유통기한 ${item.expiration_date ?: "-"}"
             holder.b.chemSearchLocation.text =
                 "${item.shelf_row ?: "-"}행 ${item.shelf_col ?: "-"}열"
             holder.b.root.setOnClickListener { onClick(item) }
