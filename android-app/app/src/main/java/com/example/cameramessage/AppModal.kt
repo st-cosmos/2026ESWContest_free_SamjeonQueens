@@ -15,6 +15,7 @@ import android.widget.LinearLayout
 import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
 import com.example.cameramessage.databinding.DialogAppModalBinding
+import com.example.cameramessage.databinding.ItemModalListRowBinding
 
 /**
  * Modal/App (design-spec §1.4) 공통 모달.
@@ -38,6 +39,17 @@ object AppModal {
         val recommended: Pair<Int, Int>
     )
 
+    /** 모달 안 시약 목록 한 행 — 이름 / 부제(반출자·시점) / 오른쪽 위치 pill(없으면 숨김) */
+    data class ListItem(
+        val title: String,
+        val subtitle: String,
+        val trailing: String? = null
+    )
+
+    // 목록이 이 개수를 넘으면 블록 높이를 고정하고 안에서 스크롤한다
+    private const val LIST_VISIBLE_ROWS = 4
+    private const val LIST_ROW_DP = 44
+
     fun show(
         activity: Activity,
         tone: Tone,
@@ -54,6 +66,9 @@ object AppModal {
         inputType: Int? = null,
         inputErrorText: String? = null,   // onInputSubmit 이 false 를 반환하면 표시할 오류 문구
         datePickerDefault: String? = null, // 지정 시(YYYY-MM-DD) 달력 UI 표시, 결과는 onInputSubmit 으로 전달
+        listTitle: String? = null,        // 지정 시 메시지 아래에 시약 목록 블록 표시 (개수 pill 은 톤 색)
+        listItems: List<ListItem> = emptyList(),
+        listHint: String? = null,         // 목록 아래 작은 안내문
         onSecondary: (() -> Unit)? = null,
         onPrimary: (() -> Unit)? = null,
         onInputSubmit: ((String) -> Boolean)? = null  // true 반환 시에만 모달을 닫는다
@@ -89,6 +104,10 @@ object AppModal {
 
         if (shelfVisual != null) {
             renderShelfVisual(activity, binding, shelfVisual)
+        }
+
+        if (listTitle != null) {
+            renderList(activity, binding, listTitle, listItems, listHint, toneColor, softColor)
         }
 
         if (inputTextHint != null) {
@@ -165,6 +184,47 @@ object AppModal {
         // parent 없이 inflate 하면 루트의 layout_width 가 무시되므로 창 크기를 직접 지정
         dialog.window?.setLayout(activity.dp(360), ViewGroup.LayoutParams.WRAP_CONTENT)
         return dialog
+    }
+
+    /** 시약 목록 블록 — 행이 LIST_VISIBLE_ROWS 를 넘으면 높이를 고정해 안에서 스크롤 */
+    private fun renderList(
+        activity: Activity,
+        binding: DialogAppModalBinding,
+        title: String,
+        items: List<ListItem>,
+        hint: String?,
+        toneColor: Int,
+        softColor: Int
+    ) {
+        binding.modalList.visibility = View.VISIBLE
+        binding.modalListTitle.text = title
+        binding.modalListCount.text = "${items.size}개"
+        binding.modalListCount.backgroundTintList = ColorStateList.valueOf(softColor)
+        binding.modalListCount.setTextColor(toneColor)
+
+        binding.modalListRows.removeAllViews()
+        val inflater = LayoutInflater.from(activity)
+        for (item in items) {
+            val row = ItemModalListRowBinding.inflate(inflater, binding.modalListRows, false)
+            row.rowTitle.text = item.title
+            row.rowSubtitle.text = item.subtitle
+            if (item.trailing == null) {
+                row.rowTrailing.visibility = View.GONE
+            } else {
+                row.rowTrailingText.text = item.trailing
+            }
+            binding.modalListRows.addView(row.root)
+        }
+        if (items.size > LIST_VISIBLE_ROWS) {
+            binding.modalListScroll.layoutParams = binding.modalListScroll.layoutParams.apply {
+                height = activity.dp(LIST_ROW_DP * LIST_VISIBLE_ROWS)
+            }
+        }
+
+        if (hint != null) {
+            binding.modalListHint.visibility = View.VISIBLE
+            binding.modalListHint.text = hint
+        }
     }
 
     /** 선반 미니 그리드를 동적으로 그린다 — 추천 칸(강조)·사용 중(플라스크)·빈 칸 */

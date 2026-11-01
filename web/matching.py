@@ -120,6 +120,15 @@ DEFAULT_ALIASES = {
     "dmf": "DMF",
     "tetrahydrofuran": "THF",
     "thf": "THF",
+    # 염화나트륨 (Sodium Chloride Solution) — 라벨의 영문/한글/화학식/식염수 표기.
+    # 표준명은 다른 시약처럼 물질명으로 두고, "용액" 등 형태 표기는 별칭으로 흡수한다.
+    "sodium chloride solution": "염화나트륨",
+    "sodium chloride": "염화나트륨",
+    "nacl": "염화나트륨",
+    "염화나트륨": "염화나트륨",
+    "염화나트륨용액": "염화나트륨",
+    "식염수": "염화나트륨",
+    "생리식염수": "염화나트륨",
 }
 
 # OCR 이 유난히 자주 뒤바꾸는 시약 쌍. 한글 '메'/'에'는 한 획 차이라 한 프레임만

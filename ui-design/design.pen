@@ -25037,6 +25037,4871 @@
           ]
         }
       ]
+    },
+    {
+      "type": "frame",
+      "id": "IoB3K",
+      "x": 20211,
+      "y": 3877,
+      "name": "app-inventory-edit",
+      "clip": true,
+      "width": 1200,
+      "height": 1920,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "nV4nO",
+          "type": "ref",
+          "ref": "G5eEH",
+          "name": "Status Bar"
+        },
+        {
+          "type": "frame",
+          "id": "HWWrf",
+          "name": "Inv Body",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "gap": 20,
+          "padding": [
+            28,
+            48,
+            0,
+            48
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "n8lfw",
+              "name": "Inv Header",
+              "width": "fill_container",
+              "gap": 12,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "q7Emn3",
+                  "name": "Inv HeadL",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "YIJFk",
+                      "name": "Inv Title",
+                      "fill": "$text-strong",
+                      "content": "재고 관리",
+                      "fontFamily": "$font",
+                      "fontSize": 40,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "uPZg6",
+                      "name": "Inv Sub",
+                      "fill": "$text-muted",
+                      "content": "폐기할 시약을 탭해서 선택하세요 · 여러 개 선택 가능",
+                      "fontFamily": "$font",
+                      "fontSize": 17,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "IoUPy",
+                  "name": "Expiry Pill",
+                  "fill": "$warning-soft",
+                  "cornerRadius": 999,
+                  "gap": 8,
+                  "padding": [
+                    10,
+                    20
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "pi2So",
+                      "name": "Expiry Pill Icon",
+                      "width": 22,
+                      "height": 22,
+                      "icon": "clock-alert",
+                      "library": "lucide",
+                      "fill": "$warning"
+                    },
+                    {
+                      "type": "text",
+                      "id": "YZdEj",
+                      "name": "Expiry Pill Text",
+                      "fill": "$warning",
+                      "content": "유통기한 1",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "vw8E9",
+                  "name": "Co Pill",
+                  "fill": "$danger-soft",
+                  "cornerRadius": 999,
+                  "gap": 8,
+                  "padding": [
+                    10,
+                    20
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "pNhjF",
+                      "name": "Co Pill Icon",
+                      "width": 22,
+                      "height": 22,
+                      "icon": "triangle-alert",
+                      "library": "lucide",
+                      "fill": "$danger"
+                    },
+                    {
+                      "type": "text",
+                      "id": "j0dKx",
+                      "name": "Co Pill Text",
+                      "fill": "$danger",
+                      "content": "인접 보관 1",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "kfZ91",
+              "type": "ref",
+              "ref": "KzXW7",
+              "name": "Inv Search",
+              "width": "fill_container",
+              "descendants": {
+                "L5iEZ": {
+                  "content": "시약 이름·CAS 번호 검색"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "V7wkJ",
+              "name": "Filter Chips",
+              "width": "fill_container",
+              "gap": 12,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "ceVa0",
+                  "name": "Chip 전체 6",
+                  "fill": "$primary",
+                  "cornerRadius": 999,
+                  "padding": [
+                    12,
+                    26
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "X5xZ1g",
+                      "name": "Chip Text 전체 6",
+                      "fill": "#FFFFFF",
+                      "content": "전체 6",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "D4ivr",
+                  "name": "Chip 비치중 5",
+                  "fill": "$surface",
+                  "cornerRadius": 999,
+                  "stroke": "$border",
+                  "strokeWidth": 1.5,
+                  "padding": [
+                    12,
+                    26
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "jFXST",
+                      "name": "Chip Text 비치중 5",
+                      "fill": "$text-body",
+                      "content": "비치중 5",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "m1WmD",
+                  "name": "Chip 반출중 1",
+                  "fill": "$surface",
+                  "cornerRadius": 999,
+                  "stroke": "$border",
+                  "strokeWidth": 1.5,
+                  "padding": [
+                    12,
+                    26
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Np2hc",
+                      "name": "Chip Text 반출중 1",
+                      "fill": "$text-body",
+                      "content": "반출중 1",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "iVSh9",
+                  "name": "Chip 유통기한 1",
+                  "fill": "$surface",
+                  "cornerRadius": 999,
+                  "stroke": "$border",
+                  "strokeWidth": 1.5,
+                  "padding": [
+                    12,
+                    26
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "bisYW",
+                      "name": "Chip Text 유통기한 1",
+                      "fill": "$text-body",
+                      "content": "유통기한 1",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "l7OOj",
+                  "name": "Chip 인접 보관 1",
+                  "fill": "$surface",
+                  "cornerRadius": 999,
+                  "stroke": "$border",
+                  "strokeWidth": 1.5,
+                  "padding": [
+                    12,
+                    26
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "rS5WD",
+                      "name": "Chip Text 인접 보관 1",
+                      "fill": "$text-body",
+                      "content": "인접 보관 1",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "iReDA",
+              "name": "Edit Bar",
+              "width": "fill_container",
+              "fill": "$primary-soft",
+              "cornerRadius": "$radius-md",
+              "padding": [
+                16,
+                20,
+                16,
+                26
+              ],
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "jbXcb",
+                  "name": "Edit Bar Left",
+                  "gap": 12,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "cl3PR",
+                      "name": "Edit Mode Icon",
+                      "width": 26,
+                      "height": 26,
+                      "icon": "list-checks",
+                      "library": "lucide",
+                      "fill": "$primary"
+                    },
+                    {
+                      "type": "text",
+                      "id": "HTuGE",
+                      "name": "Edit Mode Label",
+                      "fill": "$text-strong",
+                      "content": "편집 모드",
+                      "fontFamily": "$font",
+                      "fontSize": 20,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "yKrlj",
+                      "name": "Selected Count",
+                      "fill": "$primary",
+                      "content": "3개 선택됨",
+                      "fontFamily": "$font",
+                      "fontSize": 20,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "vtgso",
+                  "name": "Done Btn",
+                  "fill": "$primary",
+                  "cornerRadius": 999,
+                  "gap": 8,
+                  "padding": [
+                    12,
+                    26
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "EM1tM",
+                      "name": "Done Icon",
+                      "width": 20,
+                      "height": 20,
+                      "icon": "check",
+                      "library": "lucide",
+                      "fill": "#FFFFFF"
+                    },
+                    {
+                      "type": "text",
+                      "id": "mfmEK",
+                      "name": "Done Label",
+                      "fill": "#FFFFFF",
+                      "content": "완료",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "700"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "dN7Y5",
+              "name": "Chem List",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "Au4fC",
+                  "name": "Row 에탄올",
+                  "width": "fill_container",
+                  "fill": "#F5F8FF",
+                  "cornerRadius": "$radius-md",
+                  "stroke": "$primary",
+                  "strokeWidth": 2.5,
+                  "effect": {
+                    "type": "shadow",
+                    "shadowType": "outer",
+                    "color": "#1E2A560D",
+                    "offset": {
+                      "x": 0,
+                      "y": 8
+                    },
+                    "blur": 24
+                  },
+                  "layout": "vertical",
+                  "gap": 14,
+                  "padding": [
+                    22,
+                    26
+                  ],
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "mMdPz",
+                      "name": "에탄올 Top",
+                      "width": "fill_container",
+                      "gap": 16,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "Xaqqn",
+                          "name": "에탄올 Check",
+                          "width": 40,
+                          "height": 40,
+                          "fill": "$primary",
+                          "cornerRadius": 999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "DHNDx",
+                              "name": "에탄올 Check Icon",
+                              "width": 24,
+                              "height": 24,
+                              "icon": "check",
+                              "library": "lucide",
+                              "fill": "#FFFFFF"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "k9GN6a",
+                          "name": "에탄올 IconWrap",
+                          "width": 64,
+                          "height": 64,
+                          "fill": "$primary-soft",
+                          "cornerRadius": 999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "MrOXg",
+                              "name": "에탄올 Flask",
+                              "width": 30,
+                              "height": 30,
+                              "icon": "flask-conical",
+                              "library": "lucide",
+                              "fill": "$primary"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "D1Omj4",
+                          "name": "에탄올 Names",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "CMOZm",
+                              "name": "에탄올 Name",
+                              "fill": "$text-strong",
+                              "content": "에탄올",
+                              "fontFamily": "$font",
+                              "fontSize": 24,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "mjgFj",
+                              "name": "에탄올 Sub",
+                              "fill": "$text-muted",
+                              "content": "C₂H₅OH · CAS 64-17-5",
+                              "fontFamily": "$font",
+                              "fontSize": 16,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "id": "l54E8p",
+                          "type": "ref",
+                          "ref": "gZTOT",
+                          "name": "에탄올 Badge",
+                          "fill": "$success-soft",
+                          "descendants": {
+                            "XkV6V": {
+                              "content": "비치중",
+                              "fill": "$success"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "D8YP5",
+                      "name": "에탄올 Meta",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "JtG9R",
+                          "name": "에탄올 MetaL",
+                          "gap": 20,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "Futl3",
+                              "name": "에탄올 Loc",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "lyXIu",
+                                  "name": "에탄올 LocIcon",
+                                  "width": 20,
+                                  "height": 20,
+                                  "icon": "map-pin",
+                                  "library": "lucide",
+                                  "fill": "$text-muted"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "w4RIY",
+                                  "name": "에탄올 LocText",
+                                  "fill": "$text-body",
+                                  "content": "A · 1행 2열",
+                                  "fontFamily": "$font",
+                                  "fontSize": 17,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "mLPD2",
+                              "name": "에탄올 Expiry",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "zzYBZ",
+                                  "name": "에탄올 ExpIcon",
+                                  "width": 20,
+                                  "height": 20,
+                                  "icon": "calendar",
+                                  "library": "lucide",
+                                  "fill": "$text-muted"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "agISc",
+                                  "name": "에탄올 ExpText",
+                                  "fill": "$text-body",
+                                  "content": "2027-03-15",
+                                  "fontFamily": "$font",
+                                  "fontSize": 17,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "BjVV7",
+                          "name": "에탄올 MetaR",
+                          "gap": 14,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "m9zzc",
+                              "name": "에탄올 Track",
+                              "clip": true,
+                              "width": 150,
+                              "height": 12,
+                              "fill": "$bg-deep",
+                              "cornerRadius": 999,
+                              "children": [
+                                {
+                                  "type": "rectangle",
+                                  "cornerRadius": 999,
+                                  "id": "DFKZ1",
+                                  "name": "에탄올 Fill",
+                                  "fill": "$primary",
+                                  "width": 128,
+                                  "height": "fill_container"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "NCIC7",
+                              "name": "에탄올 Pct",
+                              "fill": "$text-body",
+                              "content": "85%",
+                              "fontFamily": "$font",
+                              "fontSize": 16,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "okvcv",
+                              "x": 212,
+                              "y": 0,
+                              "name": "에탄올 LED",
+                              "enabled": false,
+                              "width": 52,
+                              "height": 52,
+                              "fill": "$primary-soft",
+                              "cornerRadius": 999,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "yGygb",
+                                  "name": "에탄올 Bulb",
+                                  "width": 24,
+                                  "height": 24,
+                                  "icon": "lightbulb",
+                                  "library": "lucide",
+                                  "fill": "$primary"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "wlGTl",
+                  "name": "Row 질산",
+                  "width": "fill_container",
+                  "fill": "$surface",
+                  "cornerRadius": "$radius-md",
+                  "effect": {
+                    "type": "shadow",
+                    "shadowType": "outer",
+                    "color": "#1E2A560D",
+                    "offset": {
+                      "x": 0,
+                      "y": 8
+                    },
+                    "blur": 24
+                  },
+                  "layout": "vertical",
+                  "gap": 14,
+                  "padding": [
+                    22,
+                    26
+                  ],
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "OxMR3",
+                      "name": "질산 Top",
+                      "width": "fill_container",
+                      "gap": 16,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "DHK0t",
+                          "name": "질산 Check",
+                          "width": 40,
+                          "height": 40,
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 999,
+                          "stroke": "$border",
+                          "strokeWidth": 2.5,
+                          "justifyContent": "center",
+                          "alignItems": "center"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "RIlnF",
+                          "name": "질산 IconWrap",
+                          "width": 64,
+                          "height": 64,
+                          "fill": "$primary-soft",
+                          "cornerRadius": 999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "QrOgu",
+                              "name": "질산 Flask",
+                              "width": 30,
+                              "height": 30,
+                              "icon": "flask-conical",
+                              "library": "lucide",
+                              "fill": "$primary"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Tu6ex",
+                          "name": "질산 Names",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "TmgZT",
+                              "name": "질산 Name",
+                              "fill": "$text-strong",
+                              "content": "질산",
+                              "fontFamily": "$font",
+                              "fontSize": 24,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "zj4m3",
+                              "name": "질산 Sub",
+                              "fill": "$text-muted",
+                              "content": "HNO₃ · CAS 7697-37-2",
+                              "fontFamily": "$font",
+                              "fontSize": 16,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "id": "ADbGj",
+                          "type": "ref",
+                          "ref": "gZTOT",
+                          "name": "질산 Badge",
+                          "fill": "$success-soft",
+                          "descendants": {
+                            "XkV6V": {
+                              "content": "비치중",
+                              "fill": "$success"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "k3liYe",
+                      "name": "질산 Meta",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "vlLfF",
+                          "name": "질산 MetaL",
+                          "gap": 20,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "i7xpVz",
+                              "name": "질산 Loc",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "srVjU",
+                                  "name": "질산 LocIcon",
+                                  "width": 20,
+                                  "height": 20,
+                                  "icon": "map-pin",
+                                  "library": "lucide",
+                                  "fill": "$text-muted"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "MWZLg",
+                                  "name": "질산 LocText",
+                                  "fill": "$text-body",
+                                  "content": "A · 2행 3열",
+                                  "fontFamily": "$font",
+                                  "fontSize": 17,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "icon",
+                                  "id": "Ztfe3",
+                                  "name": "질산 CoWarn",
+                                  "width": 20,
+                                  "height": 20,
+                                  "icon": "triangle-alert",
+                                  "library": "lucide",
+                                  "fill": "$warning"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "a9MVZ",
+                              "name": "질산 Expiry",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "pAis2",
+                                  "name": "질산 ExpIcon",
+                                  "width": 20,
+                                  "height": 20,
+                                  "icon": "calendar",
+                                  "library": "lucide",
+                                  "fill": "$text-muted"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "KbCD0",
+                                  "name": "질산 ExpText",
+                                  "fill": "$text-body",
+                                  "content": "2026-11-30",
+                                  "fontFamily": "$font",
+                                  "fontSize": 17,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "e1dmE5",
+                          "name": "질산 MetaR",
+                          "gap": 14,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "Z0Yq3F",
+                              "name": "질산 Track",
+                              "clip": true,
+                              "width": 150,
+                              "height": 12,
+                              "fill": "$bg-deep",
+                              "cornerRadius": 999,
+                              "children": [
+                                {
+                                  "type": "rectangle",
+                                  "cornerRadius": 999,
+                                  "id": "t2ArW6",
+                                  "name": "질산 Fill",
+                                  "fill": "$primary",
+                                  "width": 90,
+                                  "height": "fill_container"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "DIlcn",
+                              "name": "질산 Pct",
+                              "fill": "$text-body",
+                              "content": "60%",
+                              "fontFamily": "$font",
+                              "fontSize": 16,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "gJiNW",
+                              "x": 212,
+                              "y": 0,
+                              "name": "질산 LED",
+                              "enabled": false,
+                              "width": 52,
+                              "height": 52,
+                              "fill": "$primary-soft",
+                              "cornerRadius": 999,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "S2DOh",
+                                  "name": "질산 Bulb",
+                                  "width": 24,
+                                  "height": 24,
+                                  "icon": "lightbulb",
+                                  "library": "lucide",
+                                  "fill": "$primary"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "E9PbBc",
+                  "name": "Row 아세톤",
+                  "width": "fill_container",
+                  "fill": "#F5F8FF",
+                  "cornerRadius": "$radius-md",
+                  "stroke": "$primary",
+                  "strokeWidth": 2.5,
+                  "effect": {
+                    "type": "shadow",
+                    "shadowType": "outer",
+                    "color": "#1E2A560D",
+                    "offset": {
+                      "x": 0,
+                      "y": 8
+                    },
+                    "blur": 24
+                  },
+                  "layout": "vertical",
+                  "gap": 14,
+                  "padding": [
+                    22,
+                    26
+                  ],
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "B1PRa",
+                      "name": "아세톤 Top",
+                      "width": "fill_container",
+                      "gap": 16,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "f8Wvcl",
+                          "name": "아세톤 Check",
+                          "width": 40,
+                          "height": 40,
+                          "fill": "$primary",
+                          "cornerRadius": 999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "YJbQS",
+                              "name": "아세톤 Check Icon",
+                              "width": 24,
+                              "height": 24,
+                              "icon": "check",
+                              "library": "lucide",
+                              "fill": "#FFFFFF"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "NgaJR",
+                          "name": "아세톤 IconWrap",
+                          "width": 64,
+                          "height": 64,
+                          "fill": "$bg-deep",
+                          "cornerRadius": 999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "dNCE1",
+                              "name": "아세톤 Flask",
+                              "width": 30,
+                              "height": 30,
+                              "icon": "flask-conical",
+                              "library": "lucide",
+                              "fill": "$text-muted"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "RrR5Q",
+                          "name": "아세톤 Names",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "JhQT6",
+                              "name": "아세톤 Name",
+                              "fill": "$text-strong",
+                              "content": "아세톤",
+                              "fontFamily": "$font",
+                              "fontSize": 24,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "pU2Rc",
+                              "name": "아세톤 Sub",
+                              "fill": "$text-muted",
+                              "content": "C₃H₆O · CAS 67-64-1",
+                              "fontFamily": "$font",
+                              "fontSize": 16,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "id": "iHgei",
+                          "type": "ref",
+                          "ref": "gZTOT",
+                          "name": "아세톤 Badge",
+                          "fill": "$danger-soft",
+                          "descendants": {
+                            "XkV6V": {
+                              "content": "반출중 · 김연구",
+                              "fill": "$danger"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "RaCY4",
+                      "name": "아세톤 Meta",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "Pxbtd",
+                          "name": "아세톤 MetaL",
+                          "gap": 20,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "hNU7q",
+                              "name": "아세톤 Loc",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "I9Jcpu",
+                                  "name": "아세톤 LocIcon",
+                                  "width": 20,
+                                  "height": 20,
+                                  "icon": "map-pin",
+                                  "library": "lucide",
+                                  "fill": "$text-muted"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "N3jce",
+                                  "name": "아세톤 LocText",
+                                  "fill": "$text-body",
+                                  "content": "-",
+                                  "fontFamily": "$font",
+                                  "fontSize": 17,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "gJb9b",
+                              "name": "아세톤 Expiry",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "aRf5R",
+                                  "name": "아세톤 ExpIcon",
+                                  "width": 20,
+                                  "height": 20,
+                                  "icon": "calendar",
+                                  "library": "lucide",
+                                  "fill": "$text-muted"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "OaId0",
+                                  "name": "아세톤 ExpText",
+                                  "fill": "$text-body",
+                                  "content": "2027-01-20",
+                                  "fontFamily": "$font",
+                                  "fontSize": 17,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "uAQOh",
+                          "name": "아세톤 MetaR",
+                          "gap": 14,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "q0wXD",
+                              "name": "아세톤 Track",
+                              "clip": true,
+                              "width": 150,
+                              "height": 12,
+                              "fill": "$bg-deep",
+                              "cornerRadius": 999,
+                              "children": [
+                                {
+                                  "type": "rectangle",
+                                  "cornerRadius": 999,
+                                  "id": "Iopi8",
+                                  "name": "아세톤 Fill",
+                                  "fill": "$primary",
+                                  "width": 60,
+                                  "height": "fill_container"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "ofQDp",
+                              "name": "아세톤 Pct",
+                              "fill": "$text-body",
+                              "content": "40%",
+                              "fontFamily": "$font",
+                              "fontSize": 16,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "dgGrv",
+                              "x": 212,
+                              "y": 0,
+                              "name": "아세톤 LED",
+                              "enabled": false,
+                              "width": 52,
+                              "height": 52,
+                              "fill": "$bg",
+                              "cornerRadius": 999,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "HKTvj",
+                                  "name": "아세톤 Bulb",
+                                  "width": 24,
+                                  "height": 24,
+                                  "icon": "lightbulb",
+                                  "library": "lucide",
+                                  "fill": "$text-muted"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "USfig",
+                  "name": "Row 염산",
+                  "width": "fill_container",
+                  "fill": "$surface",
+                  "cornerRadius": "$radius-md",
+                  "effect": {
+                    "type": "shadow",
+                    "shadowType": "outer",
+                    "color": "#1E2A560D",
+                    "offset": {
+                      "x": 0,
+                      "y": 8
+                    },
+                    "blur": 24
+                  },
+                  "layout": "vertical",
+                  "gap": 14,
+                  "padding": [
+                    22,
+                    26
+                  ],
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "w5Zbbe",
+                      "name": "염산 Top",
+                      "width": "fill_container",
+                      "gap": 16,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "dbJcf",
+                          "name": "염산 Check",
+                          "width": 40,
+                          "height": 40,
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 999,
+                          "stroke": "$border",
+                          "strokeWidth": 2.5,
+                          "justifyContent": "center",
+                          "alignItems": "center"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "v9ttQ6",
+                          "name": "염산 IconWrap",
+                          "width": 64,
+                          "height": 64,
+                          "fill": "$primary-soft",
+                          "cornerRadius": 999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "ug9Sl",
+                              "name": "염산 Flask",
+                              "width": 30,
+                              "height": 30,
+                              "icon": "flask-conical",
+                              "library": "lucide",
+                              "fill": "$primary"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "T3R1LU",
+                          "name": "염산 Names",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "z42Pio",
+                              "name": "염산 Name",
+                              "fill": "$text-strong",
+                              "content": "염산",
+                              "fontFamily": "$font",
+                              "fontSize": 24,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "wKwYb",
+                              "name": "염산 Sub",
+                              "fill": "$text-muted",
+                              "content": "HCl · CAS 7647-01-0",
+                              "fontFamily": "$font",
+                              "fontSize": 16,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "id": "WeKGk",
+                          "type": "ref",
+                          "ref": "gZTOT",
+                          "name": "염산 Badge",
+                          "fill": "$success-soft",
+                          "descendants": {
+                            "XkV6V": {
+                              "content": "비치중",
+                              "fill": "$success"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "J3ac5",
+                      "name": "염산 Meta",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "hOEK2",
+                          "name": "염산 MetaL",
+                          "gap": 20,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "l5IPRL",
+                              "name": "염산 Loc",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "j4wpvl",
+                                  "name": "염산 LocIcon",
+                                  "width": 20,
+                                  "height": 20,
+                                  "icon": "map-pin",
+                                  "library": "lucide",
+                                  "fill": "$text-muted"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "ABnRo",
+                                  "name": "염산 LocText",
+                                  "fill": "$text-body",
+                                  "content": "B · 1행 1열",
+                                  "fontFamily": "$font",
+                                  "fontSize": 17,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "H48An",
+                              "name": "염산 Expiry",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "v6ri4Y",
+                                  "name": "염산 ExpIcon",
+                                  "width": 20,
+                                  "height": 20,
+                                  "icon": "clock-alert",
+                                  "library": "lucide",
+                                  "fill": "$danger"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "K0z0Z",
+                                  "name": "염산 ExpText",
+                                  "fill": "$danger",
+                                  "content": "2025-12-01",
+                                  "fontFamily": "$font",
+                                  "fontSize": 17,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "J0q3OK",
+                          "name": "염산 MetaR",
+                          "gap": 14,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "YEa7e",
+                              "name": "염산 Track",
+                              "clip": true,
+                              "width": 150,
+                              "height": 12,
+                              "fill": "$bg-deep",
+                              "cornerRadius": 999,
+                              "children": [
+                                {
+                                  "type": "rectangle",
+                                  "cornerRadius": 999,
+                                  "id": "voV5G",
+                                  "name": "염산 Fill",
+                                  "fill": "$danger",
+                                  "width": 23,
+                                  "height": "fill_container"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "bzXK5",
+                              "name": "염산 Pct",
+                              "fill": "$danger",
+                              "content": "15%",
+                              "fontFamily": "$font",
+                              "fontSize": 16,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "GMPQS",
+                              "x": 212,
+                              "y": 0,
+                              "name": "염산 LED",
+                              "enabled": false,
+                              "width": 52,
+                              "height": 52,
+                              "fill": "$primary-soft",
+                              "cornerRadius": 999,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "SGBvY",
+                                  "name": "염산 Bulb",
+                                  "width": 24,
+                                  "height": 24,
+                                  "icon": "lightbulb",
+                                  "library": "lucide",
+                                  "fill": "$primary"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "r9am2m",
+                  "name": "Row 수산화나트륨",
+                  "width": "fill_container",
+                  "fill": "$surface",
+                  "cornerRadius": "$radius-md",
+                  "effect": {
+                    "type": "shadow",
+                    "shadowType": "outer",
+                    "color": "#1E2A560D",
+                    "offset": {
+                      "x": 0,
+                      "y": 8
+                    },
+                    "blur": 24
+                  },
+                  "layout": "vertical",
+                  "gap": 14,
+                  "padding": [
+                    22,
+                    26
+                  ],
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "Yh8If",
+                      "name": "수산화나트륨 Top",
+                      "width": "fill_container",
+                      "gap": 16,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "kbBeW",
+                          "name": "수산화나트륨 Check",
+                          "width": 40,
+                          "height": 40,
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 999,
+                          "stroke": "$border",
+                          "strokeWidth": 2.5,
+                          "justifyContent": "center",
+                          "alignItems": "center"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "I9APvx",
+                          "name": "수산화나트륨 IconWrap",
+                          "width": 64,
+                          "height": 64,
+                          "fill": "$primary-soft",
+                          "cornerRadius": 999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "YAfBX",
+                              "name": "수산화나트륨 Flask",
+                              "width": 30,
+                              "height": 30,
+                              "icon": "flask-conical",
+                              "library": "lucide",
+                              "fill": "$primary"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "qlnO5",
+                          "name": "수산화나트륨 Names",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "D9afP1",
+                              "name": "수산화나트륨 Name",
+                              "fill": "$text-strong",
+                              "content": "수산화나트륨",
+                              "fontFamily": "$font",
+                              "fontSize": 24,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "Koz6L",
+                              "name": "수산화나트륨 Sub",
+                              "fill": "$text-muted",
+                              "content": "NaOH · CAS 1310-73-2",
+                              "fontFamily": "$font",
+                              "fontSize": 16,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "id": "V4bBe2",
+                          "type": "ref",
+                          "ref": "gZTOT",
+                          "name": "수산화나트륨 Badge",
+                          "fill": "$success-soft",
+                          "descendants": {
+                            "XkV6V": {
+                              "content": "비치중",
+                              "fill": "$success"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "L618fk",
+                      "name": "수산화나트륨 Meta",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "aFOo2",
+                          "name": "수산화나트륨 MetaL",
+                          "gap": 20,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "V7Zpr",
+                              "name": "수산화나트륨 Loc",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "mURLl",
+                                  "name": "수산화나트륨 LocIcon",
+                                  "width": 20,
+                                  "height": 20,
+                                  "icon": "map-pin",
+                                  "library": "lucide",
+                                  "fill": "$text-muted"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "Xdzjp",
+                                  "name": "수산화나트륨 LocText",
+                                  "fill": "$text-body",
+                                  "content": "B · 2행 2열",
+                                  "fontFamily": "$font",
+                                  "fontSize": 17,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "n7VPo",
+                              "name": "수산화나트륨 Expiry",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "q6B54",
+                                  "name": "수산화나트륨 ExpIcon",
+                                  "width": 20,
+                                  "height": 20,
+                                  "icon": "calendar",
+                                  "library": "lucide",
+                                  "fill": "$text-muted"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "nXe28",
+                                  "name": "수산화나트륨 ExpText",
+                                  "fill": "$text-body",
+                                  "content": "2028-05-10",
+                                  "fontFamily": "$font",
+                                  "fontSize": 17,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "l3go7",
+                          "name": "수산화나트륨 MetaR",
+                          "gap": 14,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "WZk0X",
+                              "name": "수산화나트륨 Track",
+                              "clip": true,
+                              "width": 150,
+                              "height": 12,
+                              "fill": "$bg-deep",
+                              "cornerRadius": 999,
+                              "children": [
+                                {
+                                  "type": "rectangle",
+                                  "cornerRadius": 999,
+                                  "id": "mPUDe",
+                                  "name": "수산화나트륨 Fill",
+                                  "fill": "$primary",
+                                  "width": 135,
+                                  "height": "fill_container"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "T7iwOq",
+                              "name": "수산화나트륨 Pct",
+                              "fill": "$text-body",
+                              "content": "90%",
+                              "fontFamily": "$font",
+                              "fontSize": 16,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "xnIsB",
+                              "x": 212,
+                              "y": 0,
+                              "name": "수산화나트륨 LED",
+                              "enabled": false,
+                              "width": 52,
+                              "height": 52,
+                              "fill": "$primary-soft",
+                              "cornerRadius": 999,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "ZPR4o",
+                                  "name": "수산화나트륨 Bulb",
+                                  "width": 24,
+                                  "height": 24,
+                                  "icon": "lightbulb",
+                                  "library": "lucide",
+                                  "fill": "$primary"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "SXJkA",
+                  "name": "Row 황산",
+                  "width": "fill_container",
+                  "fill": "#F5F8FF",
+                  "cornerRadius": "$radius-md",
+                  "stroke": "$primary",
+                  "strokeWidth": 2.5,
+                  "effect": {
+                    "type": "shadow",
+                    "shadowType": "outer",
+                    "color": "#1E2A560D",
+                    "offset": {
+                      "x": 0,
+                      "y": 8
+                    },
+                    "blur": 24
+                  },
+                  "layout": "vertical",
+                  "gap": 14,
+                  "padding": [
+                    22,
+                    26
+                  ],
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "D8j13f",
+                      "name": "황산 Top",
+                      "width": "fill_container",
+                      "gap": 16,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "U04vq",
+                          "name": "황산 Check",
+                          "width": 40,
+                          "height": 40,
+                          "fill": "$primary",
+                          "cornerRadius": 999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "EtdsT",
+                              "name": "황산 Check Icon",
+                              "width": 24,
+                              "height": 24,
+                              "icon": "check",
+                              "library": "lucide",
+                              "fill": "#FFFFFF"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Xk7Md",
+                          "name": "황산 IconWrap",
+                          "width": 64,
+                          "height": 64,
+                          "fill": "$primary-soft",
+                          "cornerRadius": 999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "hdGC7",
+                              "name": "황산 Flask",
+                              "width": 30,
+                              "height": 30,
+                              "icon": "flask-conical",
+                              "library": "lucide",
+                              "fill": "$primary"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "QlJLa",
+                          "name": "황산 Names",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "U3GBh",
+                              "name": "황산 Name",
+                              "fill": "$text-strong",
+                              "content": "황산",
+                              "fontFamily": "$font",
+                              "fontSize": 24,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "WJN7L",
+                              "name": "황산 Sub",
+                              "fill": "$text-muted",
+                              "content": "H₂SO₄ · CAS 7664-93-9",
+                              "fontFamily": "$font",
+                              "fontSize": 16,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "id": "gefbi",
+                          "type": "ref",
+                          "ref": "gZTOT",
+                          "name": "황산 Badge",
+                          "fill": "$success-soft",
+                          "descendants": {
+                            "XkV6V": {
+                              "content": "비치중",
+                              "fill": "$success"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "rbAqj",
+                      "name": "황산 Meta",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "I2wqp1",
+                          "name": "황산 MetaL",
+                          "gap": 20,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "GEhw1",
+                              "name": "황산 Loc",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "b5tCXl",
+                                  "name": "황산 LocIcon",
+                                  "width": 20,
+                                  "height": 20,
+                                  "icon": "map-pin",
+                                  "library": "lucide",
+                                  "fill": "$text-muted"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "BiOAl",
+                                  "name": "황산 LocText",
+                                  "fill": "$text-body",
+                                  "content": "B · 3행 1열",
+                                  "fontFamily": "$font",
+                                  "fontSize": 17,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "FLmwd",
+                              "name": "황산 Expiry",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "B1rzHk",
+                                  "name": "황산 ExpIcon",
+                                  "width": 20,
+                                  "height": 20,
+                                  "icon": "calendar",
+                                  "library": "lucide",
+                                  "fill": "$text-muted"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "kXvZs",
+                                  "name": "황산 ExpText",
+                                  "fill": "$text-body",
+                                  "content": "2027-08-01",
+                                  "fontFamily": "$font",
+                                  "fontSize": 17,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "zvRnG",
+                          "name": "황산 MetaR",
+                          "gap": 14,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "sjQbc",
+                              "name": "황산 Track",
+                              "clip": true,
+                              "width": 150,
+                              "height": 12,
+                              "fill": "$bg-deep",
+                              "cornerRadius": 999,
+                              "children": [
+                                {
+                                  "type": "rectangle",
+                                  "cornerRadius": 999,
+                                  "id": "hhAU8",
+                                  "name": "황산 Fill",
+                                  "fill": "$primary",
+                                  "width": 105,
+                                  "height": "fill_container"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "Whgqf",
+                              "name": "황산 Pct",
+                              "fill": "$text-body",
+                              "content": "70%",
+                              "fontFamily": "$font",
+                              "fontSize": 16,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "rpBce",
+                              "x": 212,
+                              "y": 0,
+                              "name": "황산 LED",
+                              "enabled": false,
+                              "width": 52,
+                              "height": 52,
+                              "fill": "$primary-soft",
+                              "cornerRadius": 999,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "g43GX8",
+                                  "name": "황산 Bulb",
+                                  "width": 24,
+                                  "height": 24,
+                                  "icon": "lightbulb",
+                                  "library": "lucide",
+                                  "fill": "$primary"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "i2cZQO",
+              "layoutPosition": "absolute",
+              "x": 48,
+              "y": 1564,
+              "name": "Dispose Bar",
+              "width": 1104,
+              "fill": "$surface",
+              "cornerRadius": "$radius-md",
+              "effect": {
+                "type": "shadow",
+                "shadowType": "outer",
+                "color": "#1E2A5626",
+                "offset": {
+                  "x": 0,
+                  "y": 10
+                },
+                "blur": 32
+              },
+              "padding": [
+                18,
+                20,
+                18,
+                30
+              ],
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "GZzHz",
+                  "name": "Dispose Summary",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "Dr5cA",
+                      "name": "Dispose Title",
+                      "fill": "$text-strong",
+                      "content": "선택한 시약 3개",
+                      "fontFamily": "$font",
+                      "fontSize": 20,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "z2ddC",
+                      "name": "Dispose Names",
+                      "fill": "$text-muted",
+                      "content": "에탄올 · 아세톤 · 황산",
+                      "fontFamily": "$font",
+                      "fontSize": 16,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "MgEOp",
+                  "name": "Dispose Btn",
+                  "fill": "$danger",
+                  "cornerRadius": 999,
+                  "gap": 10,
+                  "padding": [
+                    16,
+                    30
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "ELnWC",
+                      "name": "Dispose Icon",
+                      "width": 22,
+                      "height": 22,
+                      "icon": "trash-2",
+                      "library": "lucide",
+                      "fill": "#FFFFFF"
+                    },
+                    {
+                      "type": "text",
+                      "id": "wxPhs",
+                      "name": "Dispose Label",
+                      "fill": "#FFFFFF",
+                      "content": "선택 폐기 (3)",
+                      "fontFamily": "$font",
+                      "fontSize": 19,
+                      "fontWeight": "700"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ZTYv7",
+          "type": "ref",
+          "ref": "EANBb",
+          "name": "Bottom Nav",
+          "descendants": {
+            "c9wAA": {
+              "fill": "#FFFFFF00"
+            },
+            "s3amsz": {
+              "fill": "$text-muted"
+            },
+            "Un8X0": {
+              "fill": "$text-muted"
+            },
+            "k2bLeX": {
+              "fill": "#FFFFFF00"
+            },
+            "uY0Kg": {
+              "fill": "$text-muted"
+            },
+            "U54Juf": {
+              "fill": "$text-muted"
+            },
+            "i51Kk2": {
+              "fill": "$primary-soft"
+            },
+            "v20GwD": {
+              "fill": "$primary"
+            },
+            "kNFJo": {
+              "fill": "$primary"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "p0HNBH",
+      "x": 21491,
+      "y": 3877,
+      "name": "app-inventory-edit-confirm",
+      "clip": true,
+      "width": 1200,
+      "height": 1920,
+      "fill": "$bg",
+      "layout": "vertical",
+      "children": [
+        {
+          "id": "Gckzo",
+          "type": "ref",
+          "ref": "G5eEH",
+          "name": "Status Bar"
+        },
+        {
+          "type": "frame",
+          "id": "FfaGH",
+          "name": "Inv Body",
+          "width": "fill_container",
+          "height": "fill_container",
+          "layout": "vertical",
+          "gap": 20,
+          "padding": [
+            28,
+            48,
+            0,
+            48
+          ],
+          "children": [
+            {
+              "type": "frame",
+              "id": "r1eS3c",
+              "name": "Inv Header",
+              "width": "fill_container",
+              "gap": 12,
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "bFsqg",
+                  "name": "Inv HeadL",
+                  "width": "fill_container",
+                  "layout": "vertical",
+                  "gap": 6,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "gAi4y",
+                      "name": "Inv Title",
+                      "fill": "$text-strong",
+                      "content": "재고 관리",
+                      "fontFamily": "$font",
+                      "fontSize": 40,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "F4QtSx",
+                      "name": "Inv Sub",
+                      "fill": "$text-muted",
+                      "content": "폐기할 시약을 탭해서 선택하세요 · 여러 개 선택 가능",
+                      "fontFamily": "$font",
+                      "fontSize": 17,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "tD4dU",
+                  "name": "Expiry Pill",
+                  "fill": "$warning-soft",
+                  "cornerRadius": 999,
+                  "gap": 8,
+                  "padding": [
+                    10,
+                    20
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "g1EBw",
+                      "name": "Expiry Pill Icon",
+                      "width": 22,
+                      "height": 22,
+                      "icon": "clock-alert",
+                      "library": "lucide",
+                      "fill": "$warning"
+                    },
+                    {
+                      "type": "text",
+                      "id": "r3PSh",
+                      "name": "Expiry Pill Text",
+                      "fill": "$warning",
+                      "content": "유통기한 1",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "FTltG",
+                  "name": "Co Pill",
+                  "fill": "$danger-soft",
+                  "cornerRadius": 999,
+                  "gap": 8,
+                  "padding": [
+                    10,
+                    20
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "xmIF2",
+                      "name": "Co Pill Icon",
+                      "width": 22,
+                      "height": 22,
+                      "icon": "triangle-alert",
+                      "library": "lucide",
+                      "fill": "$danger"
+                    },
+                    {
+                      "type": "text",
+                      "id": "y1oib",
+                      "name": "Co Pill Text",
+                      "fill": "$danger",
+                      "content": "인접 보관 1",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "id": "NG1ax",
+              "type": "ref",
+              "ref": "KzXW7",
+              "name": "Inv Search",
+              "width": "fill_container",
+              "descendants": {
+                "L5iEZ": {
+                  "content": "시약 이름·CAS 번호 검색"
+                }
+              }
+            },
+            {
+              "type": "frame",
+              "id": "x57K9",
+              "name": "Filter Chips",
+              "width": "fill_container",
+              "gap": 12,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "K1RfD",
+                  "name": "Chip 전체 6",
+                  "fill": "$primary",
+                  "cornerRadius": 999,
+                  "padding": [
+                    12,
+                    26
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "d3TbmU",
+                      "name": "Chip Text 전체 6",
+                      "fill": "#FFFFFF",
+                      "content": "전체 6",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "WLLgQ",
+                  "name": "Chip 비치중 5",
+                  "fill": "$surface",
+                  "cornerRadius": 999,
+                  "stroke": "$border",
+                  "strokeWidth": 1.5,
+                  "padding": [
+                    12,
+                    26
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "ClXPM",
+                      "name": "Chip Text 비치중 5",
+                      "fill": "$text-body",
+                      "content": "비치중 5",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "i8QCM",
+                  "name": "Chip 반출중 1",
+                  "fill": "$surface",
+                  "cornerRadius": 999,
+                  "stroke": "$border",
+                  "strokeWidth": 1.5,
+                  "padding": [
+                    12,
+                    26
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "n7o3Z8",
+                      "name": "Chip Text 반출중 1",
+                      "fill": "$text-body",
+                      "content": "반출중 1",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "zwMAg",
+                  "name": "Chip 유통기한 1",
+                  "fill": "$surface",
+                  "cornerRadius": 999,
+                  "stroke": "$border",
+                  "strokeWidth": 1.5,
+                  "padding": [
+                    12,
+                    26
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "W35kmc",
+                      "name": "Chip Text 유통기한 1",
+                      "fill": "$text-body",
+                      "content": "유통기한 1",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "mfEsr",
+                  "name": "Chip 인접 보관 1",
+                  "fill": "$surface",
+                  "cornerRadius": 999,
+                  "stroke": "$border",
+                  "strokeWidth": 1.5,
+                  "padding": [
+                    12,
+                    26
+                  ],
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "cNNI9",
+                      "name": "Chip Text 인접 보관 1",
+                      "fill": "$text-body",
+                      "content": "인접 보관 1",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "600"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "LSRGb",
+              "name": "Edit Bar",
+              "width": "fill_container",
+              "fill": "$primary-soft",
+              "cornerRadius": "$radius-md",
+              "padding": [
+                16,
+                20,
+                16,
+                26
+              ],
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "h4PxGt",
+                  "name": "Edit Bar Left",
+                  "gap": 12,
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "U0W6kc",
+                      "name": "Edit Mode Icon",
+                      "width": 26,
+                      "height": 26,
+                      "icon": "list-checks",
+                      "library": "lucide",
+                      "fill": "$primary"
+                    },
+                    {
+                      "type": "text",
+                      "id": "X8bXE",
+                      "name": "Edit Mode Label",
+                      "fill": "$text-strong",
+                      "content": "편집 모드",
+                      "fontFamily": "$font",
+                      "fontSize": 20,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "fjlPg",
+                      "name": "Selected Count",
+                      "fill": "$primary",
+                      "content": "3개 선택됨",
+                      "fontFamily": "$font",
+                      "fontSize": 20,
+                      "fontWeight": "600"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "ExaPi",
+                  "name": "Done Btn",
+                  "fill": "$primary",
+                  "cornerRadius": 999,
+                  "gap": 8,
+                  "padding": [
+                    12,
+                    26
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "Ir2dY",
+                      "name": "Done Icon",
+                      "width": 20,
+                      "height": 20,
+                      "icon": "check",
+                      "library": "lucide",
+                      "fill": "#FFFFFF"
+                    },
+                    {
+                      "type": "text",
+                      "id": "VMXQS",
+                      "name": "Done Label",
+                      "fill": "#FFFFFF",
+                      "content": "완료",
+                      "fontFamily": "$font",
+                      "fontSize": 18,
+                      "fontWeight": "700"
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "OLwyL",
+              "name": "Chem List",
+              "width": "fill_container",
+              "layout": "vertical",
+              "gap": 16,
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "hQN47",
+                  "name": "Row 에탄올",
+                  "width": "fill_container",
+                  "fill": "#F5F8FF",
+                  "cornerRadius": "$radius-md",
+                  "stroke": "$primary",
+                  "strokeWidth": 2.5,
+                  "effect": {
+                    "type": "shadow",
+                    "shadowType": "outer",
+                    "color": "#1E2A560D",
+                    "offset": {
+                      "x": 0,
+                      "y": 8
+                    },
+                    "blur": 24
+                  },
+                  "layout": "vertical",
+                  "gap": 14,
+                  "padding": [
+                    22,
+                    26
+                  ],
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "n7XYm",
+                      "name": "에탄올 Top",
+                      "width": "fill_container",
+                      "gap": 16,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "nV8Ao",
+                          "name": "에탄올 Check",
+                          "width": 40,
+                          "height": 40,
+                          "fill": "$primary",
+                          "cornerRadius": 999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "vM6oU",
+                              "name": "에탄올 Check Icon",
+                              "width": 24,
+                              "height": 24,
+                              "icon": "check",
+                              "library": "lucide",
+                              "fill": "#FFFFFF"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "H4VaFU",
+                          "name": "에탄올 IconWrap",
+                          "width": 64,
+                          "height": 64,
+                          "fill": "$primary-soft",
+                          "cornerRadius": 999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "n9lEo",
+                              "name": "에탄올 Flask",
+                              "width": 30,
+                              "height": 30,
+                              "icon": "flask-conical",
+                              "library": "lucide",
+                              "fill": "$primary"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "R2UmQ",
+                          "name": "에탄올 Names",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "ZokbW",
+                              "name": "에탄올 Name",
+                              "fill": "$text-strong",
+                              "content": "에탄올",
+                              "fontFamily": "$font",
+                              "fontSize": 24,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "qlbHw",
+                              "name": "에탄올 Sub",
+                              "fill": "$text-muted",
+                              "content": "C₂H₅OH · CAS 64-17-5",
+                              "fontFamily": "$font",
+                              "fontSize": 16,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "id": "yZ65r",
+                          "type": "ref",
+                          "ref": "gZTOT",
+                          "name": "에탄올 Badge",
+                          "fill": "$success-soft",
+                          "descendants": {
+                            "XkV6V": {
+                              "content": "비치중",
+                              "fill": "$success"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "IEsyI",
+                      "name": "에탄올 Meta",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "kt97q",
+                          "name": "에탄올 MetaL",
+                          "gap": 20,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "gnvlS",
+                              "name": "에탄올 Loc",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "MUfNp",
+                                  "name": "에탄올 LocIcon",
+                                  "width": 20,
+                                  "height": 20,
+                                  "icon": "map-pin",
+                                  "library": "lucide",
+                                  "fill": "$text-muted"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "pr8ls",
+                                  "name": "에탄올 LocText",
+                                  "fill": "$text-body",
+                                  "content": "A · 1행 2열",
+                                  "fontFamily": "$font",
+                                  "fontSize": 17,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "Xiq0d",
+                              "name": "에탄올 Expiry",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "AOuKi",
+                                  "name": "에탄올 ExpIcon",
+                                  "width": 20,
+                                  "height": 20,
+                                  "icon": "calendar",
+                                  "library": "lucide",
+                                  "fill": "$text-muted"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "rk1Mu",
+                                  "name": "에탄올 ExpText",
+                                  "fill": "$text-body",
+                                  "content": "2027-03-15",
+                                  "fontFamily": "$font",
+                                  "fontSize": 17,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "vqCFU",
+                          "name": "에탄올 MetaR",
+                          "gap": 14,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "KHsxD",
+                              "name": "에탄올 Track",
+                              "clip": true,
+                              "width": 150,
+                              "height": 12,
+                              "fill": "$bg-deep",
+                              "cornerRadius": 999,
+                              "children": [
+                                {
+                                  "type": "rectangle",
+                                  "cornerRadius": 999,
+                                  "id": "B6GkH",
+                                  "name": "에탄올 Fill",
+                                  "fill": "$primary",
+                                  "width": 128,
+                                  "height": "fill_container"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "eyX4o",
+                              "name": "에탄올 Pct",
+                              "fill": "$text-body",
+                              "content": "85%",
+                              "fontFamily": "$font",
+                              "fontSize": 16,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "o0VEeL",
+                              "x": 212,
+                              "y": 0,
+                              "name": "에탄올 LED",
+                              "enabled": false,
+                              "width": 52,
+                              "height": 52,
+                              "fill": "$primary-soft",
+                              "cornerRadius": 999,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "mQKPm",
+                                  "name": "에탄올 Bulb",
+                                  "width": 24,
+                                  "height": 24,
+                                  "icon": "lightbulb",
+                                  "library": "lucide",
+                                  "fill": "$primary"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "bfYTY",
+                  "name": "Row 질산",
+                  "width": "fill_container",
+                  "fill": "$surface",
+                  "cornerRadius": "$radius-md",
+                  "effect": {
+                    "type": "shadow",
+                    "shadowType": "outer",
+                    "color": "#1E2A560D",
+                    "offset": {
+                      "x": 0,
+                      "y": 8
+                    },
+                    "blur": 24
+                  },
+                  "layout": "vertical",
+                  "gap": 14,
+                  "padding": [
+                    22,
+                    26
+                  ],
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "CTZCm",
+                      "name": "질산 Top",
+                      "width": "fill_container",
+                      "gap": 16,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "UhlB1",
+                          "name": "질산 Check",
+                          "width": 40,
+                          "height": 40,
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 999,
+                          "stroke": "$border",
+                          "strokeWidth": 2.5,
+                          "justifyContent": "center",
+                          "alignItems": "center"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "S0LEXR",
+                          "name": "질산 IconWrap",
+                          "width": 64,
+                          "height": 64,
+                          "fill": "$primary-soft",
+                          "cornerRadius": 999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "oSYek",
+                              "name": "질산 Flask",
+                              "width": 30,
+                              "height": 30,
+                              "icon": "flask-conical",
+                              "library": "lucide",
+                              "fill": "$primary"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "L1lYem",
+                          "name": "질산 Names",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "OtobR",
+                              "name": "질산 Name",
+                              "fill": "$text-strong",
+                              "content": "질산",
+                              "fontFamily": "$font",
+                              "fontSize": 24,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "PSbDZ",
+                              "name": "질산 Sub",
+                              "fill": "$text-muted",
+                              "content": "HNO₃ · CAS 7697-37-2",
+                              "fontFamily": "$font",
+                              "fontSize": 16,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "id": "BWq1B",
+                          "type": "ref",
+                          "ref": "gZTOT",
+                          "name": "질산 Badge",
+                          "fill": "$success-soft",
+                          "descendants": {
+                            "XkV6V": {
+                              "content": "비치중",
+                              "fill": "$success"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "j1M6pf",
+                      "name": "질산 Meta",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "y1fxS",
+                          "name": "질산 MetaL",
+                          "gap": 20,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "T2aIv",
+                              "name": "질산 Loc",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "yyqie",
+                                  "name": "질산 LocIcon",
+                                  "width": 20,
+                                  "height": 20,
+                                  "icon": "map-pin",
+                                  "library": "lucide",
+                                  "fill": "$text-muted"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "mQ3VH",
+                                  "name": "질산 LocText",
+                                  "fill": "$text-body",
+                                  "content": "A · 2행 3열",
+                                  "fontFamily": "$font",
+                                  "fontSize": 17,
+                                  "fontWeight": "600"
+                                },
+                                {
+                                  "type": "icon",
+                                  "id": "U8dnIW",
+                                  "name": "질산 CoWarn",
+                                  "width": 20,
+                                  "height": 20,
+                                  "icon": "triangle-alert",
+                                  "library": "lucide",
+                                  "fill": "$warning"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "o4Wwhh",
+                              "name": "질산 Expiry",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "B6d8MT",
+                                  "name": "질산 ExpIcon",
+                                  "width": 20,
+                                  "height": 20,
+                                  "icon": "calendar",
+                                  "library": "lucide",
+                                  "fill": "$text-muted"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "VsgX1",
+                                  "name": "질산 ExpText",
+                                  "fill": "$text-body",
+                                  "content": "2026-11-30",
+                                  "fontFamily": "$font",
+                                  "fontSize": 17,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "fBp96",
+                          "name": "질산 MetaR",
+                          "gap": 14,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "L1NKC",
+                              "name": "질산 Track",
+                              "clip": true,
+                              "width": 150,
+                              "height": 12,
+                              "fill": "$bg-deep",
+                              "cornerRadius": 999,
+                              "children": [
+                                {
+                                  "type": "rectangle",
+                                  "cornerRadius": 999,
+                                  "id": "IQGYO",
+                                  "name": "질산 Fill",
+                                  "fill": "$primary",
+                                  "width": 90,
+                                  "height": "fill_container"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "vQ0WB",
+                              "name": "질산 Pct",
+                              "fill": "$text-body",
+                              "content": "60%",
+                              "fontFamily": "$font",
+                              "fontSize": 16,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "sHD1b",
+                              "x": 212,
+                              "y": 0,
+                              "name": "질산 LED",
+                              "enabled": false,
+                              "width": 52,
+                              "height": 52,
+                              "fill": "$primary-soft",
+                              "cornerRadius": 999,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "RHBm5",
+                                  "name": "질산 Bulb",
+                                  "width": 24,
+                                  "height": 24,
+                                  "icon": "lightbulb",
+                                  "library": "lucide",
+                                  "fill": "$primary"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "IW4jR",
+                  "name": "Row 아세톤",
+                  "width": "fill_container",
+                  "fill": "#F5F8FF",
+                  "cornerRadius": "$radius-md",
+                  "stroke": "$primary",
+                  "strokeWidth": 2.5,
+                  "effect": {
+                    "type": "shadow",
+                    "shadowType": "outer",
+                    "color": "#1E2A560D",
+                    "offset": {
+                      "x": 0,
+                      "y": 8
+                    },
+                    "blur": 24
+                  },
+                  "layout": "vertical",
+                  "gap": 14,
+                  "padding": [
+                    22,
+                    26
+                  ],
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "D47UN",
+                      "name": "아세톤 Top",
+                      "width": "fill_container",
+                      "gap": 16,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "dTzZf",
+                          "name": "아세톤 Check",
+                          "width": 40,
+                          "height": 40,
+                          "fill": "$primary",
+                          "cornerRadius": 999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "P6TnpA",
+                              "name": "아세톤 Check Icon",
+                              "width": 24,
+                              "height": 24,
+                              "icon": "check",
+                              "library": "lucide",
+                              "fill": "#FFFFFF"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "x6hb29",
+                          "name": "아세톤 IconWrap",
+                          "width": 64,
+                          "height": 64,
+                          "fill": "$bg-deep",
+                          "cornerRadius": 999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "Y1Z80",
+                              "name": "아세톤 Flask",
+                              "width": 30,
+                              "height": 30,
+                              "icon": "flask-conical",
+                              "library": "lucide",
+                              "fill": "$text-muted"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "nmaQd",
+                          "name": "아세톤 Names",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "JXlyf",
+                              "name": "아세톤 Name",
+                              "fill": "$text-strong",
+                              "content": "아세톤",
+                              "fontFamily": "$font",
+                              "fontSize": 24,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "Tjs2f",
+                              "name": "아세톤 Sub",
+                              "fill": "$text-muted",
+                              "content": "C₃H₆O · CAS 67-64-1",
+                              "fontFamily": "$font",
+                              "fontSize": 16,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "id": "O1pzQx",
+                          "type": "ref",
+                          "ref": "gZTOT",
+                          "name": "아세톤 Badge",
+                          "fill": "$danger-soft",
+                          "descendants": {
+                            "XkV6V": {
+                              "content": "반출중 · 김연구",
+                              "fill": "$danger"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "Z9sex0",
+                      "name": "아세톤 Meta",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "G66CUn",
+                          "name": "아세톤 MetaL",
+                          "gap": 20,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "u10Ss",
+                              "name": "아세톤 Loc",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "Cm8gd",
+                                  "name": "아세톤 LocIcon",
+                                  "width": 20,
+                                  "height": 20,
+                                  "icon": "map-pin",
+                                  "library": "lucide",
+                                  "fill": "$text-muted"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "N0RggD",
+                                  "name": "아세톤 LocText",
+                                  "fill": "$text-body",
+                                  "content": "-",
+                                  "fontFamily": "$font",
+                                  "fontSize": 17,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "aCWL1",
+                              "name": "아세톤 Expiry",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "q05nyF",
+                                  "name": "아세톤 ExpIcon",
+                                  "width": 20,
+                                  "height": 20,
+                                  "icon": "calendar",
+                                  "library": "lucide",
+                                  "fill": "$text-muted"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "zC45t",
+                                  "name": "아세톤 ExpText",
+                                  "fill": "$text-body",
+                                  "content": "2027-01-20",
+                                  "fontFamily": "$font",
+                                  "fontSize": 17,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "C2iOEk",
+                          "name": "아세톤 MetaR",
+                          "gap": 14,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "N9ibw",
+                              "name": "아세톤 Track",
+                              "clip": true,
+                              "width": 150,
+                              "height": 12,
+                              "fill": "$bg-deep",
+                              "cornerRadius": 999,
+                              "children": [
+                                {
+                                  "type": "rectangle",
+                                  "cornerRadius": 999,
+                                  "id": "AAtSF",
+                                  "name": "아세톤 Fill",
+                                  "fill": "$primary",
+                                  "width": 60,
+                                  "height": "fill_container"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "hrvZs",
+                              "name": "아세톤 Pct",
+                              "fill": "$text-body",
+                              "content": "40%",
+                              "fontFamily": "$font",
+                              "fontSize": 16,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "isb7K",
+                              "x": 212,
+                              "y": 0,
+                              "name": "아세톤 LED",
+                              "enabled": false,
+                              "width": 52,
+                              "height": 52,
+                              "fill": "$bg",
+                              "cornerRadius": 999,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "R6R0f",
+                                  "name": "아세톤 Bulb",
+                                  "width": 24,
+                                  "height": 24,
+                                  "icon": "lightbulb",
+                                  "library": "lucide",
+                                  "fill": "$text-muted"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "z2ZGe",
+                  "name": "Row 염산",
+                  "width": "fill_container",
+                  "fill": "$surface",
+                  "cornerRadius": "$radius-md",
+                  "effect": {
+                    "type": "shadow",
+                    "shadowType": "outer",
+                    "color": "#1E2A560D",
+                    "offset": {
+                      "x": 0,
+                      "y": 8
+                    },
+                    "blur": 24
+                  },
+                  "layout": "vertical",
+                  "gap": 14,
+                  "padding": [
+                    22,
+                    26
+                  ],
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "AP8R4",
+                      "name": "염산 Top",
+                      "width": "fill_container",
+                      "gap": 16,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "iWAvR",
+                          "name": "염산 Check",
+                          "width": 40,
+                          "height": 40,
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 999,
+                          "stroke": "$border",
+                          "strokeWidth": 2.5,
+                          "justifyContent": "center",
+                          "alignItems": "center"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "GJXZC",
+                          "name": "염산 IconWrap",
+                          "width": 64,
+                          "height": 64,
+                          "fill": "$primary-soft",
+                          "cornerRadius": 999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "t7LZhE",
+                              "name": "염산 Flask",
+                              "width": 30,
+                              "height": 30,
+                              "icon": "flask-conical",
+                              "library": "lucide",
+                              "fill": "$primary"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "rC2ba",
+                          "name": "염산 Names",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "KaW6a",
+                              "name": "염산 Name",
+                              "fill": "$text-strong",
+                              "content": "염산",
+                              "fontFamily": "$font",
+                              "fontSize": 24,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "J6I4Re",
+                              "name": "염산 Sub",
+                              "fill": "$text-muted",
+                              "content": "HCl · CAS 7647-01-0",
+                              "fontFamily": "$font",
+                              "fontSize": 16,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "id": "h0nsXF",
+                          "type": "ref",
+                          "ref": "gZTOT",
+                          "name": "염산 Badge",
+                          "fill": "$success-soft",
+                          "descendants": {
+                            "XkV6V": {
+                              "content": "비치중",
+                              "fill": "$success"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "P5kxAQ",
+                      "name": "염산 Meta",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "PqOnl",
+                          "name": "염산 MetaL",
+                          "gap": 20,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "oK22q",
+                              "name": "염산 Loc",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "MBqpy",
+                                  "name": "염산 LocIcon",
+                                  "width": 20,
+                                  "height": 20,
+                                  "icon": "map-pin",
+                                  "library": "lucide",
+                                  "fill": "$text-muted"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "JXDa2",
+                                  "name": "염산 LocText",
+                                  "fill": "$text-body",
+                                  "content": "B · 1행 1열",
+                                  "fontFamily": "$font",
+                                  "fontSize": 17,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "zIsrB",
+                              "name": "염산 Expiry",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "aRfXg",
+                                  "name": "염산 ExpIcon",
+                                  "width": 20,
+                                  "height": 20,
+                                  "icon": "clock-alert",
+                                  "library": "lucide",
+                                  "fill": "$danger"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "H7n71F",
+                                  "name": "염산 ExpText",
+                                  "fill": "$danger",
+                                  "content": "2025-12-01",
+                                  "fontFamily": "$font",
+                                  "fontSize": 17,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "ywi0r",
+                          "name": "염산 MetaR",
+                          "gap": 14,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "lRwOU",
+                              "name": "염산 Track",
+                              "clip": true,
+                              "width": 150,
+                              "height": 12,
+                              "fill": "$bg-deep",
+                              "cornerRadius": 999,
+                              "children": [
+                                {
+                                  "type": "rectangle",
+                                  "cornerRadius": 999,
+                                  "id": "lRguU",
+                                  "name": "염산 Fill",
+                                  "fill": "$danger",
+                                  "width": 23,
+                                  "height": "fill_container"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "Gm305",
+                              "name": "염산 Pct",
+                              "fill": "$danger",
+                              "content": "15%",
+                              "fontFamily": "$font",
+                              "fontSize": 16,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "c7z1h",
+                              "x": 212,
+                              "y": 0,
+                              "name": "염산 LED",
+                              "enabled": false,
+                              "width": 52,
+                              "height": 52,
+                              "fill": "$primary-soft",
+                              "cornerRadius": 999,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "JCBTP",
+                                  "name": "염산 Bulb",
+                                  "width": 24,
+                                  "height": 24,
+                                  "icon": "lightbulb",
+                                  "library": "lucide",
+                                  "fill": "$primary"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "QGtFJ",
+                  "name": "Row 수산화나트륨",
+                  "width": "fill_container",
+                  "fill": "$surface",
+                  "cornerRadius": "$radius-md",
+                  "effect": {
+                    "type": "shadow",
+                    "shadowType": "outer",
+                    "color": "#1E2A560D",
+                    "offset": {
+                      "x": 0,
+                      "y": 8
+                    },
+                    "blur": 24
+                  },
+                  "layout": "vertical",
+                  "gap": 14,
+                  "padding": [
+                    22,
+                    26
+                  ],
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "z0ve2",
+                      "name": "수산화나트륨 Top",
+                      "width": "fill_container",
+                      "gap": 16,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "PzVAV",
+                          "name": "수산화나트륨 Check",
+                          "width": 40,
+                          "height": 40,
+                          "fill": "#FFFFFF00",
+                          "cornerRadius": 999,
+                          "stroke": "$border",
+                          "strokeWidth": 2.5,
+                          "justifyContent": "center",
+                          "alignItems": "center"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "BEB0C",
+                          "name": "수산화나트륨 IconWrap",
+                          "width": 64,
+                          "height": 64,
+                          "fill": "$primary-soft",
+                          "cornerRadius": 999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "tMrmM",
+                              "name": "수산화나트륨 Flask",
+                              "width": 30,
+                              "height": 30,
+                              "icon": "flask-conical",
+                              "library": "lucide",
+                              "fill": "$primary"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "QgJT4",
+                          "name": "수산화나트륨 Names",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "FrLRK",
+                              "name": "수산화나트륨 Name",
+                              "fill": "$text-strong",
+                              "content": "수산화나트륨",
+                              "fontFamily": "$font",
+                              "fontSize": 24,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "g3dMnN",
+                              "name": "수산화나트륨 Sub",
+                              "fill": "$text-muted",
+                              "content": "NaOH · CAS 1310-73-2",
+                              "fontFamily": "$font",
+                              "fontSize": 16,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "id": "ZIWlQ",
+                          "type": "ref",
+                          "ref": "gZTOT",
+                          "name": "수산화나트륨 Badge",
+                          "fill": "$success-soft",
+                          "descendants": {
+                            "XkV6V": {
+                              "content": "비치중",
+                              "fill": "$success"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "KI423",
+                      "name": "수산화나트륨 Meta",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "MGCkX",
+                          "name": "수산화나트륨 MetaL",
+                          "gap": 20,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "E4Wk2x",
+                              "name": "수산화나트륨 Loc",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "cj6tH",
+                                  "name": "수산화나트륨 LocIcon",
+                                  "width": 20,
+                                  "height": 20,
+                                  "icon": "map-pin",
+                                  "library": "lucide",
+                                  "fill": "$text-muted"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "X0KOR",
+                                  "name": "수산화나트륨 LocText",
+                                  "fill": "$text-body",
+                                  "content": "B · 2행 2열",
+                                  "fontFamily": "$font",
+                                  "fontSize": 17,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "XinWT",
+                              "name": "수산화나트륨 Expiry",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "hBd8Y",
+                                  "name": "수산화나트륨 ExpIcon",
+                                  "width": 20,
+                                  "height": 20,
+                                  "icon": "calendar",
+                                  "library": "lucide",
+                                  "fill": "$text-muted"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "flP70",
+                                  "name": "수산화나트륨 ExpText",
+                                  "fill": "$text-body",
+                                  "content": "2028-05-10",
+                                  "fontFamily": "$font",
+                                  "fontSize": 17,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "ZCnQr",
+                          "name": "수산화나트륨 MetaR",
+                          "gap": 14,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "p2Fp3T",
+                              "name": "수산화나트륨 Track",
+                              "clip": true,
+                              "width": 150,
+                              "height": 12,
+                              "fill": "$bg-deep",
+                              "cornerRadius": 999,
+                              "children": [
+                                {
+                                  "type": "rectangle",
+                                  "cornerRadius": 999,
+                                  "id": "H6xxKs",
+                                  "name": "수산화나트륨 Fill",
+                                  "fill": "$primary",
+                                  "width": 135,
+                                  "height": "fill_container"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "b4MG4",
+                              "name": "수산화나트륨 Pct",
+                              "fill": "$text-body",
+                              "content": "90%",
+                              "fontFamily": "$font",
+                              "fontSize": 16,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "JwB8j",
+                              "x": 212,
+                              "y": 0,
+                              "name": "수산화나트륨 LED",
+                              "enabled": false,
+                              "width": 52,
+                              "height": 52,
+                              "fill": "$primary-soft",
+                              "cornerRadius": 999,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "o98WgA",
+                                  "name": "수산화나트륨 Bulb",
+                                  "width": 24,
+                                  "height": 24,
+                                  "icon": "lightbulb",
+                                  "library": "lucide",
+                                  "fill": "$primary"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "K5a9O1",
+                  "name": "Row 황산",
+                  "width": "fill_container",
+                  "fill": "#F5F8FF",
+                  "cornerRadius": "$radius-md",
+                  "stroke": "$primary",
+                  "strokeWidth": 2.5,
+                  "effect": {
+                    "type": "shadow",
+                    "shadowType": "outer",
+                    "color": "#1E2A560D",
+                    "offset": {
+                      "x": 0,
+                      "y": 8
+                    },
+                    "blur": 24
+                  },
+                  "layout": "vertical",
+                  "gap": 14,
+                  "padding": [
+                    22,
+                    26
+                  ],
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "NXD7U",
+                      "name": "황산 Top",
+                      "width": "fill_container",
+                      "gap": 16,
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "jt8mt",
+                          "name": "황산 Check",
+                          "width": 40,
+                          "height": 40,
+                          "fill": "$primary",
+                          "cornerRadius": 999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "H2xMf",
+                              "name": "황산 Check Icon",
+                              "width": 24,
+                              "height": 24,
+                              "icon": "check",
+                              "library": "lucide",
+                              "fill": "#FFFFFF"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "oh0j0",
+                          "name": "황산 IconWrap",
+                          "width": 64,
+                          "height": 64,
+                          "fill": "$primary-soft",
+                          "cornerRadius": 999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "Ggdud",
+                              "name": "황산 Flask",
+                              "width": 30,
+                              "height": 30,
+                              "icon": "flask-conical",
+                              "library": "lucide",
+                              "fill": "$primary"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "O03GQi",
+                          "name": "황산 Names",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 4,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "EzKEI",
+                              "name": "황산 Name",
+                              "fill": "$text-strong",
+                              "content": "황산",
+                              "fontFamily": "$font",
+                              "fontSize": 24,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "jt3BV",
+                              "name": "황산 Sub",
+                              "fill": "$text-muted",
+                              "content": "H₂SO₄ · CAS 7664-93-9",
+                              "fontFamily": "$font",
+                              "fontSize": 16,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "id": "a1lLx",
+                          "type": "ref",
+                          "ref": "gZTOT",
+                          "name": "황산 Badge",
+                          "fill": "$success-soft",
+                          "descendants": {
+                            "XkV6V": {
+                              "content": "비치중",
+                              "fill": "$success"
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "oa4de",
+                      "name": "황산 Meta",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "B9bpp",
+                          "name": "황산 MetaL",
+                          "gap": 20,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "rmWJC",
+                              "name": "황산 Loc",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "Nh2Zr",
+                                  "name": "황산 LocIcon",
+                                  "width": 20,
+                                  "height": 20,
+                                  "icon": "map-pin",
+                                  "library": "lucide",
+                                  "fill": "$text-muted"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "GtzSk",
+                                  "name": "황산 LocText",
+                                  "fill": "$text-body",
+                                  "content": "B · 3행 1열",
+                                  "fontFamily": "$font",
+                                  "fontSize": 17,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "frame",
+                              "id": "qWMLk",
+                              "name": "황산 Expiry",
+                              "gap": 6,
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "DLECz",
+                                  "name": "황산 ExpIcon",
+                                  "width": 20,
+                                  "height": 20,
+                                  "icon": "calendar",
+                                  "library": "lucide",
+                                  "fill": "$text-muted"
+                                },
+                                {
+                                  "type": "text",
+                                  "id": "Z94fXN",
+                                  "name": "황산 ExpText",
+                                  "fill": "$text-body",
+                                  "content": "2027-08-01",
+                                  "fontFamily": "$font",
+                                  "fontSize": 17,
+                                  "fontWeight": "600"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "b6ed0",
+                          "name": "황산 MetaR",
+                          "gap": 14,
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "frame",
+                              "id": "dWe6b",
+                              "name": "황산 Track",
+                              "clip": true,
+                              "width": 150,
+                              "height": 12,
+                              "fill": "$bg-deep",
+                              "cornerRadius": 999,
+                              "children": [
+                                {
+                                  "type": "rectangle",
+                                  "cornerRadius": 999,
+                                  "id": "Cnfpg",
+                                  "name": "황산 Fill",
+                                  "fill": "$primary",
+                                  "width": 105,
+                                  "height": "fill_container"
+                                }
+                              ]
+                            },
+                            {
+                              "type": "text",
+                              "id": "Wwyyb",
+                              "name": "황산 Pct",
+                              "fill": "$text-body",
+                              "content": "70%",
+                              "fontFamily": "$font",
+                              "fontSize": 16,
+                              "fontWeight": "600"
+                            },
+                            {
+                              "type": "frame",
+                              "id": "xPOpD",
+                              "x": 212,
+                              "y": 0,
+                              "name": "황산 LED",
+                              "enabled": false,
+                              "width": 52,
+                              "height": 52,
+                              "fill": "$primary-soft",
+                              "cornerRadius": 999,
+                              "justifyContent": "center",
+                              "alignItems": "center",
+                              "children": [
+                                {
+                                  "type": "icon",
+                                  "id": "r3o05h",
+                                  "name": "황산 Bulb",
+                                  "width": 24,
+                                  "height": 24,
+                                  "icon": "lightbulb",
+                                  "library": "lucide",
+                                  "fill": "$primary"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "type": "frame",
+              "id": "Lk7RJ",
+              "layoutPosition": "absolute",
+              "x": 48,
+              "y": 1564,
+              "name": "Dispose Bar",
+              "width": 1104,
+              "fill": "$surface",
+              "cornerRadius": "$radius-md",
+              "effect": {
+                "type": "shadow",
+                "shadowType": "outer",
+                "color": "#1E2A5626",
+                "offset": {
+                  "x": 0,
+                  "y": 10
+                },
+                "blur": 32
+              },
+              "padding": [
+                18,
+                20,
+                18,
+                30
+              ],
+              "justifyContent": "space_between",
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "Q2Mbj6",
+                  "name": "Dispose Summary",
+                  "layout": "vertical",
+                  "gap": 4,
+                  "children": [
+                    {
+                      "type": "text",
+                      "id": "ax1k7",
+                      "name": "Dispose Title",
+                      "fill": "$text-strong",
+                      "content": "선택한 시약 3개",
+                      "fontFamily": "$font",
+                      "fontSize": 20,
+                      "fontWeight": "700"
+                    },
+                    {
+                      "type": "text",
+                      "id": "KS79k",
+                      "name": "Dispose Names",
+                      "fill": "$text-muted",
+                      "content": "에탄올 · 아세톤 · 황산",
+                      "fontFamily": "$font",
+                      "fontSize": 16,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "F1OWg",
+                  "name": "Dispose Btn",
+                  "fill": "$danger",
+                  "cornerRadius": 999,
+                  "gap": 10,
+                  "padding": [
+                    16,
+                    30
+                  ],
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "K5Fres",
+                      "name": "Dispose Icon",
+                      "width": 22,
+                      "height": 22,
+                      "icon": "trash-2",
+                      "library": "lucide",
+                      "fill": "#FFFFFF"
+                    },
+                    {
+                      "type": "text",
+                      "id": "p9Q2u",
+                      "name": "Dispose Label",
+                      "fill": "#FFFFFF",
+                      "content": "선택 폐기 (3)",
+                      "fontFamily": "$font",
+                      "fontSize": 19,
+                      "fontWeight": "700"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "oJzjF",
+          "type": "ref",
+          "ref": "EANBb",
+          "name": "Bottom Nav",
+          "descendants": {
+            "c9wAA": {
+              "fill": "#FFFFFF00"
+            },
+            "s3amsz": {
+              "fill": "$text-muted"
+            },
+            "Un8X0": {
+              "fill": "$text-muted"
+            },
+            "k2bLeX": {
+              "fill": "#FFFFFF00"
+            },
+            "uY0Kg": {
+              "fill": "$text-muted"
+            },
+            "U54Juf": {
+              "fill": "$text-muted"
+            },
+            "i51Kk2": {
+              "fill": "$primary-soft"
+            },
+            "v20GwD": {
+              "fill": "$primary"
+            },
+            "kNFJo": {
+              "fill": "$primary"
+            }
+          }
+        },
+        {
+          "type": "frame",
+          "id": "r2PNj7",
+          "layoutPosition": "absolute",
+          "x": 0,
+          "y": 0,
+          "name": "Confirm Overlay",
+          "width": 1200,
+          "height": 1920,
+          "fill": "$overlay",
+          "justifyContent": "center",
+          "alignItems": "center",
+          "children": [
+            {
+              "id": "G3Ac1b",
+              "type": "ref",
+              "ref": "iZzjT",
+              "name": "Batch Dispose Modal",
+              "descendants": {
+                "iSSAj": {
+                  "fill": "$danger-soft"
+                },
+                "J03WX": {
+                  "fill": "$danger",
+                  "icon": "trash-2"
+                },
+                "m18Fjg": {
+                  "content": "시약 3개 폐기"
+                },
+                "R4hAZ5": {
+                  "content": "에탄올 · 아세톤 · 황산\n선택한 3개 시약을 폐기 등록할까요?\n재고 목록에서 삭제되며 되돌릴 수 없습니다."
+                },
+                "i9Blpk": {
+                  "content": "취소"
+                },
+                "gjFik": {
+                  "fill": "$danger"
+                },
+                "jRxuZ": {
+                  "content": "3개 폐기하기"
+                }
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "type": "frame",
+      "id": "r155h",
+      "x": 14207,
+      "y": 4716,
+      "name": "app-exception-modals-2",
+      "fill": "#FBFCFF",
+      "cornerRadius": 24,
+      "layout": "vertical",
+      "gap": 32,
+      "padding": 48,
+      "children": [
+        {
+          "type": "text",
+          "id": "OoFTw",
+          "name": "Ex2 Title",
+          "fill": "$text-strong",
+          "content": "예외 모달 (2) — 무단 반입",
+          "fontFamily": "$font",
+          "fontSize": 34,
+          "fontWeight": "700"
+        },
+        {
+          "type": "frame",
+          "id": "IBCop",
+          "name": "Ex Col 4. 반입 스캔 미완료",
+          "layout": "vertical",
+          "gap": 16,
+          "children": [
+            {
+              "type": "text",
+              "id": "tVPK8",
+              "name": "4. 반입 스캔 미완료 Caption",
+              "fill": "$text-muted",
+              "content": "4. 반입 스캔 미완료 (반출중 시약 목록 포함)",
+              "fontFamily": "$font",
+              "fontSize": 20,
+              "fontWeight": "600"
+            },
+            {
+              "type": "frame",
+              "id": "fVWuf",
+              "name": "4. 반입 스캔 미완료 Modal",
+              "width": 720,
+              "fill": "$surface",
+              "cornerRadius": "$radius-lg",
+              "effect": {
+                "type": "shadow",
+                "shadowType": "outer",
+                "color": "#1E2A5633",
+                "offset": {
+                  "x": 0,
+                  "y": 24
+                },
+                "blur": 64
+              },
+              "layout": "vertical",
+              "gap": 24,
+              "padding": [
+                56,
+                48
+              ],
+              "alignItems": "center",
+              "children": [
+                {
+                  "type": "frame",
+                  "id": "N7cnF",
+                  "name": "Modal IconWrap",
+                  "width": 112,
+                  "height": 112,
+                  "fill": "$warning-soft",
+                  "cornerRadius": 999,
+                  "justifyContent": "center",
+                  "alignItems": "center",
+                  "children": [
+                    {
+                      "type": "icon",
+                      "id": "ftU5a",
+                      "name": "Modal Icon",
+                      "width": 52,
+                      "height": 52,
+                      "icon": "package-plus",
+                      "library": "lucide",
+                      "fill": "$warning"
+                    }
+                  ]
+                },
+                {
+                  "type": "text",
+                  "id": "EiNF9",
+                  "name": "Modal Title",
+                  "fill": "$text-strong",
+                  "content": "반입 스캔 미완료 알림",
+                  "fontFamily": "$font",
+                  "fontSize": 32,
+                  "fontWeight": "700"
+                },
+                {
+                  "type": "text",
+                  "id": "VP0Iu",
+                  "name": "Modal Message",
+                  "fill": "$text-body",
+                  "textGrowth": "fixed-width",
+                  "width": "fill_container",
+                  "content": "선반 A · 2행 1열에 반입 스캔 없이 시약이 놓였습니다 (+0.48kg).\n반출했던 시약을 돌려놓으셨다면 지금 반입 스캔으로 기록을 맞춰 주세요.",
+                  "lineHeight": 1.55,
+                  "textAlign": "center",
+                  "fontFamily": "$font",
+                  "fontSize": 22,
+                  "fontWeight": "normal"
+                },
+                {
+                  "type": "frame",
+                  "id": "kbDUC",
+                  "name": "Out List",
+                  "width": "fill_container",
+                  "fill": "$bg",
+                  "cornerRadius": 16,
+                  "layout": "vertical",
+                  "gap": 10,
+                  "padding": [
+                    18,
+                    20
+                  ],
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "Wc5Sj",
+                      "name": "Out List Head",
+                      "width": "fill_container",
+                      "justifyContent": "space_between",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "nr5Zp",
+                          "name": "Out List Title",
+                          "fill": "$text-strong",
+                          "content": "현재 반출중인 시약",
+                          "fontFamily": "$font",
+                          "fontSize": 17,
+                          "fontWeight": "700"
+                        },
+                        {
+                          "type": "frame",
+                          "id": "y3dtck",
+                          "name": "Out Count Pill",
+                          "fill": "$warning-soft",
+                          "cornerRadius": 999,
+                          "padding": [
+                            4,
+                            12
+                          ],
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "aXyuc",
+                              "name": "Out Count",
+                              "fill": "$warning",
+                              "content": "3개",
+                              "fontFamily": "$font",
+                              "fontSize": 14,
+                              "fontWeight": "700"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "fVH08",
+                      "name": "Out Row 아세톤",
+                      "width": "fill_container",
+                      "fill": "$surface",
+                      "cornerRadius": 12,
+                      "gap": 14,
+                      "padding": [
+                        12,
+                        14
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "iFrLr",
+                          "name": "아세톤 IconWrap",
+                          "width": 44,
+                          "height": 44,
+                          "fill": "$danger-soft",
+                          "cornerRadius": 999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "G1J2lH",
+                              "name": "아세톤 Icon",
+                              "width": 22,
+                              "height": 22,
+                              "icon": "flask-conical",
+                              "library": "lucide",
+                              "fill": "$danger"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "ZGo6L",
+                          "name": "아세톤 Texts",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 3,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "PlFhR",
+                              "name": "아세톤 Name",
+                              "fill": "$text-strong",
+                              "content": "아세톤",
+                              "fontFamily": "$font",
+                              "fontSize": 19,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "jxAOM",
+                              "name": "아세톤 Sub",
+                              "fill": "$text-muted",
+                              "content": "김연구 · 2시간 전 반출",
+                              "fontFamily": "$font",
+                              "fontSize": 14,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "L6aVju",
+                          "name": "아세톤 Loc",
+                          "fill": "$bg",
+                          "cornerRadius": 999,
+                          "gap": 5,
+                          "padding": [
+                            5,
+                            10
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "HkgpX",
+                              "name": "아세톤 Loc Icon",
+                              "width": 13,
+                              "height": 13,
+                              "icon": "map-pin",
+                              "library": "lucide",
+                              "fill": "$text-muted"
+                            },
+                            {
+                              "type": "text",
+                              "id": "n1pVJ",
+                              "name": "아세톤 Loc Text",
+                              "fill": "$text-body",
+                              "content": "A · 2행 1열",
+                              "fontFamily": "$font",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "lMAjQ",
+                      "name": "Out Row 메탄올",
+                      "width": "fill_container",
+                      "fill": "$surface",
+                      "cornerRadius": 12,
+                      "gap": 14,
+                      "padding": [
+                        12,
+                        14
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "tV2SY",
+                          "name": "메탄올 IconWrap",
+                          "width": 44,
+                          "height": 44,
+                          "fill": "$danger-soft",
+                          "cornerRadius": 999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "KGsJo",
+                              "name": "메탄올 Icon",
+                              "width": 22,
+                              "height": 22,
+                              "icon": "flask-conical",
+                              "library": "lucide",
+                              "fill": "$danger"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "G64UJ",
+                          "name": "메탄올 Texts",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 3,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "G5HqZm",
+                              "name": "메탄올 Name",
+                              "fill": "$text-strong",
+                              "content": "메탄올",
+                              "fontFamily": "$font",
+                              "fontSize": 19,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "QcHT5",
+                              "name": "메탄올 Sub",
+                              "fill": "$text-muted",
+                              "content": "이실험 · 어제 반출",
+                              "fontFamily": "$font",
+                              "fontSize": 14,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "wWHgG",
+                          "name": "메탄올 Loc",
+                          "fill": "$bg",
+                          "cornerRadius": 999,
+                          "gap": 5,
+                          "padding": [
+                            5,
+                            10
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "MHxXl",
+                              "name": "메탄올 Loc Icon",
+                              "width": 13,
+                              "height": 13,
+                              "icon": "map-pin",
+                              "library": "lucide",
+                              "fill": "$text-muted"
+                            },
+                            {
+                              "type": "text",
+                              "id": "ABXbt",
+                              "name": "메탄올 Loc Text",
+                              "fill": "$text-body",
+                              "content": "B · 1행 2열",
+                              "fontFamily": "$font",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "H8rGn2",
+                      "name": "Out Row 톨루엔",
+                      "width": "fill_container",
+                      "fill": "$surface",
+                      "cornerRadius": 12,
+                      "gap": 14,
+                      "padding": [
+                        12,
+                        14
+                      ],
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "frame",
+                          "id": "kpk6w",
+                          "name": "톨루엔 IconWrap",
+                          "width": 44,
+                          "height": 44,
+                          "fill": "$danger-soft",
+                          "cornerRadius": 999,
+                          "justifyContent": "center",
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "h6Wg4",
+                              "name": "톨루엔 Icon",
+                              "width": 22,
+                              "height": 22,
+                              "icon": "flask-conical",
+                              "library": "lucide",
+                              "fill": "$danger"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "fe4GN",
+                          "name": "톨루엔 Texts",
+                          "width": "fill_container",
+                          "layout": "vertical",
+                          "gap": 3,
+                          "children": [
+                            {
+                              "type": "text",
+                              "id": "C1bvCX",
+                              "name": "톨루엔 Name",
+                              "fill": "$text-strong",
+                              "content": "톨루엔",
+                              "fontFamily": "$font",
+                              "fontSize": 19,
+                              "fontWeight": "700"
+                            },
+                            {
+                              "type": "text",
+                              "id": "iUAPs",
+                              "name": "톨루엔 Sub",
+                              "fill": "$text-muted",
+                              "content": "김연구 · 3일 전 반출",
+                              "fontFamily": "$font",
+                              "fontSize": 14,
+                              "fontWeight": "normal"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "frame",
+                          "id": "Vvn4V",
+                          "name": "톨루엔 Loc",
+                          "fill": "$bg",
+                          "cornerRadius": 999,
+                          "gap": 5,
+                          "padding": [
+                            5,
+                            10
+                          ],
+                          "alignItems": "center",
+                          "children": [
+                            {
+                              "type": "icon",
+                              "id": "ktb7e",
+                              "name": "톨루엔 Loc Icon",
+                              "width": 13,
+                              "height": 13,
+                              "icon": "map-pin",
+                              "library": "lucide",
+                              "fill": "$text-muted"
+                            },
+                            {
+                              "type": "text",
+                              "id": "L5twz",
+                              "name": "톨루엔 Loc Text",
+                              "fill": "$text-body",
+                              "content": "A · 1행 3열",
+                              "fontFamily": "$font",
+                              "fontSize": 13,
+                              "fontWeight": "600"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    {
+                      "type": "text",
+                      "id": "v3i64",
+                      "name": "Out List Hint",
+                      "fill": "$text-muted",
+                      "textGrowth": "fixed-width",
+                      "width": "fill_container",
+                      "content": "목록은 참고용입니다 — 스캔하면 라벨로 시약을 확인하고 기존 기록에 복귀 처리합니다.",
+                      "lineHeight": 1.5,
+                      "fontFamily": "$font",
+                      "fontSize": 13,
+                      "fontWeight": "normal"
+                    }
+                  ]
+                },
+                {
+                  "type": "frame",
+                  "id": "ECxTj",
+                  "name": "Modal Buttons",
+                  "width": "fill_container",
+                  "gap": 16,
+                  "children": [
+                    {
+                      "type": "frame",
+                      "id": "r0HbFb",
+                      "name": "Modal Btn Secondary",
+                      "width": "fill_container",
+                      "height": 84,
+                      "fill": "$bg",
+                      "cornerRadius": 999,
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "vryL2",
+                          "name": "Modal Btn Sec Label",
+                          "fill": "$text-body",
+                          "content": "나중에 하기",
+                          "fontFamily": "$font",
+                          "fontSize": 22,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    },
+                    {
+                      "type": "frame",
+                      "id": "x9abe",
+                      "name": "Modal Btn Primary",
+                      "width": "fill_container",
+                      "height": 84,
+                      "fill": "$warning",
+                      "cornerRadius": 999,
+                      "effect": {
+                        "type": "shadow",
+                        "shadowType": "outer",
+                        "color": "#F5A62340",
+                        "offset": {
+                          "x": 0,
+                          "y": 8
+                        },
+                        "blur": 24
+                      },
+                      "justifyContent": "center",
+                      "alignItems": "center",
+                      "children": [
+                        {
+                          "type": "text",
+                          "id": "WWyTf",
+                          "name": "Modal Btn Pri Label",
+                          "fill": "#FFFFFF",
+                          "content": "지금 스캔하기",
+                          "fontFamily": "$font",
+                          "fontSize": 22,
+                          "fontWeight": "700"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
   ],
   "variables": {

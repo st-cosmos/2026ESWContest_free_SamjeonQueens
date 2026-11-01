@@ -33,7 +33,25 @@ data class UnscannedCheckout(
     val chemical_id: String,
     val chemical_name: String,
     val shelf_id: String,
-    val shelf_desc: String
+    val shelf_desc: String,
+    val since: Double? = null  // 이 회수가 감지된 시각 — 같은 회수를 또 띄우지 않기 위한 식별자
+)
+
+// 무단 반입(반입 스캔 없는 적재) — 유예가 지나도록 청구되지 않은 적재 (현재 상태)
+data class UnscannedCheckin(
+    val shelf_id: String,
+    val shelf_desc: String,
+    val delta_kg: Double,
+    val since: Double? = null
+)
+
+// 서버가 유예 시간 뒤 확정한 무단 반입 이벤트 (WebSocket unscanned_checkin 과 동일 필드)
+data class UnscannedCheckinEvent(
+    val event_id: String,
+    val shelf_id: String,
+    val shelf_desc: String,
+    val delta_kg: Double,
+    val detected_at: String
 )
 
 data class ExpiredChemical(
@@ -56,16 +74,31 @@ data class CoStorageWarning(
     val recommended_safe_shelf_desc: String? = null
 )
 
+// 서버가 유예 시간 뒤 확정한 무단 반출 이벤트 (WebSocket unscanned_checkout 과 동일 필드)
+data class UnscannedEvent(
+    val event_id: String,
+    val chemical_id: String,
+    val chemical_name: String,
+    val shelf_desc: String,
+    val detected_at: String
+)
+
 data class ChemicalAlerts(
     val unscanned_checkouts: List<UnscannedCheckout>,
     val expired_chemicals: List<ExpiredChemical>,
-    val co_storage_warnings: List<CoStorageWarning>
+    val co_storage_warnings: List<CoStorageWarning>,
+    // 구버전 서버는 이 필드가 없을 수 있어 nullable (Gson 은 누락 필드를 null 로 둔다)
+    val unscanned_events: List<UnscannedEvent>? = null,
+    val unscanned_checkins: List<UnscannedCheckin>? = null,
+    val unscanned_checkin_events: List<UnscannedCheckinEvent>? = null
 )
 
 data class ScanInRequest(
     val ocr_text: String,
     val username: String,
-    val chemical_name: String? = null  // 매칭/확인이 끝난 표준명 (서버 매칭 생략)
+    val chemical_name: String? = null,  // 매칭/확인이 끝난 표준명 (서버 매칭 생략)
+    // 병을 이미 올려놓은 칸 (무단 반입 알림의 '지금 스캔하기') — 서버가 그 적재를 청구해 즉시 확정
+    val claim_shelf_id: String? = null
 )
 
 data class ExpirationRequest(
@@ -78,7 +111,11 @@ data class ScanInResponse(
     val has_history: Boolean,
     val recommended_shelf: String?,
     val recommended_shelf_desc: String,
-    val timeout_seconds: Double
+    val timeout_seconds: Double,
+    // 병이 이미 선반에 있어 스캔만으로 즉시 확정된 경우 (안착 대기 없음)
+    val already_placed: Boolean? = null,
+    val chemical_id: String? = null,
+    val placed_shelf_id: String? = null
 )
 
 data class ScanOutRequest(
@@ -216,7 +253,9 @@ data class SelectLedResponse(
 data class RelocateRequest(
     val chemical_id: String,
     val target_shelf_id: String,
-    val username: String
+    val username: String,
+    // "co_storage": 혼재 경고 → 안전 위치로 이동 (완료 시 처음 칸 기록을 남기지 않음)
+    val reason: String? = null
 )
 
 data class CheckinSessionState(
