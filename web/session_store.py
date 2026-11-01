@@ -12,6 +12,7 @@ checkin_session = {
     "username": "",
     "expiration_date": None,
     "capacity_kg": None,     # 라벨/사진으로 추정한 가득 총 무게 — 안착 시 병에 기록
+    "capacity_is_default": False,  # 위 값이 내용량 표기 없이 정한 기본값인가 (새 병에만 적용)
     # 지정 위치로 옮기기 세션: 이미 반입 기록된 병을 다른 칸으로 옮겨 놓는 중.
     # 값이 있으면 무게 증가를 신규 반입이 아니라 이 병의 위치 이동으로 처리한다.
     "relocate_chemical_id": "",
@@ -30,6 +31,7 @@ def reset_checkin():
     checkin_session["username"] = ""
     checkin_session["expiration_date"] = None
     checkin_session["capacity_kg"] = None
+    checkin_session["capacity_is_default"] = False
     checkin_session["relocate_chemical_id"] = ""
     checkin_session["target_shelf_id"] = ""
     checkin_session["relocate_reason"] = ""

@@ -25,8 +25,8 @@ import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
 // 잔량 % 환산: 병별 capacity_kg(라벨/사진 추정 + 실측 래칫)을 우선 쓰고,
-// 미추정 병은 가득 = 500g 폴백 (web Inventory.tsx 와 동일 기준)
-private const val CAPACITY_KG = 0.5
+// 미추정 병은 가득 = 520g 폴백 (web Inventory.tsx·서버 용량 추정 기본값과 동일 기준)
+private const val CAPACITY_KG = 0.52
 private const val DANGER_PCT = 25
 
 /**

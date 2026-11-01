@@ -8,6 +8,7 @@ import device_status
 import models
 import routes.chemicals as chemical_routes
 import schemas
+import services.capacity as capacity
 import services.llm_safety as llm_safety
 import unscanned_alert
 from session_store import checkin_session, reset_checkin
@@ -380,10 +381,18 @@ def _handle_checkin_increase(db: Session, shelf: models.Shelf, delta_kg: float):
 
     # 병별 용량(가득 총 무게) 래칫 — 라벨/사진 추정치와 실측 무게 중 큰 값.
     # 가득 병이 반입되면 실측이 곧 용량이고, 반쯤 쓴 병 재반입은 기존 값을 유지한다.
+    # 내용량 표기 없이 정한 기본값(0.52/0.12 kg)은 처음 등록하는 병에만 쓴다 — 이미 용량이
+    # 있는 병에 쓰면 래칫이라 다시 내려오지 않아 작은 병이 0.52 kg 으로 굳는다.
+    is_new = moving is None and restored is None
     est_cap = checkin_session.get("capacity_kg")
+    if est_cap and checkin_session.get("capacity_is_default") and not is_new:
+        est_cap = None
     chem.capacity_kg = round(
         max(v for v in (est_cap, measured, chem.capacity_kg) if v), 2
     )
+    if is_new and not checkin_session.get("capacity_kg"):
+        # 추정이 아직 안 왔다 — 늦게 오는 기본값을 이 새 병에만 적용할 수 있게 표시
+        capacity.mark_new_without_estimate(chem.id)
 
     # LLM 기반 혼재 금지 시약 정보 분석 및 저장
     llm_safety.ensure_chemical_incompatibility_info(chem, db)

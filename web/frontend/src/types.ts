@@ -24,7 +24,7 @@ export interface Chemical {
   manufacturer: string | null;
   incompatible_chemicals?: string | null;
   incompatible_reason?: string | null;
-  // 가득 찼을 때 총 무게(kg) — 라벨/사진 추정 + 반입 실측 래칫. 없으면 500g 폴백.
+  // 가득 찼을 때 총 무게(kg) — 라벨/사진 추정 + 반입 실측 래칫. 없으면 520g 폴백.
   capacity_kg?: number | null;
 }
 

@@ -111,16 +111,17 @@ def estimate_capacity(req: schemas.CapacityEstimateRequest, db: Session = Depend
     실리고, 세션이 이미 끝났으면 방금 반입된 같은 이름의 병에 바로 반영한다."""
     images = req.images_b64 or ([req.image_b64] if req.image_b64 else [])
     est = capacity.estimate_capacity(req.chemical_name, req.ocr_text, images)
-    if not est:
-        return {"status": "no_estimate", "capacity_kg": None}
 
     if checkin_session["active"] and checkin_session["chemical_name"] == req.chemical_name:
         checkin_session["capacity_kg"] = est["capacity_kg"]
+        checkin_session["capacity_is_default"] = est["is_default"]
     else:
         chem = db.query(models.Chemical).filter(
             models.Chemical.name == req.chemical_name
         ).order_by(models.Chemical.time_in.desc()).first()
-        if chem:
+        # 내용량 표기 없이 정한 기본값은 이번 반입으로 처음 등록된 병에만 쓴다 —
+        # 이미 용량이 있는 병을 기본값으로 덮지 않는다 (래칫이라 다시 내려오지 않음)
+        if chem and (not est["is_default"] or capacity.take_new_without_estimate(chem.id)):
             chem.capacity_kg = round(
                 max(est["capacity_kg"], chem.weight or 0.0, chem.capacity_kg or 0.0), 2
             )
