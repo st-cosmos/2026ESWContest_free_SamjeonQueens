@@ -140,6 +140,79 @@ def names_match(item: str, name: str) -> bool:
     return _mentions(item, name) or any(kw in name for kw in _category_keywords(item))
 
 
+# ==============================================================================
+# 데모 시약 고정 혼재표
+# 데모에 쓰는 네 시약끼리는 LLM 답이 흔들려도 판정이 바뀌지 않도록 표로 고정한다.
+# 네 시약 사이의 혼재 금지 조합은 아래 두 개뿐이고, 나머지 네 조합은 경고하지 않는다.
+#   수산화나트륨 + 묽은 염산 / 수산화나트륨 + 아세트산
+# 데모 시약은 Gemini 를 부르지 않는다. 표에 없는 시약이 끼면 기존대로 각 병의
+# 목록(LLM·대체 규칙)을 서로 대조한다.
+# ==============================================================================
+# 표준명 → 이름 표기들. 공백·농도·괄호 표기를 지운 뒤 '정확히' 같아야 한다 —
+# 부분 일치로 하면 아세트산에틸·아세트산나트륨·염산염 같은 다른 물질까지 걸린다.
+_DEMO_NAMES = {
+    "염화나트륨": {"염화나트륨", "염화나트륨용액", "염화나트륨수용액", "식염수", "생리식염수",
+                "nacl", "sodiumchloride", "sodiumchloridesolution"},
+    "아세트산": {"아세트산", "초산", "빙초산", "빙아세트산", "아세트산용액",
+              "aceticacid", "glacialaceticacid"},
+    "수산화나트륨": {"수산화나트륨", "수산화나트륨용액", "수산화나트륨수용액", "가성소다",
+                 "naoh", "sodiumhydroxide"},
+    # 이 시스템의 표준명은 "염산 1M" — 농도 표기를 지우면 "염산"
+    "묽은 염산": {"염산", "묽은염산", "희염산", "염산용액", "염산수용액", "hcl", "hydrochloricacid"},
+}
+_DEMO_PAIR_REASONS = {
+    frozenset(("수산화나트륨", "묽은 염산")):
+        "강염기인 수산화나트륨과 염산이 섞이면 중화 반응으로 열이 나고, 용액이 끓어 튈 수 있습니다.",
+    frozenset(("수산화나트륨", "아세트산")):
+        "강염기인 수산화나트륨과 아세트산이 섞이면 중화 반응으로 열이 나고, 진한 아세트산이면 격렬하게 끓어 튈 수 있습니다.",
+}
+# 병 기록에 저장할 목록·사유 (웹 재고 화면에 그대로 보인다)
+_DEMO_INFO = {
+    "염화나트륨": ([], "고정 혼재표: 아세트산·수산화나트륨·묽은 염산과 함께 두어도 위험한 반응이 없습니다."),
+    "아세트산": (["수산화나트륨"], "고정 혼재표: " + _DEMO_PAIR_REASONS[frozenset(("수산화나트륨", "아세트산"))]),
+    "수산화나트륨": (["묽은 염산", "아세트산"],
+                 "고정 혼재표: 묽은 염산·아세트산과 섞이면 중화 반응으로 열이 나고, 용액이 끓어 튈 수 있습니다."),
+    "묽은 염산": (["수산화나트륨"], "고정 혼재표: " + _DEMO_PAIR_REASONS[frozenset(("수산화나트륨", "묽은 염산"))]),
+}
+
+
+def _demo_norm(name: str) -> str:
+    s = (name or "").lower()
+    s = re.sub(r"\([^)]*\)|\[[^\]]*\]", "", s)  # 괄호 속 부가 표기
+    # 농도 표기 (1M, 0.1 N, 0.9 w/v%, 99.5%) — 단위 뒤에 영문이 이어지면 단위가 아니다 ("2 NaOH")
+    s = re.sub(r"[\d.]+\s*(?:(?:mol/l|mol|m|n|w/v|v/v|w/w)(?![a-z]))?\s*%?", "", s)
+    return re.sub(r"[\s·,_/%-]+", "", s)
+
+
+def demo_key(name: str):
+    """데모 시약이면 표의 표준명("염화나트륨"·"아세트산"·"수산화나트륨"·"묽은 염산"), 아니면 None."""
+    n = _demo_norm(name)
+    for key, names in _DEMO_NAMES.items():
+        if n in names:
+            return key
+    return None
+
+
+def demo_info(name: str):
+    """데모 시약이면 (저장할 혼재 금지 목록, 사유), 아니면 None."""
+    key = demo_key(name)
+    return _DEMO_INFO[key] if key else None
+
+
+def pair_incompatible(name_a: str, items_a, name_b: str, items_b):
+    """두 병을 같은 행에 두면 안 되는가 → (혼재 여부, 고정 표의 사유 또는 None).
+
+    둘 다 데모 시약이면 고정 표만 본다 — 저장된 목록이 무엇이든 표가 정한 두 조합만 경고한다.
+    하나라도 데모 시약이 아니면 양쪽 목록을 서로 대조한다 (상대 목록이 이 병을 지목해도 위험).
+    """
+    ka, kb = demo_key(name_a), demo_key(name_b)
+    if ka and kb:
+        reason = None if ka == kb else _DEMO_PAIR_REASONS.get(frozenset((ka, kb)))
+        return reason is not None, reason
+    hit = incompatible_with(name_a, items_a, name_b) or incompatible_with(name_b, items_b, name_a)
+    return hit, None
+
+
 def get_fallback_incompatibility(chemical_name: str) -> Dict[str, Any]:
     """LLM 미사용 또는 오류 시 작동하는 룰 기반 대체 분석기"""
     name_clean = chemical_name.strip()
@@ -239,7 +312,19 @@ def fetch_incompatible_chemicals_from_llm(chemical_name: str) -> Dict[str, Any]:
 
 
 def ensure_chemical_incompatibility_info(chem, db):
-    """시약 객체 chem에 혼재 금지 정보가 없을 경우 LLM/Fallback으로 채우고 저장합니다."""
+    """시약 객체 chem에 혼재 금지 정보가 없을 경우 LLM/Fallback으로 채우고 저장합니다.
+
+    데모 시약은 Gemini 를 부르지 않고 고정 혼재표 값으로 맞춘다 — 이전에 LLM·대체 규칙으로
+    저장된 목록도 다음 조회 때 표 값으로 바뀐다."""
+    fixed = demo_info(chem.name)
+    if fixed is not None:
+        items_json = json.dumps(fixed[0], ensure_ascii=False)
+        if chem.incompatible_chemicals != items_json or chem.incompatible_reason != fixed[1]:
+            chem.incompatible_chemicals = items_json
+            chem.incompatible_reason = fixed[1]
+            db.commit()
+            db.refresh(chem)
+        return chem
     if not chem.incompatible_chemicals:
         info = fetch_incompatible_chemicals_from_llm(chem.name)
         # 자기 자신을 가리키는 항목은 뺀다 — 같은 시약 병끼리 혼재로 뜨는 원인
@@ -274,8 +359,8 @@ def find_recommended_safe_shelf(chem, db):
                 # (양방향 — 상대 목록이 이 시약을 지목하는 경우도 위험)
                 if (s.row or 1) == (other_shelf.row or 1):
                     other_list = json.loads(other.incompatible_chemicals) if other.incompatible_chemicals else []
-                    if (incompatible_with(chem.name, incomp_list, other.name)
-                            or incompatible_with(other.name, other_list, chem.name)):
+                    # 데모 시약끼리는 고정 혼재표, 그 외에는 양쪽 목록 대조
+                    if pair_incompatible(chem.name, incomp_list, other.name, other_list)[0]:
                         is_safe = False
                         break
         if is_safe:

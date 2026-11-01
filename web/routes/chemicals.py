@@ -465,9 +465,10 @@ def get_alerts(db: Session = Depends(get_db)):
             incomp1 = json.loads(c1.incompatible_chemicals) if c1.incompatible_chemicals else []
             incomp2 = json.loads(c2.incompatible_chemicals) if c2.incompatible_chemicals else []
 
-            # 직접 지목 + 카테고리명("강산"·"강염기" 등) 확장 매칭, 산끼리는 직접 지목만 인정
-            is_incompatible = (llm_safety.incompatible_with(c1.name, incomp1, c2.name)
-                               or llm_safety.incompatible_with(c2.name, incomp2, c1.name))
+            # 데모 시약끼리는 고정 혼재표로만 판정한다. 그 외에는 직접 지목 + 카테고리명
+            # ("강산"·"강염기" 등) 확장 매칭, 산끼리는 직접 지목만 인정
+            is_incompatible, fixed_reason = llm_safety.pair_incompatible(
+                c1.name, incomp1, c2.name, incomp2)
 
             if is_incompatible:
                 safe_id, safe_desc = llm_safety.find_recommended_safe_shelf(c1, db)
@@ -480,7 +481,7 @@ def get_alerts(db: Session = Depends(get_db)):
                     "chemical_2_name": c2.name,
                     "shelf_desc": f"선반 {s1_desc} 및 {s2_desc}",
                     "message": f"🚨 [혼재 위험] {c1.name}와(과) {c2.name}은(는) 인접 보관 금지 시약입니다.",
-                    "reason": c1.incompatible_reason or c2.incompatible_reason or "인접 보관 시 격렬한 반응, 유독가스 또는 화재/폭발 위험",
+                    "reason": fixed_reason or c1.incompatible_reason or c2.incompatible_reason or "인접 보관 시 격렬한 반응, 유독가스 또는 화재/폭발 위험",
                     "recommended_safe_shelf_id": safe_id,
                     "recommended_safe_shelf_desc": safe_desc
                 })
