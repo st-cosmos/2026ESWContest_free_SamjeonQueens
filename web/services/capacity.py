@@ -135,7 +135,7 @@ full_weight_kg 를 null 로 해.
 {{"net_content": "500 mL", "container": "갈색 유리병", "estimated_from": "label",
   "confidence": "high", "full_weight_kg": 0.62}}"""
 
-    model = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
+    model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
     parts = [{"text": prompt}]
     for img in (images_b64 or [])[:3]:

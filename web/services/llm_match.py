@@ -59,9 +59,10 @@ def identify_chemical_from_ocr(ocr_text: str, known_names: list,
 
 마크다운 없이 순수 JSON만 출력해: {{"name": "...", "label_text": "..."}}"""
 
-    # flash 계열은 기본 thinking 때문에 15~20초씩 걸린다 — 스캔 폴백에는
-    # 1초대에 답하는 lite 가 적합 (실측: 3.1-flash-lite 1.0s vs 3.6-flash 21s)
-    model = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
+    # flash 계열은 기본 thinking 때문에 15~20초씩 걸린다 — 스캔 폴백에는 lite 가 적합
+    # (실측: 3.6-flash 21s). 3.1-flash-lite 는 2026-11 "high demand" 503 이 계속돼
+    # 3.5-flash-lite 로 옮김 (실측: 글자만 1.0s, 라벨 사진 포함 1.6~3.5s)
+    model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
     parts = [{"text": prompt}]
     if image_b64:

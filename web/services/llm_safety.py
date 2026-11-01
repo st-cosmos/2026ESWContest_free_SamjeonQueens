@@ -196,7 +196,7 @@ def fetch_incompatible_chemicals_from_llm(chemical_name: str) -> Dict[str, Any]:
     """
 
     # 반입 처리 경로를 막지 않도록 응답이 빠른 lite 를 기본으로 쓴다 (GEMINI_MODEL 로 변경 가능)
-    model = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
+    model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
     payload = {
         "contents": [
