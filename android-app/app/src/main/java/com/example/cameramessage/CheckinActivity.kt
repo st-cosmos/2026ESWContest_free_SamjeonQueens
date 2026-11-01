@@ -75,6 +75,8 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
     private var recommendedShelfId: String? = null
     private var recommendedShelfDesc: String = ""
     private var scannedName: String = ""  // 세션 완료 후 결과 조회용 (세션 리셋 시 이름이 비므로)
+    // 라벨 인식 직후 등록해 둔 유통기한 (날짜, 출처) — 안착 완료 모달에서 함께 안내
+    private var pendingExpiry: Pair<String, String>? = null
     // '지정 위치로 옮기기' 진행 중인 병 — 지정 칸 안착(또는 타임아웃)까지 유지
     private var relocatingChemId: String? = null
 
@@ -315,6 +317,7 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
                     recommendedShelfId = response.recommended_shelf
                     recommendedShelfDesc = response.recommended_shelf_desc
                     currentNewItem = !response.has_history
+                    pendingExpiry = null
                     showScanResult(response)
                     startSessionPolling()
                     learnMatch(name, barcode, learnToken)
@@ -378,19 +381,13 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
         return null
     }
 
+    /** 유통기한을 반입 세션에 조용히 등록한다. 등록 완료 안내는 라벨 인식 시점이 아니라
+     *  로드셀이 무게 증가(선반 안착)를 감지했을 때 최종 완료 모달에서 함께 보여준다. */
     private fun submitExpirationDate(date: String, note: String) {
         lifecycleScope.launch {
             try {
                 NetworkClient.api.setCheckinExpiration(ExpirationRequest(date))
-                AppModal.show(
-                    this@CheckinActivity, AppModal.Tone.SUCCESS, R.drawable.ic_circle_check,
-                    "등록 완료",
-                    "새 시약 등록이 완료되었습니다.\n" +
-                            "유통기한: $date ($note)\n" +
-                            "잘못됐다면 웹 재고 관리에서 수정할 수 있어요.",
-                    null, "확인",
-                    dateBadge = date
-                )
+                pendingExpiry = date to note
             } catch (e: Exception) {
                 Toast.makeText(this@CheckinActivity, "유통기한 등록 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show()
             }
@@ -640,12 +637,18 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
             // 신규 시약 → 등록 완료 success 모달 (§3.8)
             currentNewItem -> {
                 setStatusSuccess("등록 완료", "선반 안착 확인")
+                val expiry = pendingExpiry
                 AppModal.show(
                     this, AppModal.Tone.SUCCESS, R.drawable.ic_check,
                     "신규 시약 등록 완료",
-                    "신규 시약 [${chemical.name}]이(가)\n${placedShelfDesc}에 등록 완료되었습니다.",
+                    "신규 시약 [${chemical.name}]이(가)\n${placedShelfDesc}에 등록 완료되었습니다." +
+                            (expiry?.let {
+                                "\n유통기한: ${it.first} (${it.second})\n" +
+                                        "잘못됐다면 웹 재고 관리에서 수정할 수 있어요."
+                            } ?: ""),
                     null, "확인",
-                    autoDismissMs = 3000L,
+                    autoDismissMs = if (expiry != null) 5000L else 3000L,
+                    dateBadge = expiry?.first,
                     onPrimary = { resetScanState() }
                 )
             }
@@ -759,6 +762,7 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
 
     private fun resetScanState() {
         currentNewItem = false
+        pendingExpiry = null
         recommendedShelfId = null
         recommendedShelfDesc = ""
         scannedName = ""
