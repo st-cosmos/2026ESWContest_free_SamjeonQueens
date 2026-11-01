@@ -253,7 +253,9 @@ data class SelectLedResponse(
 data class RelocateRequest(
     val chemical_id: String,
     val target_shelf_id: String,
-    val username: String
+    val username: String,
+    // "co_storage": 혼재 경고 → 안전 위치로 이동 (완료 시 처음 칸 기록을 남기지 않음)
+    val reason: String? = null
 )
 
 data class CheckinSessionState(

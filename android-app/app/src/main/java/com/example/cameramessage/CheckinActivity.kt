@@ -91,6 +91,10 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
     private var pendingExpiry: Pair<String, String>? = null
     // '지정 위치로 옮기기' 진행 중인 병 — 지정 칸 안착(또는 타임아웃)까지 유지
     private var relocatingChemId: String? = null
+    // 혼재 경고 → '안전 위치로 이동' 진행 중: 추천 칸 안착이 확인돼야 완료된다
+    private var safeRelocation = false
+    private var safeTargetShelfId: String? = null
+    private var safeTargetDesc: String = ""
 
     // 세션 완료를 폴링 루프와 WebSocket 트리거가 동시에 감지해 완료 모달이
     // 두 번 뜨는 것을 막기 위한 가드. 서버는 완료 결과를 다음 세션 시작
@@ -665,6 +669,12 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
             it.chemical_1_id == chemical.id || it.chemical_2_id == chemical.id
         }
 
+        // 안전 위치 이동이 끝났고 혼재 위험도 사라짐 → 추천 칸에 놓였는지 확인해 마무리
+        if (safeRelocation && coWarning == null) {
+            finishSafeRelocation(chemical, placedShelfId, placedShelfDesc)
+            return
+        }
+
         if (coWarning != null) {
             // 이 화면에서 이동 선택지와 함께 보여 주므로, 홈 등의 예외 모달이 같은 경고를 또 띄우지 않게 표시
             ExceptionDialogHelper.markCoStorageHandled(coWarning)
@@ -677,23 +687,7 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
                         "${coWarning.message}\n💡 ${reasonText}\n\n" +
                         "👉 추천 이동 위치: ${safeDesc}",
                 "이 위치 유지", "안전 위치로 이동",
-                onPrimary = {
-                    lifecycleScope.launch {
-                        val visual = buildShelfVisual(coWarning.recommended_safe_shelf_id)
-                        AppModal.show(
-                            this@CheckinActivity, AppModal.Tone.SUCCESS, R.drawable.ic_map_pin,
-                            "추천 안전 보관 위치 안내",
-                            if (visual != null)
-                                "'${chemical.name}'을(를) 아래 추천 위치로\n옮겨서 안착해 주세요."
-                            else
-                                "[${chemical.name}]을(를)\n${safeDesc}(으)로 이동하여 안착해 주세요.",
-                            null, "확인",
-                            autoDismissMs = 6000L,
-                            shelfVisual = visual,
-                            onPrimary = { resetScanState() }
-                        )
-                    }
-                },
+                onPrimary = { startSafeRelocation(chemical, coWarning) },
                 onSecondary = { resetScanState() }
             )
             return
@@ -784,13 +778,106 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
         }
     }
 
+    /** '안전 위치로 이동': 서버에 안전 위치 이동 세션(reason=co_storage)을 열고 추천 칸
+     *  안착을 기다린다. 완료되면 서버가 반입 기록을 안전 위치로 고쳐 써서 혼재 금지 칸에
+     *  있었던 흔적이 남지 않는다. 추천 칸이 특정되지 않으면(안전한 빈 칸 없음) 안내만 한다. */
+    private fun startSafeRelocation(chemical: ChemicalData, warning: CoStorageWarning) {
+        val safeDesc = warning.recommended_safe_shelf_desc ?: "선반 C · 분리 보관 구역"
+        val targetId = warning.recommended_safe_shelf_id
+        lifecycleScope.launch {
+            val visual = buildShelfVisual(targetId)
+            val guide = if (visual != null)
+                "'${chemical.name}'을(를) 아래 추천 위치로\n옮겨서 안착해 주세요."
+            else
+                "[${chemical.name}]을(를)\n${safeDesc}(으)로 이동하여 안착해 주세요."
+
+            if (targetId == null) {
+                AppModal.show(
+                    this@CheckinActivity, AppModal.Tone.SUCCESS, R.drawable.ic_map_pin,
+                    "추천 안전 보관 위치 안내", guide, null, "확인",
+                    autoDismissMs = 6000L, shelfVisual = visual,
+                    onPrimary = { resetScanState() }
+                )
+                return@launch
+            }
+
+            try {
+                NetworkClient.api.relocateCheckin(
+                    RelocateRequest(chemical.id, targetId, currentUser, reason = "co_storage")
+                )
+            } catch (e: Exception) {
+                Toast.makeText(
+                    this@CheckinActivity,
+                    httpErrorDetail(e) ?: "안전 위치 이동 요청 실패 — 현재 위치로 기록되어 있습니다.",
+                    Toast.LENGTH_SHORT
+                ).show()
+                resetScanState()
+                return@launch
+            }
+
+            relocatingChemId = chemical.id
+            safeRelocation = true
+            safeTargetShelfId = targetId
+            safeTargetDesc = safeDesc
+            scannedName = chemical.name
+            binding.scanStatusText.text = "안착 감지 중"
+            setStatusWaiting("안전 위치로 옮겨 주세요", "$safeDesc 안착 감지 중")
+            startSessionPolling()
+
+            // 안내 모달은 닫혀도 안착 대기는 계속된다 (완료·타임아웃은 세션 폴링이 감지)
+            AppModal.show(
+                this@CheckinActivity, AppModal.Tone.SUCCESS, R.drawable.ic_map_pin,
+                "추천 안전 보관 위치 안내", guide, null, "확인",
+                autoDismissMs = 6000L, shelfVisual = visual
+            )
+        }
+    }
+
+    /** 안전 위치 이동 세션이 혼재 위험 없이 끝남 — 추천 칸이면 완료, 다른 칸이면 그 위치로 기록됐음을 알린다 */
+    private fun finishSafeRelocation(chemical: ChemicalData, placedShelfId: String, placedShelfDesc: String) {
+        if (placedShelfId == safeTargetShelfId) {
+            setStatusSuccess("이동 완료", "안전 위치 안착 확인")
+            AppModal.show(
+                this, AppModal.Tone.SUCCESS, R.drawable.ic_check,
+                "안전 위치 이동 완료",
+                "[${chemical.name}]이(가)\n${placedShelfDesc}에 안전하게 보관되었습니다.\n" +
+                        "보관 기록은 이 위치로 남고, 처음 놓였던 칸은 기록되지 않습니다.",
+                null, "확인",
+                autoDismissMs = 4000L,
+                onPrimary = { resetScanState() }
+            )
+        } else {
+            setStatusSuccess("위치 변경 완료", "현재 위치로 등록됨")
+            AppModal.show(
+                this, AppModal.Tone.WARNING, R.drawable.ic_triangle_alert,
+                "추천 위치가 아닌 곳에 놓였습니다",
+                "[${chemical.name}]이(가) 추천 위치(${safeTargetDesc})가 아닌\n" +
+                        "${placedShelfDesc}에 안착되었습니다.\n혼재 위험은 없어 이 위치로 기록되었습니다.",
+                null, "확인",
+                onPrimary = { resetScanState() }
+            )
+        }
+    }
+
     /** 제한 시간 안에 지정 칸 안착이 감지되지 않음 — 기록은 처음 놓인 칸 그대로다 */
     private fun showRelocateTimeout(chemical: ChemicalData?) {
         binding.statusIcon.clearAnimation()
+        val name = chemical?.name ?: scannedName
+        if (safeRelocation) {
+            AppModal.show(
+                this, AppModal.Tone.WARNING, R.drawable.ic_triangle_alert,
+                "안전 위치 안착이 확인되지 않았습니다",
+                "${name}이(가) ${safeTargetDesc}에 놓인 것을 확인하지 못했습니다.\n" +
+                        "보관 위치는 처음 안착된 칸으로 기록되어 있고, 혼재 경고도 그대로 유지됩니다.",
+                null, "확인",
+                onPrimary = { resetScanState() }
+            )
+            return
+        }
         AppModal.show(
             this, AppModal.Tone.WARNING, R.drawable.ic_triangle_alert,
             "지정 위치 안착이 확인되지 않았습니다",
-            "${chemical?.name ?: scannedName}이(가) ${recommendedShelfDesc}에 놓인 것을 " +
+            "${name}이(가) ${recommendedShelfDesc}에 놓인 것을 " +
                     "확인하지 못했습니다.\n보관 위치는 처음 안착된 칸으로 기록되어 있습니다.",
             null, "확인",
             onPrimary = { resetScanState() }
@@ -834,6 +921,9 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
         recommendedShelfDesc = ""
         scannedName = ""
         relocatingChemId = null
+        safeRelocation = false
+        safeTargetShelfId = null
+        safeTargetDesc = ""
         activeSessionJob?.cancel()
 
         binding.statusIcon.clearAnimation()
