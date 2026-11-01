@@ -1,6 +1,5 @@
 package com.example.cameramessage
 
-import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Typeface
@@ -9,11 +8,11 @@ import android.text.Editable
 import android.text.TextWatcher
 import android.view.HapticFeedbackConstants
 import android.view.LayoutInflater
-import android.view.MotionEvent
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
@@ -30,12 +29,10 @@ import kotlin.math.roundToInt
 private const val CAPACITY_KG = 0.5
 private const val DANGER_PCT = 25
 
-// 시약 카드를 이 시간(ms) 이상 꾹 누르면 폐기 확인 모달을 띄운다
-private const val DISPOSE_HOLD_MS = 2000L
-
 /**
- * app-inventory (design.pen)
+ * app-inventory / app-inventory-edit (design.pen)
  * 웹 재고 관리와 동일한 시약 리스트: 검색 · 필터 칩 · 상태 배지 · 잔량 바 · 위치 LED 점등.
+ * 카드를 길게 누르면 편집 모드 — 여러 시약을 선택해 한 번에 폐기한다.
  */
 class InventoryActivity : AppCompatActivity() {
 
@@ -58,6 +55,14 @@ class InventoryActivity : AppCompatActivity() {
     private var currentUser = ""
     private val chipViews = linkedMapOf<Filter, TextView>()
 
+    // 편집 모드: 5초 폴링으로 리스트가 다시 그려져도 선택이 유지되도록 id 로 보관
+    private var editMode = false
+    private val selectedIds = linkedSetOf<String>()
+    private var disposing = false
+    private val exitEditOnBack = object : OnBackPressedCallback(false) {
+        override fun handleOnBackPressed() = exitEditMode()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityInventoryBinding.inflate(layoutInflater)
@@ -70,6 +75,9 @@ class InventoryActivity : AppCompatActivity() {
         NavBar.setup(binding.bottomNav, this, NavBar.TAB_INVENTORY)
 
         buildChips()
+        onBackPressedDispatcher.addCallback(this, exitEditOnBack)
+        binding.editDoneBtn.setOnClickListener { exitEditMode() }
+        binding.disposeBtn.setOnClickListener { confirmDisposeSelected() }
         binding.searchInput.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
             override fun onTextChanged(s: CharSequence?, a: Int, b: Int, c: Int) {}
@@ -200,11 +208,26 @@ class InventoryActivity : AppCompatActivity() {
             matchQ && matchF
         }
 
+        // 다른 기기에서 이미 폐기·삭제된 시약은 선택에서 뺀다
+        if (loaded) selectedIds.retainAll(chemicals.map { it.id }.toSet())
+
         binding.chemListLayout.removeAllViews()
         binding.emptyText.visibility = if (filtered.isEmpty()) View.VISIBLE else View.GONE
         binding.emptyText.text =
             if (!loaded) "데이터를 불러오는 중입니다..." else "검색 결과가 없습니다."
         filtered.forEach { chem -> binding.chemListLayout.addView(buildRow(chem)) }
+        renderEditBars()
+    }
+
+    private fun renderEditBars() {
+        binding.editBar.visibility = if (editMode) View.VISIBLE else View.GONE
+        val picked = chemicals.filter { it.id in selectedIds }
+        binding.editCount.text = "${picked.size}개 선택됨"
+        binding.disposeBar.visibility =
+            if (editMode && picked.isNotEmpty()) View.VISIBLE else View.GONE
+        binding.disposeTitle.text = "선택한 시약 ${picked.size}개"
+        binding.disposeNames.text = picked.joinToString(" · ") { it.name }
+        binding.disposeBtnText.text = "선택 폐기 (${picked.size})"
     }
 
     private fun buildRow(chem: ChemicalData): View {
@@ -261,68 +284,106 @@ class InventoryActivity : AppCompatActivity() {
         b.invPct.text = "$pct%"
         if (low) b.invPct.setTextColor(color(R.color.danger))
 
-        if (isOut) {
+        if (editMode) {
+            // 편집 중 LED 버튼은 숨긴다 — 선택하려다 LED가 켜지는 오조작 방지
+            b.invLedBtn.visibility = View.GONE
+            val selected = chem.id in selectedIds
+            b.invCheck.visibility = View.VISIBLE
+            if (selected) {
+                b.invCheck.setBackgroundResource(R.drawable.shape_circle)
+                b.invCheck.backgroundTintList = ColorStateList.valueOf(color(R.color.primary))
+                b.invCheckIcon.visibility = View.VISIBLE
+                b.root.setBackgroundResource(R.drawable.bg_inv_row_selected)
+                b.root.backgroundTintList = null
+            }
+            b.root.setOnClickListener { toggleSelection(chem) }
+        } else if (isOut) {
             b.invLedBtn.backgroundTintList = ColorStateList.valueOf(color(R.color.bg))
             b.invLedIcon.imageTintList = ColorStateList.valueOf(color(R.color.text_muted))
         } else {
             b.invLedBtn.setOnClickListener { lightLed(chem) }
         }
-        attachDisposeHold(b.root, chem)
+        b.root.setOnLongClickListener {
+            it.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+            if (editMode) toggleSelection(chem) else enterEditMode(chem)
+            true
+        }
         return b.root
     }
 
-    // ---------- 폐기 등록 (카드 3초 홀드 → 확인 모달, design.pen app-exception-modals §2-3) ----------
+    // ---------- 편집 모드 · 일괄 폐기 (design.pen app-inventory-edit / -edit-confirm) ----------
 
-    /** 카드를 DISPOSE_HOLD_MS 이상 누르고 있으면 폐기 확인 모달을 띄운다.
-     *  스크롤이 시작되면 ACTION_CANCEL 이 전달되어 타이머가 자동 취소된다. */
-    @SuppressLint("ClickableViewAccessibility")
-    private fun attachDisposeHold(card: View, chem: ChemicalData) {
-        var pending: Runnable? = null
-        card.setOnTouchListener { v, event ->
-            when (event.actionMasked) {
-                MotionEvent.ACTION_DOWN -> {
-                    pending = Runnable {
-                        v.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-                        showDisposeModal(chem)
-                    }.also { v.postDelayed(it, DISPOSE_HOLD_MS) }
-                }
-                MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
-                    pending?.let { v.removeCallbacks(it) }
-                    pending = null
-                }
-            }
-            true
-        }
+    /** 카드를 길게 누르면 편집 모드로 들어가며, 누른 카드는 선택된 상태로 시작한다. */
+    private fun enterEditMode(first: ChemicalData) {
+        editMode = true
+        selectedIds.clear()
+        selectedIds.add(first.id)
+        exitEditOnBack.isEnabled = true
+        render()
     }
 
-    private fun showDisposeModal(chem: ChemicalData) {
+    private fun exitEditMode() {
+        editMode = false
+        selectedIds.clear()
+        exitEditOnBack.isEnabled = false
+        render()
+    }
+
+    private fun toggleSelection(chem: ChemicalData) {
+        if (!selectedIds.remove(chem.id)) selectedIds.add(chem.id)
+        render()
+    }
+
+    private fun confirmDisposeSelected() {
+        val picked = chemicals.filter { it.id in selectedIds }
+        if (picked.isEmpty() || disposing) return
         AppModal.show(
             this, AppModal.Tone.DANGER, R.drawable.ic_trash_2,
-            "시약 폐기",
-            "'${chem.name}'을(를) 폐기 등록할까요?\n재고 목록에서 삭제되며 되돌릴 수 없습니다.",
-            "취소", "폐기하기",
-            onPrimary = { disposeChemical(chem) }
+            "시약 ${picked.size}개 폐기",
+            "${picked.joinToString(" · ") { it.name }}\n" +
+                    "선택한 ${picked.size}개 시약을 폐기 등록할까요?\n" +
+                    "재고 목록에서 삭제되며 되돌릴 수 없습니다.",
+            "취소", "${picked.size}개 폐기하기",
+            onPrimary = { disposeSelected(picked) }
         )
     }
 
-    private fun disposeChemical(chem: ChemicalData) {
+    /** 선택 시약을 하나씩 폐기 등록한다. 일부만 실패하면 실패한 시약만 선택으로 남겨
+     *  편집 모드를 유지하고, 모두 성공하면 편집 모드를 끝낸다. */
+    private fun disposeSelected(picked: List<ChemicalData>) {
+        disposing = true
         lifecycleScope.launch {
-            try {
-                NetworkClient.api.disposeChemical(chem.id, DisposeRequest(username = currentUser))
+            val failed = mutableListOf<ChemicalData>()
+            var lastError: String? = null
+            for (chem in picked) {
+                try {
+                    NetworkClient.api.disposeChemical(chem.id, DisposeRequest(username = currentUser))
+                } catch (e: Exception) {
+                    failed.add(chem)
+                    lastError = httpErrorDetail(e)
+                }
+            }
+            disposing = false
+            val done = picked.size - failed.size
+            if (failed.isEmpty()) {
+                exitEditMode()
                 AppModal.show(
                     this@InventoryActivity, AppModal.Tone.SUCCESS, R.drawable.ic_trash_2,
                     "폐기 등록 완료",
-                    "'${chem.name}'이(가) 폐기 등록되었습니다.\n재고 목록에서 삭제되었습니다.",
+                    "시약 ${done}개가 폐기 등록되었습니다.\n재고 목록에서 삭제되었습니다.",
                     null, "확인"
                 )
-                fetchData()
-            } catch (e: Exception) {
+            } else {
+                selectedIds.clear()
+                failed.forEach { selectedIds.add(it.id) }
                 Toast.makeText(
                     this@InventoryActivity,
-                    httpErrorDetail(e) ?: "폐기 등록에 실패했습니다.",
-                    Toast.LENGTH_SHORT
+                    "${done}개 폐기 완료, ${failed.size}개 실패" +
+                            (lastError?.let { " — $it" } ?: ""),
+                    Toast.LENGTH_LONG
                 ).show()
             }
+            fetchData()
         }
     }
 

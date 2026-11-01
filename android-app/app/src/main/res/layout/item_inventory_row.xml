@@ -19,6 +19,25 @@
         android:orientation="horizontal"
         android:gravity="center_vertical">
 
+        <!-- 편집 모드 선택 체크 원 (편집 모드에서만 표시) -->
+        <FrameLayout
+            android:id="@+id/invCheck"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_marginEnd="10dp"
+            android:background="@drawable/bg_check_ring"
+            android:visibility="gone">
+            <ImageView
+                android:id="@+id/invCheckIcon"
+                android:layout_width="12dp"
+                android:layout_height="12dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_check"
+                android:contentDescription="선택됨"
+                android:visibility="gone"
+                app:tint="@color/white" />
+        </FrameLayout>
+
         <FrameLayout
             android:id="@+id/invIconWrap"
             android:layout_width="32dp"
