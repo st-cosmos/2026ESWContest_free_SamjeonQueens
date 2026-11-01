@@ -457,16 +457,17 @@ def get_alerts(db: Session = Depends(get_db)):
             if not is_adjacent:
                 continue
 
+            # 같은 물질(농도만 다른 병 포함)끼리는 혼재가 아니다
+            if llm_safety.same_substance(c1.name, c2.name):
+                continue
+
             # Check incompatibility matching between c1 and c2
             incomp1 = json.loads(c1.incompatible_chemicals) if c1.incompatible_chemicals else []
             incomp2 = json.loads(c2.incompatible_chemicals) if c2.incompatible_chemicals else []
 
-            # 직접 이름 매칭 + 카테고리명("강산"·"강염기" 등) 확장 매칭
-            is_incompatible = False
-            if any(llm_safety.names_match(item, c2.name) for item in incomp1):
-                is_incompatible = True
-            elif any(llm_safety.names_match(item, c1.name) for item in incomp2):
-                is_incompatible = True
+            # 직접 지목 + 카테고리명("강산"·"강염기" 등) 확장 매칭, 산끼리는 직접 지목만 인정
+            is_incompatible = (llm_safety.incompatible_with(c1.name, incomp1, c2.name)
+                               or llm_safety.incompatible_with(c2.name, incomp2, c1.name))
 
             if is_incompatible:
                 safe_id, safe_desc = llm_safety.find_recommended_safe_shelf(c1, db)

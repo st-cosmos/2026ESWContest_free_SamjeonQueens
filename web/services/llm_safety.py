@@ -1,6 +1,7 @@
 import os
 import json
 import logging
+import re
 import urllib.request
 from typing import Any, Dict
 
@@ -32,7 +33,9 @@ FALLBACK_RULES = [
         "reason": "시안화물은 산성 물질과 혼재 시 치명적인 맹독성 시안화수소(HCN) 가스를 발생시킵니다."
     },
     {
-        "keywords": ["나트륨", "칼륨", "수소화나트륨", "금수성"],
+        # 금속 나트륨·칼륨만 — "나트륨"/"칼륨" 단독 키워드는 수산화나트륨·과망간산칼륨·
+        # 시안화칼륨 이름 안에서도 맞아 엉뚱한 금수성 목록(물·에탄올·자기 자신)을 만들었다
+        "keywords": ["금속 나트륨", "나트륨 금속", "금속 칼륨", "칼륨 금속", "수소화나트륨", "금수성"],
         "incompatible": ["물", "염산", "황산", "질산", "에탄올", "수산화나트륨"],
         "reason": "금수성 물질은 물 또는 산/알코올과 상호작용 시 가연성 수소가스를 격렬히 발생시켜 폭발 위험이 있습니다."
     },
@@ -48,18 +51,31 @@ FALLBACK_RULES = [
 # 부분 문자열이 겹치지 않아 혼재 매칭이 빗나간다. 카테고리명 → 해당하는
 # 대표 시약 이름 키워드로 확장해 매칭한다. (검사 순서 중요:
 # "강산화제"가 "강산"으로 오인되지 않도록 산화제를 먼저 검사한다)
-_OXIDIZERS = ["과산화수소", "과망간산칼륨", "질산", "과염소산", "질산나트륨"]
-_ACIDS = ["염산", "질산", "황산", "아세트산", "초산", "과염소산"]
+_OXIDIZERS = ["과산화수소", "과망간산칼륨", "질산", "과염소산", "질산나트륨", "크롬산", "차아염소산"]
+# 강산은 진짜 강산만 — 아세트산(초산) 같은 약산을 넣어 두면 LLM 이 아세트산 목록에 쓴
+# "강산(질산·황산)"이 다른 아세트산 병이나 묽은 염산까지 가리키게 된다
+_STRONG_ACIDS = ["염산", "질산", "황산", "과염소산"]
+_ORGANIC_ACIDS = ["아세트산", "초산", "포름산", "옥살산", "시트르산", "젖산"]
+_ACIDS = _STRONG_ACIDS + _ORGANIC_ACIDS  # "산성 물질" — 염기·시안화물 목록이 쓰는 넓은 범주
 _BASES = ["수산화나트륨", "수산화칼륨", "암모니아", "가성소다"]
 _FLAMMABLES = ["에탄올", "메탄올", "아세톤", "톨루엔", "헥산", "이소프로판올",
                "자일렌", "벤젠", "에틸아세테이트", "포름알데히드"]
 _CYANIDES = ["시안화칼륨", "시안화나트륨"]
 
+# 목록 항목 문구 안에서 '실제 시약 이름'을 찾을 때 쓰는 전체 키워드
+_ALL_KEYWORDS = sorted(set(_OXIDIZERS + _ACIDS + _BASES + _FLAMMABLES + _CYANIDES), key=len, reverse=True)
+# 산 병의 목록에 있는 이 범주들은 다른 산에 적용하지 않는다 (아래 incompatible_with 참고)
+_ACID_CLASS_HINTS = ("강산", "산성", "유기산")
+
 
 def _category_keywords(item: str) -> list:
     if "산화제" in item:
         return _OXIDIZERS
-    if "강산" in item or "산성" in item or "유기산" in item:
+    if "유기산" in item:
+        return _ORGANIC_ACIDS
+    if "강산" in item:
+        return _STRONG_ACIDS
+    if "산성" in item:
         return _ACIDS
     if "염기" in item or "알칼리" in item:
         return _BASES
@@ -70,14 +86,58 @@ def _category_keywords(item: str) -> list:
     return []
 
 
-def names_match(item: str, name: str) -> bool:
-    """혼재 금지 목록 항목 ↔ 시약 이름 매칭.
-    직접 부분 문자열 + 카테고리명 확장("강산" → 염산/질산/황산…)."""
-    if not item or not name:
-        return False
+def _mentions(item: str, name: str) -> bool:
+    """목록 항목이 시약 이름을 직접 지목하는가.
+    부분 문자열("질산" ↔ "질산 65%")뿐 아니라 "강산 (질산, 황산 등)"처럼 항목 문구 안에
+    실제 시약 이름이 들어 있는 경우도 직접 지목으로 본다."""
     if item in name or name in item:
         return True
-    return any(kw in name for kw in _category_keywords(item))
+    return any(kw in item and kw in name for kw in _ALL_KEYWORDS)
+
+
+def is_acid(name: str) -> bool:
+    return any(kw in name for kw in _ACIDS)
+
+
+def same_substance(name_a: str, name_b: str) -> bool:
+    """농도·규격 표기만 다른 같은 물질인가 ("염산" ↔ "염산 1M", "에탄올 95%" ↔ "에탄올").
+    같은 물질의 병끼리는 혼재 판정 대상이 아니다."""
+    strip = lambda s: re.sub(r"[\d.]+\s*(mol/l|mol|m|n|%|v/v|w/w)?", "", (s or "").lower())
+    a = re.sub(r"\s+", "", strip(name_a))
+    b = re.sub(r"\s+", "", strip(name_b))
+    return bool(a) and a == b
+
+
+def incompatible_with(owner_name: str, items, other_name: str) -> bool:
+    """owner 의 혼재 금지 목록(items)이 other 를 가리키는가.
+
+    - 이름을 직접 지목한 항목은 항상 인정한다 ("질산" ↔ "질산 65%", "강산(질산…)" ↔ 질산).
+    - 카테고리 항목("강산", "강염기성 물질" 등)은 대표 시약으로 확장해 매칭한다.
+    - 단, 산끼리는 "강산/산성/유기산" 류 카테고리를 적용하지 않는다. 아세트산 목록의
+      "강산"은 산화성 강산과의 혼합 위험을 뜻하는 것이지 묽은 염산이나 다른 산 전반을
+      뜻하지 않는다 — 산 사이의 위험 조합(아세트산 + 질산 등)은 이름을 직접 지목했을 때만 인정한다.
+    """
+    if not owner_name or not other_name:
+        return False
+    both_acids = is_acid(owner_name) and is_acid(other_name)
+    for item in items or []:
+        if not item:
+            continue
+        if _mentions(item, other_name):
+            return True
+        if both_acids and any(h in item for h in _ACID_CLASS_HINTS) and "산화제" not in item:
+            continue
+        if any(kw in other_name for kw in _category_keywords(item)):
+            return True
+    return False
+
+
+def names_match(item: str, name: str) -> bool:
+    """단일 항목 ↔ 시약 이름 매칭 (직접 지목 + 카테고리 확장). 산끼리 제외 규칙은
+    쌍 전체를 보는 incompatible_with 에서 적용한다."""
+    if not item or not name:
+        return False
+    return _mentions(item, name) or any(kw in name for kw in _category_keywords(item))
 
 
 def get_fallback_incompatibility(chemical_name: str) -> Dict[str, Any]:
@@ -182,7 +242,10 @@ def ensure_chemical_incompatibility_info(chem, db):
     """시약 객체 chem에 혼재 금지 정보가 없을 경우 LLM/Fallback으로 채우고 저장합니다."""
     if not chem.incompatible_chemicals:
         info = fetch_incompatible_chemicals_from_llm(chem.name)
-        chem.incompatible_chemicals = json.dumps(info["incompatible_chemicals"], ensure_ascii=False)
+        # 자기 자신을 가리키는 항목은 뺀다 — 같은 시약 병끼리 혼재로 뜨는 원인
+        items = [x for x in info["incompatible_chemicals"]
+                 if x and not (x in chem.name or chem.name in x)]
+        chem.incompatible_chemicals = json.dumps(items, ensure_ascii=False)
         chem.incompatible_reason = info["reason"]
         db.commit()
         db.refresh(chem)
@@ -201,15 +264,18 @@ def find_recommended_safe_shelf(chem, db):
             continue
         is_safe = True
         for other in all_chems:
-            if other.id == chem.id or not other.shelf_id:
+            if other.id == chem.id or not other.shelf_id or same_substance(other.name, chem.name):
                 continue
             other_shelf = db.query(models.Shelf).filter(models.Shelf.id == other.shelf_id).first()
             if not other_shelf:
                 continue
             if s.parent_shelf and other_shelf.parent_shelf and s.parent_shelf == other_shelf.parent_shelf:
                 # 혼재 판정 범위와 동일: 같은 선반의 같은 행에 혼재 금지 시약이 없어야 안전
+                # (양방향 — 상대 목록이 이 시약을 지목하는 경우도 위험)
                 if (s.row or 1) == (other_shelf.row or 1):
-                    if any(names_match(item, other.name) for item in incomp_list):
+                    other_list = json.loads(other.incompatible_chemicals) if other.incompatible_chemicals else []
+                    if (incompatible_with(chem.name, incomp_list, other.name)
+                            or incompatible_with(other.name, other_list, chem.name)):
                         is_safe = False
                         break
         if is_safe:
