@@ -663,8 +663,9 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
         val placedShelfDesc =
             "선반 ${parentShelf ?: "?"} · ${chemical.shelf_row ?: 0}행 ${chemical.shelf_col ?: 0}열"
 
-        // 반입 즉시 인접 수납칸 혼재 금지 시약 연동 검사
-        val alerts = try { NetworkClient.api.getAlerts() } catch (e: Exception) { null }
+        // 반입 즉시 인접 수납칸 혼재 금지 시약 연동 검사. 추천 이동 칸은 방금 놓은 이 병 기준으로
+        // 받는다 — 이 화면의 '안전 위치로 이동'은 이 병을 옮기기 때문이다
+        val alerts = try { NetworkClient.api.getAlertsForPlaced(chemical.id) } catch (e: Exception) { null }
         val coWarning = alerts?.co_storage_warnings?.firstOrNull {
             it.chemical_1_id == chemical.id || it.chemical_2_id == chemical.id
         }

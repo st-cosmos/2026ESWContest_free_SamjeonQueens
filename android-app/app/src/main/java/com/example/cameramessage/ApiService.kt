@@ -4,6 +4,7 @@ import retrofit2.http.Body
 import retrofit2.http.GET
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
 
 /**
  * Smart Chemical Shelf FastAPI 서버와 통신하는 인터페이스.
@@ -98,6 +99,10 @@ interface ApiService {
 
     @GET("api/chemicals/alerts")
     suspend fun getAlerts(): ChemicalAlerts
+
+    // 반입 직후 확인용: 방금 놓은 병이 낀 혼재 경고는 그 병을 옮길 칸으로 추천받는다
+    @GET("api/chemicals/alerts")
+    suspend fun getAlertsForPlaced(@Query("placed_chemical_id") placedChemicalId: String): ChemicalAlerts
 
     // --- Settings ---
     // 유통기한 직접 입력 달력의 기본값 (반입일 + N개월) — 웹 관리자 설정과 공유
