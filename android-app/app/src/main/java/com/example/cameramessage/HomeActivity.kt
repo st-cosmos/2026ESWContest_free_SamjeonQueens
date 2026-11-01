@@ -1,13 +1,17 @@
 package com.example.cameramessage
 
+import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.ColorStateList
+import android.os.Build
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
@@ -34,6 +38,12 @@ class HomeActivity : AppCompatActivity() {
     private var pollJob: Job? = null
     private lateinit var exceptionHelper: ExceptionDialogHelper
 
+    // 알림 권한(Android 13+) 응답 — 거부해도 감시 서비스는 띄운다 (알림만 표시되지 않음)
+    private val notifPermissionLauncher =
+        registerForActivityResult(ActivityResultContracts.RequestPermission()) {
+            AlertMonitorService.start(this)
+        }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityHomeBinding.inflate(layoutInflater)
@@ -45,6 +55,19 @@ class HomeActivity : AppCompatActivity() {
         setupUserGreeting()
         setupNavigations()
         setupActivitiesList()
+        ensureAlertMonitor()
+    }
+
+    /** 무단 반출 경보를 앱이 화면에 없어도 받도록 감시 서비스를 띄운다 */
+    private fun ensureAlertMonitor() {
+        val needsPermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+                ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) !=
+                PackageManager.PERMISSION_GRANTED
+        if (needsPermission) {
+            notifPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+        } else {
+            AlertMonitorService.start(this)
+        }
     }
 
     override fun onResume() {
@@ -92,6 +115,7 @@ class HomeActivity : AppCompatActivity() {
                 onPrimary = {
                     val prefs = getSharedPreferences("smart_shelf", Context.MODE_PRIVATE)
                     notifyAppSessionLeave(prefs.getString("username", null))
+                    AlertMonitorService.stop(this)  // 로그아웃하면 경보 감시도 내린다
                     prefs.edit().clear().apply()
                     startActivity(Intent(this, LoginActivity::class.java))
                     finish()

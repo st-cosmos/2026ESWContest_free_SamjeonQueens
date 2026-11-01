@@ -119,6 +119,13 @@ interface ApiService {
     @POST("api/checkin-session/expiration")
     suspend fun setCheckinExpiration(@Body request: ExpirationRequest): Map<String, String>
 
+    // 세션이 이미 끝난 병(즉시 확정 반입)의 유통기한 등록 — 웹 재고 관리와 같은 엔드포인트
+    @POST("api/chemicals/{chemId}/expiration")
+    suspend fun setChemicalExpiration(
+        @Path("chemId") chemId: String,
+        @Body request: ExpirationRequest
+    ): Map<String, String>
+
     // --- Check-out Session (선반 무게 감소로 반출 확정) ---
     @GET("api/checkout-session")
     suspend fun getCheckoutSession(): CheckoutSessionState

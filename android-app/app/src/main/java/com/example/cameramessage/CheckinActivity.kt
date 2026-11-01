@@ -3,6 +3,7 @@ package com.example.cameramessage
 import android.Manifest
 import android.app.AlertDialog
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.res.ColorStateList
 import android.os.Bundle
@@ -50,7 +51,13 @@ import java.util.concurrent.RejectedExecutionException
  */
 class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
 
+    companion object {
+        /** 무단 반입 알림 → '지금 스캔하기': 병이 이미 올려진 칸 id. 스캔이 그 적재를 청구한다. */
+        const val EXTRA_CLAIM_SHELF_ID = "claim_shelf_id"
+    }
+
     private lateinit var binding: ActivityCheckinBinding
+    private lateinit var exceptionHelper: ExceptionDialogHelper
     private val cameraExecutor = Executors.newSingleThreadExecutor()
     private val recognizer = TextRecognition.getClient(KoreanTextRecognizerOptions.Builder().build())
     private val barcodeScanner = BarcodeScanning.getClient(
@@ -65,6 +72,11 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
     )
     private lateinit var scanner: ChemicalScanner
     private val frameCache = ScanFrameCache()  // LLM 비전·용량 추정용 라벨 사진
+
+    // 병을 먼저 올려놓은 칸 — 다음 scan-in 이 그 적재를 청구해 안착 대기 없이 확정한다
+    private var claimShelfId: String? = null
+    // 즉시 확정된 병 id — 세션이 이미 끝났으므로 유통기한은 병 엔드포인트로 직접 등록
+    private var placedChemId: String? = null
 
     private var camera: Camera? = null
     private var torchOn = false
@@ -103,6 +115,11 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
         scanner.frameImageProvider = { frameCache.bestOrLatest() }
         scanner.latestFrameProvider = { frameCache.latestBase64 }
 
+        // 반입 화면에서도 무단 반출·반입 경보가 바로 뜨도록 예외 모달 폴링을 붙인다.
+        // 혼재 경고는 이 화면이 안착 직후 이동 선택지와 함께 직접 띄우므로 헬퍼에서는 끈다.
+        exceptionHelper = ExceptionDialogHelper(this, showCoStorage = false)
+        claimShelfId = intent.getStringExtra(EXTRA_CLAIM_SHELF_ID)
+
         // 스캔 정확도 측정: 상태 칩 길게 누르면 실험 모드·라벨 번호 설정
         ScanExperiment.load(this)
         binding.scanStatusText.setOnLongClickListener {
@@ -128,6 +145,37 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
 
         if (hasCameraPermission()) startCamera()
         else requestPermissionLauncher.launch(Manifest.permission.CAMERA)
+    }
+
+    // 반입 진행 중(안착 대기·위치 결정 모달·이동 대기)에는 예외 모달 폴링을 멈춘다 —
+    // 결정 모달 위에 다른 경보가 겹쳐 뜨지 않게 하고, 끝나면(resetScanState) 다시 켠다
+    private var resumed = false
+    private var sessionBusy = false
+
+    override fun onResume() {
+        super.onResume()
+        resumed = true
+        if (!sessionBusy) exceptionHelper.startPollingAlerts()
+    }
+
+    override fun onPause() {
+        super.onPause()
+        resumed = false
+        exceptionHelper.stopPollingAlerts()
+    }
+
+    private fun setSessionBusy(busy: Boolean) {
+        if (sessionBusy == busy) return
+        sessionBusy = busy
+        if (!resumed) return
+        if (busy) exceptionHelper.stopPollingAlerts() else exceptionHelper.startPollingAlerts()
+    }
+
+    /** 이미 반입 화면에 있을 때 '지금 스캔하기'가 눌리면(singleTop) 청구할 칸만 갱신한다 */
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        intent.getStringExtra(EXTRA_CLAIM_SHELF_ID)?.let { claimShelfId = it }
     }
 
     override fun onDestroy() {
@@ -310,15 +358,25 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
         lifecycleScope.launch {
             try {
                 val response = NetworkClient.api.scanIn(
-                    ScanInRequest(ocr_text = ocrText, username = currentUser, chemical_name = name)
+                    ScanInRequest(
+                        ocr_text = ocrText, username = currentUser, chemical_name = name,
+                        claim_shelf_id = claimShelfId
+                    )
                 )
                 if (response.status == "success") {
+                    setSessionBusy(true)
+                    claimShelfId = null  // 한 번 청구했으면 다음 스캔에는 쓰지 않는다
+                    placedChemId = response.chemical_id.takeIf { response.already_placed == true }
                     scannedName = response.chemical_name
                     recommendedShelfId = response.recommended_shelf
                     recommendedShelfDesc = response.recommended_shelf_desc
                     currentNewItem = !response.has_history
                     pendingExpiry = null
                     showScanResult(response)
+                    if (placedChemId != null) {
+                        // 병이 이미 선반에 있어 서버가 즉시 확정했다 — 세션 폴링이 바로 완료를 감지한다
+                        setStatusWaiting("기록 확인 중", "이미 올려진 병을 기록하는 중")
+                    }
                     startSessionPolling()
                     learnMatch(name, barcode, learnToken)
                     // 라벨 규격/사진으로 병의 가득 무게(잔량 % 분모)를 백그라운드 추정
@@ -386,7 +444,13 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
     private fun submitExpirationDate(date: String, note: String) {
         lifecycleScope.launch {
             try {
-                NetworkClient.api.setCheckinExpiration(ExpirationRequest(date))
+                val placedId = placedChemId
+                if (placedId != null) {
+                    // 즉시 확정된 병은 세션이 이미 끝났으므로 병에 직접 등록한다
+                    NetworkClient.api.setChemicalExpiration(placedId, ExpirationRequest(date))
+                } else {
+                    NetworkClient.api.setCheckinExpiration(ExpirationRequest(date))
+                }
                 pendingExpiry = date to note
             } catch (e: Exception) {
                 Toast.makeText(this@CheckinActivity, "유통기한 등록 중 오류가 발생했습니다.", Toast.LENGTH_SHORT).show()
@@ -602,6 +666,8 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
         }
 
         if (coWarning != null) {
+            // 이 화면에서 이동 선택지와 함께 보여 주므로, 홈 등의 예외 모달이 같은 경고를 또 띄우지 않게 표시
+            ExceptionDialogHelper.markCoStorageHandled(coWarning)
             val safeDesc = coWarning.recommended_safe_shelf_desc ?: "선반 C · 분리 보관 구역"
             val reasonText = coWarning.reason ?: "반응 및 발열 위험"
             AppModal.show(
@@ -763,6 +829,7 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
     private fun resetScanState() {
         currentNewItem = false
         pendingExpiry = null
+        placedChemId = null
         recommendedShelfId = null
         recommendedShelfDesc = ""
         scannedName = ""
@@ -774,6 +841,7 @@ class CheckinActivity : AppCompatActivity(), ChemicalScanner.Listener {
         binding.resultBadge.visibility = View.GONE
         binding.scanResultEmpty.visibility = View.VISIBLE
         binding.btnManualSelect.visibility = View.GONE
+        setSessionBusy(false)
         resumeScanning()
     }
 

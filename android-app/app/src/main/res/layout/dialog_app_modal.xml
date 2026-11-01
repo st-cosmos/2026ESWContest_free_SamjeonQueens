@@ -205,6 +205,77 @@
         </LinearLayout>
     </LinearLayout>
 
+    <!-- 시약 목록 블록 (design.pen app-exception-modals-2 · Out List): 제목 + 개수 pill + 행 목록 + 안내문 -->
+    <LinearLayout
+        android:id="@+id/modalList"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp"
+        android:orientation="vertical"
+        android:background="@drawable/shape_rounded_10"
+        android:backgroundTint="@color/bg"
+        android:padding="10dp"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
+            <TextView
+                android:id="@+id/modalListTitle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textSize="10sp"
+                android:textStyle="bold"
+                android:textColor="@color/text_strong"
+                tools:text="현재 반출중인 시약" />
+            <TextView
+                android:id="@+id/modalListCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:background="@drawable/shape_pill"
+                android:backgroundTint="@color/warning_soft"
+                android:paddingStart="7dp"
+                android:paddingEnd="7dp"
+                android:paddingTop="2dp"
+                android:paddingBottom="2dp"
+                android:textSize="8sp"
+                android:textStyle="bold"
+                android:textColor="@color/warning"
+                tools:text="3개" />
+        </LinearLayout>
+
+        <!-- 행이 많으면 AppModal 이 높이를 제한해 이 안에서 스크롤 -->
+        <ScrollView
+            android:id="@+id/modalListScroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:overScrollMode="never"
+            android:scrollbars="none">
+            <LinearLayout
+                android:id="@+id/modalListRows"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical" />
+        </ScrollView>
+
+        <TextView
+            android:id="@+id/modalListHint"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="3dp"
+            android:lineSpacingExtra="2dp"
+            android:textSize="8sp"
+            android:textColor="@color/text_muted"
+            android:visibility="gone"
+            tools:visibility="visible"
+            tools:text="목록은 참고용입니다 — 스캔하면 라벨로 시약을 확인합니다." />
+    </LinearLayout>
+
     <!-- 달력 날짜 선택 (유통기한 직접 입력용) -->
     <DatePicker
         android:id="@+id/modalDatePicker"
