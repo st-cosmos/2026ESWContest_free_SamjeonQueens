@@ -412,7 +412,7 @@ class ShelfManageActivity : AppCompatActivity() {
                 layoutParams = LinearLayout.LayoutParams(dp(9), dp(9))
             })
             meta.addView(TextView(this).apply {
-                text = "${displayKg(device.weight)}kg"
+                text = "${formatKg(device.weight)}kg"
                 textSize = 8f
                 setTypeface(typeface, android.graphics.Typeface.BOLD)
                 setTextColor(color(R.color.text_body))
