@@ -5,3 +5,8 @@
 export function displayKg(kg: number): number {
   return Math.max(0, kg);
 }
+
+/** 화면에 쓰는 무게 문자열. 앱(WeightDisplay.kt formatKg)과 같게 소수점 둘째 자리까지 고정 ("0.50"). */
+export function formatKg(kg: number): string {
+  return displayKg(kg).toFixed(2);
+}

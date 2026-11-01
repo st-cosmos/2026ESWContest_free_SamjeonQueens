@@ -17,7 +17,7 @@ import Button from '../components/Button';
 import Input from '../components/Input';
 import { deleteJSON, getJSON, postJSON } from '../api';
 import type { Chemical, ShelfConfig, ShelfDevice } from '../types';
-import { displayKg } from '../weight';
+import { formatKg } from '../weight';
 import { useWebSocket } from '../useWebSocket';
 
 interface RegisterTarget {
@@ -239,7 +239,7 @@ function ShelfCard({
                       )}
                     </div>
                     <div className="slot-info">
-                      <span className="slot-remain-val">{displayKg(device.weight).toFixed(1)}kg</span>
+                      <span className="slot-remain-val">{formatKg(device.weight)}kg</span>
                     </div>
                   </div>
                 );
@@ -510,7 +510,7 @@ export default function Shelves() {
                     <div className="slot-chem-item-texts">
                       <span className="slot-chem-item-name">{c.name}</span>
                       <span className="slot-chem-item-meta">
-                        {displayKg(c.weight).toFixed(1)}kg · 유통기한 {c.expiration_date ?? '-'}
+                        {formatKg(c.weight)}kg · 유통기한 {c.expiration_date ?? '-'}
                       </span>
                     </div>
                     <Badge variant="success">비치중</Badge>
