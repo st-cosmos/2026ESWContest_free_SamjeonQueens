@@ -20,6 +20,7 @@ from datetime import datetime
 import checkout_flow
 import models
 from database import SessionLocal
+from session_store import checkin_session
 
 # 반출: 감소 감지 후 이 시간 안에 스캔이 오면 정상 순서(병 먼저 들고 스캔)로 본다.
 # 병을 들고 앱을 열어 라벨을 비추기까지의 시간. 반입에는 유예가 없다 (모듈 설명 참고).
@@ -63,7 +64,10 @@ def _pending(db, shelf_id: str):
         models.Chemical.shelf_id == shelf_id,
         models.Chemical.current_status == "비치중",
     ).all()
-    return shelf, [c for c in chems if (c.weight or 0.0) >= MIN_BOTTLE_KG]
+    # 위치 이동 중인 병(들어 올리기 전에 버튼을 눌렀든, 든 뒤에 눌렀든)은 무단 반출이 아니다
+    relocating_id = checkin_session.get("relocate_chemical_id") if checkin_session["active"] else ""
+    return shelf, [c for c in chems
+                   if (c.weight or 0.0) >= MIN_BOTTLE_KG and c.id != relocating_id]
 
 
 async def watch(shelf_id: str, broadcast):

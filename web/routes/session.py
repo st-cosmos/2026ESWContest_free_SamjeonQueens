@@ -71,6 +71,10 @@ def relocate_checkin(req: schemas.RelocateRequest, db: Session = Depends(get_db)
         raise HTTPException(status_code=404, detail="지정 위치를 찾을 수 없습니다.")
 
     safe_move = req.reason == "co_storage"
+    # 버튼을 누르기 전에 병을 먼저 들어 올린 경우 — 그 감소는 반출이 아니라 이동의 시작이다.
+    # 미청구 감소로 남겨 두면 다음 반출 스캔이 엉뚱하게 청구할 수 있으므로 지운다.
+    if chem.shelf_id:
+        checkout_flow.clear_unclaimed_drop(chem.shelf_id)
     reset_checkin()
     checkin_session["active"] = True
     checkin_session["chemical_name"] = chem.name

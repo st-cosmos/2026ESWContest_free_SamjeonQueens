@@ -375,7 +375,12 @@ def get_alerts(db: Session = Depends(get_db)):
     # A chemical with status "비치중" but its shelf weight is near 0
     unscanned_checkouts = []
     chemicals = db.query(models.Chemical).filter(models.Chemical.current_status == "비치중").all()
+    # 위치 이동(지정 위치/안전 위치로 옮기기) 중인 병은 옮기려고 들어 올려 칸이 비어도
+    # 무단 반출이 아니다 — 이동 세션이 끝날 때까지 판정에서 제외한다
+    relocating_id = checkin_session.get("relocate_chemical_id") if checkin_session["active"] else ""
     for c in chemicals:
+        if c.id == relocating_id:
+            continue
         if c.shelf_id:
             shelf = db.query(models.Shelf).filter(models.Shelf.id == c.shelf_id).first()
             # 유예(GRACE_S) 안에는 띄우지 않는다 — 병을 먼저 들고 스캔하러 오는 정상 순서.
