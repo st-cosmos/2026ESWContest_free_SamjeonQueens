@@ -9,7 +9,8 @@ import models
 import routes.shelves as shelf_routes
 import schemas
 from session_store import (
-    RELOCATE_TIMEOUT_S, checkin_session, checkout_session, reset_checkin,
+    RELOCATE_TIMEOUT_S, SAFE_RELOCATE_TIMEOUT_S, checkin_session, checkout_session,
+    reset_checkin,
 )
 
 router = APIRouter(prefix="/api/checkin-session", tags=["session"])
@@ -57,6 +58,10 @@ def relocate_checkin(req: schemas.RelocateRequest, db: Session = Depends(get_db)
     다음 무게 증가(안착)가 신규 반입이 아니라 이 병의 위치 변경으로 처리된다
     (routes/shelves._handle_checkin_increase). 앱은 기존 반입 세션 폴링
     (GET /api/checkin-session)으로 완료·타임아웃을 그대로 감지한다.
+
+    reason="co_storage"(혼재 경고 → 안전 위치로 이동)면 완료 시 '위치 변경' 기록을
+    남기는 대신 반입 기록 자체를 안전 위치로 고쳐 써서, 혼재 금지 칸에 있었던
+    흔적이 남지 않는다.
     """
     chem = db.query(models.Chemical).filter(models.Chemical.id == req.chemical_id).first()
     if not chem or chem.current_status != "비치중":
@@ -65,17 +70,20 @@ def relocate_checkin(req: schemas.RelocateRequest, db: Session = Depends(get_db)
     if not target:
         raise HTTPException(status_code=404, detail="지정 위치를 찾을 수 없습니다.")
 
+    safe_move = req.reason == "co_storage"
     reset_checkin()
     checkin_session["active"] = True
     checkin_session["chemical_name"] = chem.name
     checkin_session["start_time"] = time.time()
-    checkin_session["timeout_seconds"] = RELOCATE_TIMEOUT_S
+    checkin_session["timeout_seconds"] = SAFE_RELOCATE_TIMEOUT_S if safe_move else RELOCATE_TIMEOUT_S
     checkin_session["username"] = req.username or ""
     checkin_session["relocate_chemical_id"] = chem.id
     checkin_session["target_shelf_id"] = target.id
+    checkin_session["relocate_reason"] = req.reason or ""
 
     target.led_on = True
-    target.led_message = f"기존 반입 이력 위치: {chem.name}"
+    target.led_message = (f"안전 위치 안내: {chem.name}" if safe_move
+                          else f"기존 반입 이력 위치: {chem.name}")
     target.updated_time = datetime.now().strftime("%H:%M:%S")
     db.commit()
 
@@ -88,7 +96,7 @@ def relocate_checkin(req: schemas.RelocateRequest, db: Session = Depends(get_db)
     return {
         "status": "success",
         "already_moved": already_moved,
-        "timeout_seconds": RELOCATE_TIMEOUT_S,
+        "timeout_seconds": SAFE_RELOCATE_TIMEOUT_S if safe_move else RELOCATE_TIMEOUT_S,
     }
 
 @router.post("/expiration")

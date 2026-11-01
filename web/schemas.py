@@ -68,6 +68,9 @@ class RelocateRequest(BaseModel):
     chemical_id: str
     target_shelf_id: str
     username: Optional[str] = None
+    # "co_storage": 혼재 경고 뒤 '안전 위치로 이동' — 완료 시 처음 놓였던 칸의 흔적을
+    # 남기지 않고 반입 기록 자체를 안전 위치로 고쳐 쓴다
+    reason: Optional[str] = None
 
 class ScanOutRequest(BaseModel):
     ocr_text: str

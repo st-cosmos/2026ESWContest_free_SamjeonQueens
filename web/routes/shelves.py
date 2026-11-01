@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from typing import Dict, List
 from database import get_db
@@ -255,6 +256,22 @@ def pending_rises(min_age: float = 0.0, min_kg: float = 0.0) -> list:
             if now - t >= min_age and d >= min_kg]
 
 
+def _rewrite_intake_location(db: Session, chem: models.Chemical, old_desc: str, new_desc: str):
+    """가장 최근 반입 기록의 위치 문구를 새 칸으로 고쳐 쓴다.
+
+    혼재 경고 → 안전 위치 이동이 추천 칸에서 끝났을 때 쓴다. '위치 변경' 기록을
+    따로 남기지 않으므로, 혼재 금지 칸에 잠깐 놓였던 흔적이 기록에 남지 않는다."""
+    intake = db.query(models.Log).filter(
+        models.Log.chemical_id == chem.id,
+        models.Log.action == "반입",
+    ).order_by(models.Log.timestamp.desc()).first()
+    if intake is None:
+        return
+    text = intake.details or ""
+    intake.details = (text.replace(old_desc, new_desc) if old_desc in text
+                      else f"{text} — 보관 위치 {new_desc}")
+
+
 def _relocating_from(db: Session, shelf: models.Shelf) -> bool:
     """위치 이동 세션 중 옮길 병이 지금 이 칸에 기록돼 있는가 (= 이 칸에서 들어 올릴 차례)."""
     chem_id = checkin_session["active"] and checkin_session.get("relocate_chemical_id")
@@ -325,8 +342,14 @@ def _handle_checkin_increase(db: Session, shelf: models.Shelf, delta_kg: float):
         moving.shelf_col = shelf.col or 1
         chem = moving
         on_target = shelf.id == checkin_session.get("target_shelf_id")
-        details = (f"지정 위치로 이동 완료: {old_desc} → {shelf_desc}" if on_target
-                   else f"위치 변경: {old_desc} → {shelf_desc} (지정 위치 아님)")
+        if on_target and checkin_session.get("relocate_reason") == "co_storage":
+            # 혼재 경고 → 안전 위치로 이동 완료: '위치 변경' 기록 대신 반입 기록 자체를
+            # 안전 위치로 고쳐 써서 혼재 금지 칸에 있었던 흔적을 남기지 않는다
+            _rewrite_intake_location(db, moving, old_desc, shelf_desc)
+            details = None
+        else:
+            details = (f"지정 위치로 이동 완료: {old_desc} → {shelf_desc}" if on_target
+                       else f"위치 변경: {old_desc} → {shelf_desc} (지정 위치 아님)")
     elif restored is not None:
         restored.current_status = "비치중"
         restored.shelf_id = shelf.id
@@ -365,21 +388,23 @@ def _handle_checkin_increase(db: Session, shelf: models.Shelf, delta_kg: float):
     # LLM 기반 혼재 금지 시약 정보 분석 및 저장
     llm_safety.ensure_chemical_incompatibility_info(chem, db)
 
-    # 추천 위치 안내 LED 소등
+    # 추천 위치(기존 이력 칸·안전 위치) 안내 LED 소등
     recommended = db.query(models.Shelf).filter(
-        models.Shelf.led_message.like("%기존 반입%")
+        or_(models.Shelf.led_message.like("%기존 반입%"),
+            models.Shelf.led_message.like("안전 위치 안내%"))
     ).all()
     for r_shelf in recommended:
         r_shelf.led_on = False
         r_shelf.led_message = ""
 
-    db.add(models.Log(
-        chemical_id=chem.id,
-        chemical_name=chem.name,
-        action="위치 변경" if moving is not None else "반입",
-        operator_name=operator_name,
-        details=details,
-    ))
+    if details is not None:
+        db.add(models.Log(
+            chemical_id=chem.id,
+            chemical_name=chem.name,
+            action="위치 변경" if moving is not None else "반입",
+            operator_name=operator_name,
+            details=details,
+        ))
 
     # 반입 직후 인접 수납칸 혼재 금지 시약 배치 여부 검사
     safe_id, safe_desc = llm_safety.find_recommended_safe_shelf(chem, db)
