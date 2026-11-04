@@ -12,6 +12,7 @@ import matching
 import models
 import schemas
 import services.capacity as capacity
+import services.costorage as costorage
 import services.llm_match as llm_match
 import services.llm_safety as llm_safety
 import unscanned_alert
@@ -147,6 +148,9 @@ def scan_in(req: schemas.ScanInRequest, db: Session = Depends(get_db)):
         db, req,
         f"인식된 텍스트 '{req.ocr_text}'에서 보관 가능한 시약을 매칭하지 못했습니다."
     )
+    # 이 시약과 지금 선반에 놓인 시약들 사이의 혼재 판정 중 없는 것을 미리 받아 둔다.
+    # 병이 놓이는 순간(무게 보고 처리)에는 Gemini 를 기다릴 수 없으므로 여기서 묻는다.
+    costorage.resolve_for(db, matched_std_name)
         
     # Check if there is history of this chemical name to find designated shelf location
     prev_chem = db.query(models.Chemical).filter(
@@ -374,6 +378,12 @@ def dispose_chemical(chem_id: str, req: Dict[str, str], db: Session = Depends(ge
 def get_alerts(db: Session = Depends(get_db), placed_chemical_id: Optional[str] = None):
     # placed_chemical_id: 반입 직후 확인에서 방금 놓은 병. 그 병이 낀 혼재 경고는 그 병을
     # 옮길 병으로 보고 추천 칸을 고른다 (없으면 기존대로 경고 쌍의 첫 병 기준).
+    return compute_alerts(db, placed_chemical_id)
+
+
+def compute_alerts(db: Session, placed_chemical_id: Optional[str] = None, ensure_lists: bool = True):
+    """경고 계산. ensure_lists=False 는 무게 보고 처리(비동기 루프) 안에서 부를 때다 —
+    병별 혼재 목록을 Gemini 로 채우지 않아 루프가 멈추지 않는다 (다음 경고 조회가 채운다)."""
     # 1. Un-scanned checkouts:
     # A chemical with status "비치중" but its shelf weight is near 0
     unscanned_checkouts = []
@@ -431,8 +441,11 @@ def get_alerts(db: Session = Depends(get_db), placed_chemical_id: Optional[str] 
     co_storage_warnings = []
 
     # Ensure all checked-in chemicals have incompatible_chemicals analyzed
-    for c in chemicals:
-        llm_safety.ensure_chemical_incompatibility_info(c, db)
+    # (병별 목록은 화면 표시와, 쌍 판정을 못 받았을 때의 대체 규칙에 쓴다)
+    if ensure_lists:
+        for c in chemicals:
+            llm_safety.ensure_chemical_incompatibility_info(c, db)
+    verdicts = costorage.load_verdicts(db)
 
     stored_chems = [c for c in chemicals if c.shelf_id]
     n = len(stored_chems)
@@ -468,10 +481,9 @@ def get_alerts(db: Session = Depends(get_db), placed_chemical_id: Optional[str] 
             incomp1 = json.loads(c1.incompatible_chemicals) if c1.incompatible_chemicals else []
             incomp2 = json.loads(c2.incompatible_chemicals) if c2.incompatible_chemicals else []
 
-            # 데모 시약끼리는 고정 혼재표로만 판정한다. 그 외에는 직접 지목 + 카테고리명
-            # ("강산"·"강염기" 등) 확장 매칭, 산끼리는 직접 지목만 인정
-            is_incompatible, fixed_reason = llm_safety.pair_incompatible(
-                c1.name, incomp1, c2.name, incomp2)
+            # 시약 쌍 판정: 데모 고정 혼재표 → 저장된 쌍 판정 → (판정 없음) 보류·대체 규칙
+            is_incompatible, pair_reason = costorage.judge(
+                verdicts, c1.name, incomp1, c2.name, incomp2)
 
             if is_incompatible:
                 # 옮길 병: 방금 놓은 병이 이 쌍에 있으면 그 병, 아니면 첫 병. 예전에는 늘 첫 병
@@ -487,7 +499,7 @@ def get_alerts(db: Session = Depends(get_db), placed_chemical_id: Optional[str] 
                     "chemical_2_name": c2.name,
                     "shelf_desc": f"선반 {s1_desc} 및 {s2_desc}",
                     "message": f"🚨 [혼재 위험] {c1.name}와(과) {c2.name}은(는) 인접 보관 금지 시약입니다.",
-                    "reason": fixed_reason or c1.incompatible_reason or c2.incompatible_reason or "인접 보관 시 격렬한 반응, 유독가스 또는 화재/폭발 위험",
+                    "reason": pair_reason or c1.incompatible_reason or c2.incompatible_reason or "인접 보관 시 격렬한 반응, 유독가스 또는 화재/폭발 위험",
                     "recommended_safe_shelf_id": safe_id,
                     "recommended_safe_shelf_desc": safe_desc,
                     "move_chemical_id": mover.id,

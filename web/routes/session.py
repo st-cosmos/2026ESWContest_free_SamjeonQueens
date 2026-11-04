@@ -8,6 +8,7 @@ from database import get_db
 import models
 import routes.shelves as shelf_routes
 import schemas
+import services.costorage as costorage
 from session_store import (
     RELOCATE_TIMEOUT_S, SAFE_RELOCATE_TIMEOUT_S, checkin_session, checkout_session,
     reset_checkin,
@@ -69,6 +70,9 @@ def relocate_checkin(req: schemas.RelocateRequest, db: Session = Depends(get_db)
     target = db.query(models.Shelf).filter(models.Shelf.id == req.target_shelf_id).first()
     if not target:
         raise HTTPException(status_code=404, detail="지정 위치를 찾을 수 없습니다.")
+
+    # 옮길 칸의 이웃과의 혼재 판정 중 없는 것을 미리 받아 둔다 (안착 순간에는 Gemini 를 못 기다린다)
+    costorage.resolve_for(db, chem.name)
 
     safe_move = req.reason == "co_storage"
     # 버튼을 누르기 전에 병을 먼저 들어 올린 경우 — 그 감소는 반출이 아니라 이동의 시작이다.

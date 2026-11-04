@@ -394,8 +394,9 @@ def _handle_checkin_increase(db: Session, shelf: models.Shelf, delta_kg: float):
         # 추정이 아직 안 왔다 — 늦게 오는 기본값을 이 새 병에만 적용할 수 있게 표시
         capacity.mark_new_without_estimate(chem.id)
 
-    # LLM 기반 혼재 금지 시약 정보 분석 및 저장
-    llm_safety.ensure_chemical_incompatibility_info(chem, db)
+    # 병별 혼재 목록(화면 표시·대체 규칙용)은 여기서 채우지 않는다. 무게 보고 처리는 비동기
+    # 루프에서 돌아 Gemini 를 기다리면 서버 전체가 멈춘다. 다음 경고·재고 조회가 채운다.
+    # 혼재 판정 자체는 반입 스캔 때 받아 둔 시약 쌍 판정(services/costorage)을 쓴다.
 
     # 추천 위치(기존 이력 칸·안전 위치) 안내 LED 소등
     recommended = db.query(models.Shelf).filter(
@@ -418,7 +419,7 @@ def _handle_checkin_increase(db: Session, shelf: models.Shelf, delta_kg: float):
     # 반입 직후 인접 수납칸 혼재 금지 시약 배치 여부 검사
     safe_id, safe_desc = llm_safety.find_recommended_safe_shelf(chem, db)
     co_warning = None
-    alerts = chemical_routes.get_alerts(db, placed_chemical_id=chem.id)
+    alerts = chemical_routes.compute_alerts(db, placed_chemical_id=chem.id, ensure_lists=False)
     for warning in alerts.get("co_storage_warnings", []):
         if warning["chemical_1_id"] == chem.id or warning["chemical_2_id"] == chem.id:
             co_warning = warning
