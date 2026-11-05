@@ -126,7 +126,7 @@ def _ask(anchor: str, others: list, timeout_s: float) -> Optional[dict]:
 모든 번호에 빠짐없이 답해. 마크다운 없이 순수 JSON만 출력해:
 {{"results": [{{"no": 1, "dangerous": false, "reason": "판단 이유 한 문장"}}]}}"""
 
-    model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
+    model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
     payload = {
         "contents": [{"parts": [{"text": prompt}]}],

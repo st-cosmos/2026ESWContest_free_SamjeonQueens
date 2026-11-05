@@ -93,7 +93,7 @@ def _ask_photo(chemical_name: str, ocr_text: str, images_b64: list) -> Optional[
 
 마크다운 없이 순수 JSON만 출력해: {{"net_content": "500 mL", "size": "standard"}}"""
 
-    model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
+    model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
     parts = [{"text": prompt}] + [{"inline_data": {"mime_type": "image/jpeg", "data": img}} for img in images]
     payload = {
