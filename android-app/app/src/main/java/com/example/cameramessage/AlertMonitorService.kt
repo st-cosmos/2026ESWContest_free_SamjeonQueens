@@ -38,6 +38,10 @@ import org.json.JSONObject
  * WebSocket 이 끊긴 사이의 이벤트는 GET /api/chemicals/alerts 의 unscanned_events 를
  * 주기 폴링해 보충한다. 두 경로 모두 서버가 확정한 같은 이벤트(event_id)를 전달하므로
  * 한 번만 알린다. HomeActivity 가 로그인 후 띄우고 로그아웃 때 내린다.
+ *
+ * 이미 알린 이벤트 id 는 SharedPreferences 에 남긴다. 서버는 이벤트를 30분 보관하는데,
+ * 메모리에만 기억하면 로그아웃(서비스 종료)·앱 재시작 뒤 첫 폴링에서 그 30분치가
+ * 전부 새 이벤트로 보여 로그인할 때마다 같은 알림이 다시 떴다.
  */
 class AlertMonitorService : Service() {
 
@@ -49,6 +53,8 @@ class AlertMonitorService : Service() {
         private const val NOTIF_ID_MONITOR = 1001
         private const val POLL_MS = 15_000L
         private const val MAX_REMEMBERED = 200
+        private const val PREFS = "alert_monitor"
+        private const val KEY_NOTIFIED = "notified_event_ids"
 
         fun start(context: Context) {
             ContextCompat.startForegroundService(
@@ -62,7 +68,11 @@ class AlertMonitorService : Service() {
     }
 
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
-    private val notifiedEventIds = LinkedHashSet<String>()
+    private val prefs by lazy { getSharedPreferences(PREFS, Context.MODE_PRIVATE) }
+    // 순서를 지켜 오래된 것부터 버리려고 줄바꿈으로 이어 붙인 문자열 하나로 저장한다
+    private val notifiedEventIds: LinkedHashSet<String> by lazy {
+        LinkedHashSet(prefs.getString(KEY_NOTIFIED, "").orEmpty().split('\n').filter { it.isNotEmpty() })
+    }
     private var nextNotifId = 2000
 
     private val wsListener: (String) -> Unit = { message ->
@@ -146,20 +156,21 @@ class AlertMonitorService : Service() {
         if (!rememberEvent("checkin:${event.event_id}")) return
         val grams = (event.delta_kg * 1000).toInt()
         notify(
-            title = "📦 반입 스캔 없이 시약이 놓였습니다",
+            title = "🚨 반입 스캔 없이 시약이 놓였습니다",
             text = "${event.shelf_desc} · +${grams}g",
             bigText = "${event.shelf_desc}에 반입 스캔 없이 시약(+${grams}g)이 놓였습니다.\n" +
                     "반출했던 시약을 돌려놓으셨다면 앱에서 '지금 스캔하기'로 기록을 맞춰 주세요.\n" +
                     "감지 시각 ${event.detected_at}",
-            iconRes = R.drawable.ic_flask_conical,
+            iconRes = R.drawable.ic_shield_alert,
             requestCode = event.event_id.hashCode()
         )
     }
 
-    /** 같은 이벤트를 두 경로(WebSocket·폴링)로 받아도 한 번만 알린다 */
+    /** 같은 이벤트를 두 경로(WebSocket·폴링)로 받아도, 서비스를 다시 띄워도 한 번만 알린다 */
     private fun rememberEvent(key: String): Boolean {
         if (!notifiedEventIds.add(key)) return false
-        if (notifiedEventIds.size > MAX_REMEMBERED) notifiedEventIds.remove(notifiedEventIds.first())
+        while (notifiedEventIds.size > MAX_REMEMBERED) notifiedEventIds.remove(notifiedEventIds.first())
+        prefs.edit().putString(KEY_NOTIFIED, notifiedEventIds.joinToString("\n")).apply()
         return true
     }
 
