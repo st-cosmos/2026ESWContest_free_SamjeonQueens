@@ -17,7 +17,7 @@ logger = logging.getLogger("llm_match")
 
 
 LLM_ATTEMPTS = 3          # 429/5xx 에 대한 시도 횟수 (첫 호출 포함)
-LLM_RETRY_WAIT_S = 2.5    # 재시도 전 대기
+LLM_RETRY_WAIT_S = 1.0    # 재시도 전 대기 (503 자체가 5초쯤 걸려 돌아오므로 길게 쉴 이유가 없다)
 
 
 def identify_chemical_from_ocr(ocr_text: str, known_names: list,
