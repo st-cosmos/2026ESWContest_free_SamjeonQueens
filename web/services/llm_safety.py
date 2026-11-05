@@ -369,7 +369,14 @@ def find_recommended_safe_shelf(chem, db):
     import models
     import services.costorage as costorage  # costorage 가 이 모듈을 import 하므로 지연 import
     verdicts = costorage.load_verdicts(db)
-    shelves = db.query(models.Shelf).all()
+    # 후보는 선반·행·열이 배정된 등록 칸만. 미등록 노드는 parent_shelf 가 없어 어떤 시약과도
+    # 같은 선반으로 묶이지 않아 무조건 "안전"으로 판정됐고, "None행 None열"로 안내되는 원인이었다.
+    shelves = db.query(models.Shelf).filter(
+        models.Shelf.status == "registered",
+        models.Shelf.parent_shelf.isnot(None),
+        models.Shelf.row.isnot(None),
+        models.Shelf.col.isnot(None),
+    ).all()
     incomp_list = json.loads(chem.incompatible_chemicals) if chem.incompatible_chemicals else []
     all_chems = db.query(models.Chemical).filter(models.Chemical.current_status == "비치중").all()
 
@@ -397,4 +404,5 @@ def find_recommended_safe_shelf(chem, db):
             desc = f"선반 {parent} · {s.row}행 {s.col}열"
             return s.id, desc
 
-    return None, "선반 C · 분리 보관 전용 구역"
+    # 등록된 칸 중 안전한 곳이 없다 — 존재하지 않는 "선반 C" 대신 선반 밖 별도 보관을 안내한다
+    return None, "등록된 선반 밖 별도 보관 구역"
