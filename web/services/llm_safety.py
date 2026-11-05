@@ -239,8 +239,13 @@ def get_fallback_incompatibility(chemical_name: str) -> Dict[str, Any]:
                 reasons.append(rule["reason"])
 
     if not matched_incompatible:
-        matched_incompatible = {"강산성 물질", "강염기성 물질", "강산화제"}
-        reasons.append("일반 화학 시약으로서 반응성 위험 물질과의 분리 보관이 권장됩니다.")
+        # 규칙에 없는 시약은 '모름'이다. 예전에는 범용 기본값(강산·강염기·강산화제)을 넣었는데,
+        # 목록 대조 규칙이 그 범주를 산·염기·산화제 전부로 확장해 아이오딘 ↔ 아세트산처럼
+        # 급성 위험이 없는 조합까지 혼재 금지로 지목했다. 아무도 지목하지 않는 빈 목록으로 둔다.
+        return {
+            "incompatible_chemicals": [],
+            "reason": "판정 보류: 혼재 정보를 받지 못해 자동으로 위험 판정하지 않습니다.",
+        }
 
     return {
         "incompatible_chemicals": list(matched_incompatible),
@@ -280,8 +285,9 @@ def fetch_incompatible_chemicals_from_llm(chemical_name: str) -> Dict[str, Any]:
     }}
     """
 
-    # 반입 처리 경로를 막지 않도록 응답이 빠른 lite 를 기본으로 쓴다 (GEMINI_MODEL 로 변경 가능)
-    model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
+    # 기본은 flash (GEMINI_MODEL 로 변경 가능). lite 는 2026-11 측정에서 한 줄 응답도 10초를 넘겨
+    # 반입 스캔의 쌍 판정(6초 제한)이 타임아웃으로 대체 규칙을 타게 했다.
+    model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
     payload = {
         "contents": [
