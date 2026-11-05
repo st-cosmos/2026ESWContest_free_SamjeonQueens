@@ -56,8 +56,13 @@ def _strip(events: list) -> list:
     return [{k: v for k, v in e.items() if k != "_ts"} for e in reversed(events)]
 
 
+def unidentified_name(drop_kg) -> str:
+    """병을 특정하지 못한 무단 반출의 표시 이름 (앱은 chemical_name 을 그대로 보여 준다)."""
+    return f"미확인 시약 ({drop_kg:.2f}kg)" if drop_kg else "미확인 시약"
+
+
 def suspects(db, shelf_id: str, min_age: float = 0.0):
-    """이 칸에서 무단 반출로 볼 병들 — [(병, 감지 시각)] (현재 상태).
+    """이 칸에서 무단 반출로 볼 항목들 — [(병 또는 None, 감지 시각, 감소량)] (현재 상태).
     푸시(watch)와 앱 모달(GET /alerts)이 함께 쓴다. min_age 미만 나이의 감소는 아직
     유예 중으로 보고 건너뛴다.
 
@@ -65,9 +70,12 @@ def suspects(db, shelf_id: str, min_age: float = 0.0):
        (여러 개면 가장 가까운 병 하나, 이미 지목된 병은 제외). 한 칸에 병이 여러 개라
        하나를 빼도 칸이 비지 않는 경우와 두 병을 연달아 뺀 경우를 잡는다 — 예전에는
        칸이 비어야만 울려서 병이 둘 이상인 칸은 감지되지 않았다.
-    2) 맞는 병이 하나도 없으면 칸이 비었을 때(EMPTY_SHELF_KG 미만)만 남은 비치중 병 전부를
-       든다 (감소 기록이 없는 서버 재시작 직후나, 기록 무게와 동떨어진 감소에 대한 보루).
-       유예 중인 감소가 남아 있으면 보루도 기다린다.
+    2) 어느 병과도 안 맞는 감소(기록 무게가 틀렸거나 두 병을 한 번에 든 경우)는 병을
+       None 으로 두고 칸 단위로 든다 — 병은 특정 못 해도 경보는 울려야 한다. 손·용기 같은
+       노이즈를 빼려고 MIN_BOTTLE_KG 이상의 감소만, 그 칸에 비치중 병이 있을 때만 든다.
+    3) 맞는 병이 하나도 없고 칸이 비었으면(EMPTY_SHELF_KG 미만) 남은 비치중 병 전부를 든다
+       (감소 기록이 없는 서버 재시작 직후나, 기록 무게와 동떨어진 감소에 대한 보루).
+       이때는 2)의 미확인 항목을 따로 내지 않는다. 유예 중인 감소가 남아 있으면 보루도 기다린다.
     """
     shelf = db.query(models.Shelf).filter(models.Shelf.id == shelf_id).first()
     if not shelf:
@@ -78,27 +86,36 @@ def suspects(db, shelf_id: str, min_age: float = 0.0):
     ).all()
     # 위치 이동 중인 병(들어 올리기 전에 버튼을 눌렀든, 든 뒤에 눌렀든)은 무단 반출이 아니다
     relocating_id = checkin_session.get("relocate_chemical_id") if checkin_session["active"] else ""
-    chems = [c for c in chems
-             if (c.weight or 0.0) >= MIN_BOTTLE_KG and c.id != relocating_id]
+    chems = [c for c in chems if (c.weight or 0.0) >= MIN_BOTTLE_KG]
+    # 이동 중인 병은 경보 대상이 아니지만, 그 병 무게와 맞는 감소는 '설명된' 감소로 보아
+    # 미확인 경보도 내지 않는다 (들어 올리기 전에 이동 버튼을 눌렀든, 든 뒤에 눌렀든)
+    relocating = [c for c in chems if c.id == relocating_id]
+    chems = [c for c in chems if c.id != relocating_id]
 
     now = time.time()
     drops = checkout_flow.unclaimed_drops(shelf_id)   # 오래된 순
     ready = [d for d in drops if now - d[1] >= min_age]
     pool = list(chems)
     out = []
+    unmatched = []
     for drop_kg, ts in ready:
         matched = [c for c in pool if checkout_flow.weight_within_tolerance(c.weight, drop_kg)]
         if matched:
             best = min(matched, key=lambda c: abs(c.weight - drop_kg))
             pool.remove(best)
-            out.append((best, ts))
-    if out:
-        return shelf, out
+            out.append((best, ts, drop_kg))
+        elif not any(checkout_flow.weight_within_tolerance(c.weight, drop_kg) for c in relocating):
+            unmatched.append((drop_kg, ts))
 
-    if len(ready) == len(drops) and shelf.weight < checkout_flow.EMPTY_SHELF_KG:
+    if not out and len(ready) == len(drops) and shelf.weight < checkout_flow.EMPTY_SHELF_KG:
         since = drops[-1][1] if drops else None
-        return shelf, [(c, since) for c in chems]
-    return shelf, []
+        drop_kg = drops[-1][0] if drops else None
+        return shelf, [(c, since, drop_kg) for c in chems]
+
+    if chems:
+        out.extend((None, ts, drop_kg) for drop_kg, ts in unmatched
+                   if drop_kg >= MIN_BOTTLE_KG)
+    return shelf, out
 
 
 async def watch(shelf_id: str, broadcast):
@@ -108,21 +125,33 @@ async def watch(shelf_id: str, broadcast):
     db = SessionLocal()
     try:
         shelf, pairs = suspects(db, shelf_id, min_age=GRACE_S)
-        snapshot = [(c.id, c.name) for c, _ in pairs]
+        snapshot = [(c.id if c else None, c.name if c else None, since, drop_kg)
+                    for c, since, drop_kg in pairs]
         desc = _shelf_desc(shelf)
     finally:
         db.close()
 
     now = time.time()
     _prune(now)
-    for chem_id, name in snapshot:
-        if now - _alerted_at.get(chem_id, 0.0) < REALERT_COOLDOWN_S:
-            continue
-        _alerted_at[chem_id] = now
+    for chem_id, name, since, drop_kg in snapshot:
+        if chem_id is None:
+            # 병을 특정하지 못한 감소 — 칸 단위로 경보한다. 같은 감소(감지 시각)에는 한 번만.
+            key = f"shelf:{shelf_id}:{int(since or now)}"
+            if key in _alerted_at:
+                continue
+            _alerted_at[key] = now
+            chem_id, name, event_id = f"shelf:{shelf_id}", unidentified_name(drop_kg), key
+        else:
+            if now - _alerted_at.get(chem_id, 0.0) < REALERT_COOLDOWN_S:
+                continue
+            _alerted_at[chem_id] = now
+            event_id = f"{chem_id}:{int(now)}"
         event = {
-            "event_id": f"{chem_id}:{int(now)}",
+            "event_id": event_id,
             "chemical_id": chem_id,
             "chemical_name": name,
+            "unidentified": name is not None and chem_id.startswith("shelf:"),
+            "drop_kg": drop_kg,
             "shelf_id": shelf_id,
             "shelf_desc": desc,
             "detected_at": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),

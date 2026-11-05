@@ -399,10 +399,14 @@ def compute_alerts(db: Session, placed_chemical_id: Optional[str] = None, ensure
         shelf, pairs = unscanned_alert.suspects(db, shelf_id, min_age=unscanned_alert.GRACE_S)
         # since: 이 회수가 감지된 시각 — 앱이 '같은 회수를 또 띄우지 않기' 판정에 쓴다
         # (이름이 같은 다른 회수는 새 경보로 떠야 하므로 이름이 아니라 시각으로 구분)
-        for c, since in pairs:
+        for c, since, drop_kg in pairs:
+            # c 가 None 이면 무게가 어느 병과도 안 맞는 감소 — 병을 특정하지 못한 채 칸 단위로
+            # 알린다. chemical_id 는 칸 기준 식별자이고 앱은 이름과 since 로 표시·중복 방지만 한다.
             unscanned_checkouts.append({
-                "chemical_id": c.id,
-                "chemical_name": c.name,
+                "chemical_id": c.id if c else f"shelf:{shelf_id}",
+                "chemical_name": c.name if c else unscanned_alert.unidentified_name(drop_kg),
+                "unidentified": c is None,
+                "drop_kg": drop_kg,
                 "shelf_id": shelf_id,
                 "shelf_desc": f"선반 {shelf.parent_shelf} · {shelf.row}행 {shelf.col}열",
                 "since": since,
