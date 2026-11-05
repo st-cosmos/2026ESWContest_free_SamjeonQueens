@@ -259,7 +259,7 @@ def scan_out(req: schemas.ScanOutRequest, db: Session = Depends(get_db)):
         shelf = db.query(models.Shelf).filter(models.Shelf.id == chem.shelf_id).first()
         if not shelf:
             continue
-        drop = checkout_flow.claim_recent_drop(chem.shelf_id)
+        drop = checkout_flow.claim_recent_drop(chem.shelf_id, expected_kg=chem.weight)
         if drop is not None or shelf.weight < checkout_flow.EMPTY_SHELF_KG:
             result = checkout_flow.finalize_already_removed(
                 db, chem, req.username, measured_delta=drop
@@ -390,23 +390,18 @@ def compute_alerts(db: Session, placed_chemical_id: Optional[str] = None, ensure
     unscanned_checkouts = []
     chemicals = db.query(models.Chemical).filter(models.Chemical.current_status == "비치중").all()
     for shelf_id in sorted({c.shelf_id for c in chemicals if c.shelf_id}):
-        # 유예(GRACE_S) 안에는 띄우지 않는다 — 병을 먼저 들고 스캔하러 오는 정상 순서.
+        # 유예(GRACE_S) 안의 감소는 띄우지 않는다 — 병을 먼저 들고 스캔하러 오는 정상 순서.
         # 푸시 알림(unscanned_alert.watch)과 같은 타이밍에 모달이 뜨게 맞춘다.
-        if not unscanned_alert.drop_past_grace(shelf_id):
-            continue
-        shelf, suspects = unscanned_alert.suspects(db, shelf_id)
-        if not suspects:
-            continue
+        shelf, pairs = unscanned_alert.suspects(db, shelf_id, min_age=unscanned_alert.GRACE_S)
         # since: 이 회수가 감지된 시각 — 앱이 '같은 회수를 또 띄우지 않기' 판정에 쓴다
         # (이름이 같은 다른 회수는 새 경보로 떠야 하므로 이름이 아니라 시각으로 구분)
-        drop = checkout_flow.peek_unclaimed_drop(shelf_id)
-        for c in suspects:
+        for c, since in pairs:
             unscanned_checkouts.append({
                 "chemical_id": c.id,
                 "chemical_name": c.name,
                 "shelf_id": shelf_id,
                 "shelf_desc": f"선반 {shelf.parent_shelf} · {shelf.row}행 {shelf.col}열",
-                "since": drop[1] if drop else None,
+                "since": since,
             })
                 
     # 2. Expired chemicals:

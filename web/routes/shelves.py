@@ -476,8 +476,8 @@ def update_weight(shelf_id: str, req: schemas.WeightUpdate, db: Session = Depend
             # 청구할 수 있도록 기록하고, 경보 대상이 되는 순간 즉시 무단 반입으로 알린다
             # (unscanned_alert.notify_rise — 반출과 달리 유예 없음).
             unclaimed_rise = _record_rise(shelf.id, delta)
-        # 병이 다시 올라왔으면 직전의 미청구 감소 기록은 무효
-        checkout_flow.clear_unclaimed_drop(shelf.id)
+        # 병이 다시 올라왔으면 그 무게와 맞는 미청구 감소 한 건은 무효 (맞는 게 없으면 전부)
+        checkout_flow.clear_unclaimed_drop(shelf.id, rise_kg=delta)
     elif delta <= -MIN_EVENT_DELTA_KG:
         # 방금 스캔 없이 놓인 병이 있으면 그 증가에서 먼저 차감한다 (손 떼기·자리 고치기)
         absorbed = _absorb_drop_into_rise(shelf.id, -delta)

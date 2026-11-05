@@ -56,14 +56,18 @@ def _strip(events: list) -> list:
     return [{k: v for k, v in e.items() if k != "_ts"} for e in reversed(events)]
 
 
-def suspects(db, shelf_id: str):
-    """이 칸에서 무단 반출로 볼 병들 (현재 상태). 푸시(watch)와 앱 모달(GET /alerts)이 함께 쓴다.
+def suspects(db, shelf_id: str, min_age: float = 0.0):
+    """이 칸에서 무단 반출로 볼 병들 — [(병, 감지 시각)] (현재 상태).
+    푸시(watch)와 앱 모달(GET /alerts)이 함께 쓴다. min_age 미만 나이의 감소는 아직
+    유예 중으로 보고 건너뛴다.
 
-    1) 미청구 감소가 있으면 그 감소량과 무게가 허용 오차 안에서 맞는 비치중 병을 고른다
-       (여러 개면 가장 가까운 병 하나). 한 칸에 병이 여러 개라 하나를 빼도 칸이 비지 않는
-       경우를 잡는다 — 예전에는 칸이 비어야만 울려서 병이 둘 이상인 칸은 감지되지 않았다.
-    2) 맞는 병이 없으면 칸이 비었을 때(EMPTY_SHELF_KG 미만)만 남은 비치중 병 전부를 든다.
-       (감소 기록이 없는 서버 재시작 직후나, 기록 무게와 동떨어진 감소에 대한 보루)
+    1) 미청구 감소 한 건마다 그 감소량과 무게가 허용 오차 안에서 맞는 비치중 병을 고른다
+       (여러 개면 가장 가까운 병 하나, 이미 지목된 병은 제외). 한 칸에 병이 여러 개라
+       하나를 빼도 칸이 비지 않는 경우와 두 병을 연달아 뺀 경우를 잡는다 — 예전에는
+       칸이 비어야만 울려서 병이 둘 이상인 칸은 감지되지 않았다.
+    2) 맞는 병이 하나도 없으면 칸이 비었을 때(EMPTY_SHELF_KG 미만)만 남은 비치중 병 전부를
+       든다 (감소 기록이 없는 서버 재시작 직후나, 기록 무게와 동떨어진 감소에 대한 보루).
+       유예 중인 감소가 남아 있으면 보루도 기다린다.
     """
     shelf = db.query(models.Shelf).filter(models.Shelf.id == shelf_id).first()
     if not shelf:
@@ -77,15 +81,23 @@ def suspects(db, shelf_id: str):
     chems = [c for c in chems
              if (c.weight or 0.0) >= MIN_BOTTLE_KG and c.id != relocating_id]
 
-    drop = checkout_flow.peek_unclaimed_drop(shelf_id)
-    if drop is not None:
-        drop_kg = drop[0]
-        matched = [c for c in chems if checkout_flow.weight_within_tolerance(c.weight, drop_kg)]
+    now = time.time()
+    drops = checkout_flow.unclaimed_drops(shelf_id)   # 오래된 순
+    ready = [d for d in drops if now - d[1] >= min_age]
+    pool = list(chems)
+    out = []
+    for drop_kg, ts in ready:
+        matched = [c for c in pool if checkout_flow.weight_within_tolerance(c.weight, drop_kg)]
         if matched:
-            return shelf, [min(matched, key=lambda c: abs(c.weight - drop_kg))]
+            best = min(matched, key=lambda c: abs(c.weight - drop_kg))
+            pool.remove(best)
+            out.append((best, ts))
+    if out:
+        return shelf, out
 
-    if shelf.weight < checkout_flow.EMPTY_SHELF_KG:
-        return shelf, chems
+    if len(ready) == len(drops) and shelf.weight < checkout_flow.EMPTY_SHELF_KG:
+        since = drops[-1][1] if drops else None
+        return shelf, [(c, since) for c in chems]
     return shelf, []
 
 
@@ -95,8 +107,8 @@ async def watch(shelf_id: str, broadcast):
     await asyncio.sleep(GRACE_S)
     db = SessionLocal()
     try:
-        shelf, chems = suspects(db, shelf_id)
-        snapshot = [(c.id, c.name) for c in chems]
+        shelf, pairs = suspects(db, shelf_id, min_age=GRACE_S)
+        snapshot = [(c.id, c.name) for c, _ in pairs]
         desc = _shelf_desc(shelf)
     finally:
         db.close()
@@ -123,13 +135,6 @@ def recent_events() -> list:
     """최근 EVENT_TTL_S 안의 확정 무단 반출 이벤트 (최신 순). 앱 폴링용."""
     _prune(time.time())
     return _strip(_events)
-
-
-def drop_past_grace(shelf_id) -> bool:
-    """이 칸의 미청구 감소가 유예 시간을 넘겼는가 (앱 모달의 무단 반출 판정용).
-    감소 기록이 없으면(서버 재시작 등) 나이를 알 수 없으므로 지난 것으로 본다."""
-    drop = checkout_flow.peek_unclaimed_drop(shelf_id)
-    return drop is None or time.time() - drop[1] >= GRACE_S
 
 
 # ---------- 무단 반입 (반입 스캔 없는 적재) ----------
