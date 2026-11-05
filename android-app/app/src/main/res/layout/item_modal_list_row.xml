@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 모달 안 시약 목록 행 (design.pen app-exception-modals-2 · Out Row): 아이콘 + 이름/부제 + 위치 pill -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="5dp"
+    android:orientation="horizontal"
+    android:gravity="center_vertical"
+    android:background="@drawable/shape_rounded_8"
+    android:backgroundTint="@color/surface"
+    android:paddingStart="8dp"
+    android:paddingEnd="8dp"
+    android:paddingTop="7dp"
+    android:paddingBottom="7dp">
+
+    <FrameLayout
+        android:id="@+id/rowIconWrap"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:background="@drawable/shape_circle"
+        android:backgroundTint="@color/danger_soft">
+        <ImageView
+            android:id="@+id/rowIcon"
+            android:layout_width="12dp"
+            android:layout_height="12dp"
+            android:layout_gravity="center"
+            android:src="@drawable/ic_flask_conical"
+            android:contentDescription="시약"
+            app:tint="@color/danger" />
+    </FrameLayout>
+
+    <LinearLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:layout_marginStart="8dp"
+        android:orientation="vertical">
+        <TextView
+            android:id="@+id/rowTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_strong"
+            tools:text="아세톤" />
+        <TextView
+            android:id="@+id/rowSubtitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="1dp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:textSize="8sp"
+            android:textColor="@color/text_muted"
+            tools:text="김연구 · 2시간 전 반출" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:id="@+id/rowTrailing"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="6dp"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:background="@drawable/shape_pill"
+        android:backgroundTint="@color/bg"
+        android:paddingStart="6dp"
+        android:paddingEnd="6dp"
+        android:paddingTop="3dp"
+        android:paddingBottom="3dp">
+        <ImageView
+            android:layout_width="8dp"
+            android:layout_height="8dp"
+            android:layout_marginEnd="3dp"
+            android:src="@drawable/ic_map_pin"
+            android:contentDescription="위치"
+            app:tint="@color/text_muted" />
+        <TextView
+            android:id="@+id/rowTrailingText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="8sp"
+            android:textStyle="bold"
+            android:textColor="@color/text_body"
+            tools:text="A · 2행 1열" />
+    </LinearLayout>
+</LinearLayout>

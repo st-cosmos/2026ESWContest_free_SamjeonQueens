@@ -1,4 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from typing import Dict, List
 from database import get_db
@@ -7,7 +8,9 @@ import device_status
 import models
 import routes.chemicals as chemical_routes
 import schemas
+import services.capacity as capacity
 import services.llm_safety as llm_safety
+import unscanned_alert
 from session_store import checkin_session, reset_checkin
 from datetime import datetime
 import time
@@ -180,22 +183,94 @@ def delete_config_col(shelf_id: str, req: Dict[str, int], db: Session = Depends(
 MIN_EVENT_DELTA_KG = 0.05
 
 
-# '지정 위치로 옮기기' 버튼을 누르기 전에 병을 먼저 옮겨 놓는 순서 지원:
-# 반입 세션 없이 발생한 무게 증가를 칸별로 기억해 두고, 이 시간 안에 온
-# 위치 이동 요청(routes/session.relocate_checkin)이 청구하면 즉시 확정한다.
+# 반입 세션 없이 발생한 무게 증가(= 스캔 없이 올려진 병)를 칸별로 기억해 두고, 뒤따르는
+# 요청이 청구(claim)하면 다시 들었다 놓을 필요 없이 즉시 확정한다.
+#  - 위치 이동 요청(routes/session.relocate_checkin): UNCLAIMED_RISE_TTL_S 안의 증가만
+#  - 반입 스캔(routes/chemicals.scan_in): 무단 반입 알림을 보고 스캔하러 오기까지
+#    시간이 걸리므로 UNCLAIMED_RISE_KEEP_S 까지 청구 가능
+# 스캔 없는 적재는 절차 위반이므로 유예 없이 즉시 무단 반입으로 경보된다 (unscanned_alert).
 UNCLAIMED_RISE_TTL_S = 60.0
+UNCLAIMED_RISE_KEEP_S = 15 * 60.0
+# 병을 놓는 동안 무게가 여러 단계로 보고되면(300 g → 500 g, 손 떼기) 같은 적재로 합친다.
+# 이 시간 안에 같은 칸에 또 증가가 오면 새 적재가 아니라 이어지는 단계로 보고 합산한다.
+RISE_MERGE_WINDOW_S = 30.0
 _unclaimed_rises: dict = {}  # shelf_id -> (delta_kg, timestamp)
 
 
-def claim_recent_rise(shelf_id):
-    """이 칸의 최근 미청구 증가량을 소비하고 반환한다. 없으면 None."""
+def _record_rise(shelf_id: str, delta_kg: float):
+    """미청구 증가를 기록하고, 이번 보고로 적재가 '처음 경보 대상이 된' 경우에만
+    (delta_kg, timestamp) 를 돌려준다. 그 외(합산만 됐거나 아직 가벼움)는 None.
+
+    합산 시 timestamp 는 첫 단계의 것을 유지한다 — 앱이 `since` 로 같은 경보를 다시
+    띄우지 않도록 식별하고, 한 번의 적재에 경보가 한 번만 나가게 하기 위해서다."""
+    now = time.time()
+    prev = _unclaimed_rises.get(shelf_id)
+    if prev is not None and now - prev[1] <= RISE_MERGE_WINDOW_S:
+        total, ts = round(prev[0] + delta_kg, 2), prev[1]
+        was_alertable = prev[0] >= unscanned_alert.MIN_RISE_KG
+    else:
+        total, ts = round(delta_kg, 2), now
+        was_alertable = False
+    entry = (total, ts)
+    _unclaimed_rises[shelf_id] = entry
+    if not was_alertable and total >= unscanned_alert.MIN_RISE_KG:
+        return entry
+    return None
+
+
+def _absorb_drop_into_rise(shelf_id: str, drop_kg: float) -> bool:
+    """감소를 이 칸의 미청구 증가에서 차감한다. 방금 놓은 병에서 손을 떼거나 자리를 고쳐
+    무게가 조금 줄어도 적재 기록(과 '지금 스캔하기' 청구)이 사라지지 않게 한다.
+
+    감소가 이 증가로 설명되면 True (반출 쪽 미청구 감소로 남기지 않는다). 증가분을 넘는
+    큰 감소는 기록돼 있던 다른 병까지 들린 것일 수 있으므로 False 를 돌려 반출 판정에 맡긴다."""
+    entry = _unclaimed_rises.get(shelf_id)
+    if entry is None:
+        return False
+    rise, ts = entry
+    net = round(rise - drop_kg, 2)
+    if net >= MIN_EVENT_DELTA_KG:
+        _unclaimed_rises[shelf_id] = (net, ts)
+        return True
+    # 놓았던 병을 도로 들어 올렸다 — 적재 자체가 무효
+    _unclaimed_rises.pop(shelf_id, None)
+    return drop_kg <= rise + MIN_EVENT_DELTA_KG
+
+
+def claim_recent_rise(shelf_id, max_age: float = UNCLAIMED_RISE_TTL_S):
+    """이 칸의 최근 미청구 증가량을 소비하고 반환한다. 없거나 너무 오래됐으면 None."""
     entry = _unclaimed_rises.pop(shelf_id, None)
     if entry is None:
         return None
     delta, at = entry
-    if time.time() - at > UNCLAIMED_RISE_TTL_S:
+    if time.time() - at > max_age:
         return None
     return delta
+
+
+def pending_rises(min_age: float = 0.0, min_kg: float = 0.0) -> list:
+    """아직 청구되지 않은 증가 [(shelf_id, delta_kg, timestamp)]. 보관 기한이 지난 것은 버린다."""
+    now = time.time()
+    for sid in [s for s, (_d, t) in _unclaimed_rises.items() if now - t > UNCLAIMED_RISE_KEEP_S]:
+        _unclaimed_rises.pop(sid, None)
+    return [(sid, d, t) for sid, (d, t) in _unclaimed_rises.items()
+            if now - t >= min_age and d >= min_kg]
+
+
+def _rewrite_intake_location(db: Session, chem: models.Chemical, old_desc: str, new_desc: str):
+    """가장 최근 반입 기록의 위치 문구를 새 칸으로 고쳐 쓴다.
+
+    혼재 경고 → 안전 위치 이동이 추천 칸에서 끝났을 때 쓴다. '위치 변경' 기록을
+    따로 남기지 않으므로, 혼재 금지 칸에 잠깐 놓였던 흔적이 기록에 남지 않는다."""
+    intake = db.query(models.Log).filter(
+        models.Log.chemical_id == chem.id,
+        models.Log.action == "반입",
+    ).order_by(models.Log.timestamp.desc()).first()
+    if intake is None:
+        return
+    text = intake.details or ""
+    intake.details = (text.replace(old_desc, new_desc) if old_desc in text
+                      else f"{text} — 보관 위치 {new_desc}")
 
 
 def _relocating_from(db: Session, shelf: models.Shelf) -> bool:
@@ -268,8 +343,14 @@ def _handle_checkin_increase(db: Session, shelf: models.Shelf, delta_kg: float):
         moving.shelf_col = shelf.col or 1
         chem = moving
         on_target = shelf.id == checkin_session.get("target_shelf_id")
-        details = (f"지정 위치로 이동 완료: {old_desc} → {shelf_desc}" if on_target
-                   else f"위치 변경: {old_desc} → {shelf_desc} (지정 위치 아님)")
+        if on_target and checkin_session.get("relocate_reason") == "co_storage":
+            # 혼재 경고 → 안전 위치로 이동 완료: '위치 변경' 기록 대신 반입 기록 자체를
+            # 안전 위치로 고쳐 써서 혼재 금지 칸에 있었던 흔적을 남기지 않는다
+            _rewrite_intake_location(db, moving, old_desc, shelf_desc)
+            details = None
+        else:
+            details = (f"지정 위치로 이동 완료: {old_desc} → {shelf_desc}" if on_target
+                       else f"위치 변경: {old_desc} → {shelf_desc} (지정 위치 아님)")
     elif restored is not None:
         restored.current_status = "비치중"
         restored.shelf_id = shelf.id
@@ -300,34 +381,45 @@ def _handle_checkin_increase(db: Session, shelf: models.Shelf, delta_kg: float):
 
     # 병별 용량(가득 총 무게) 래칫 — 라벨/사진 추정치와 실측 무게 중 큰 값.
     # 가득 병이 반입되면 실측이 곧 용량이고, 반쯤 쓴 병 재반입은 기존 값을 유지한다.
+    # 내용량 표기 없이 정한 기본값(0.52/0.12 kg)은 처음 등록하는 병에만 쓴다 — 이미 용량이
+    # 있는 병에 쓰면 래칫이라 다시 내려오지 않아 작은 병이 0.52 kg 으로 굳는다.
+    is_new = moving is None and restored is None
     est_cap = checkin_session.get("capacity_kg")
+    if est_cap and checkin_session.get("capacity_is_default") and not is_new:
+        est_cap = None
     chem.capacity_kg = round(
         max(v for v in (est_cap, measured, chem.capacity_kg) if v), 2
     )
+    if is_new and not checkin_session.get("capacity_kg"):
+        # 추정이 아직 안 왔다 — 늦게 오는 기본값을 이 새 병에만 적용할 수 있게 표시
+        capacity.mark_new_without_estimate(chem.id)
 
-    # LLM 기반 혼재 금지 시약 정보 분석 및 저장
-    llm_safety.ensure_chemical_incompatibility_info(chem, db)
+    # 병별 혼재 목록(화면 표시·대체 규칙용)은 여기서 채우지 않는다. 무게 보고 처리는 비동기
+    # 루프에서 돌아 Gemini 를 기다리면 서버 전체가 멈춘다. 다음 경고·재고 조회가 채운다.
+    # 혼재 판정 자체는 반입 스캔 때 받아 둔 시약 쌍 판정(services/costorage)을 쓴다.
 
-    # 추천 위치 안내 LED 소등
+    # 추천 위치(기존 이력 칸·안전 위치) 안내 LED 소등
     recommended = db.query(models.Shelf).filter(
-        models.Shelf.led_message.like("%기존 반입%")
+        or_(models.Shelf.led_message.like("%기존 반입%"),
+            models.Shelf.led_message.like("안전 위치 안내%"))
     ).all()
     for r_shelf in recommended:
         r_shelf.led_on = False
         r_shelf.led_message = ""
 
-    db.add(models.Log(
-        chemical_id=chem.id,
-        chemical_name=chem.name,
-        action="위치 변경" if moving is not None else "반입",
-        operator_name=operator_name,
-        details=details,
-    ))
+    if details is not None:
+        db.add(models.Log(
+            chemical_id=chem.id,
+            chemical_name=chem.name,
+            action="위치 변경" if moving is not None else "반입",
+            operator_name=operator_name,
+            details=details,
+        ))
 
     # 반입 직후 인접 수납칸 혼재 금지 시약 배치 여부 검사
     safe_id, safe_desc = llm_safety.find_recommended_safe_shelf(chem, db)
     co_warning = None
-    alerts = chemical_routes.get_alerts(db)
+    alerts = chemical_routes.compute_alerts(db, placed_chemical_id=chem.id, ensure_lists=False)
     for warning in alerts.get("co_storage_warnings", []):
         if warning["chemical_1_id"] == chem.id or warning["chemical_2_id"] == chem.id:
             co_warning = warning
@@ -336,8 +428,8 @@ def _handle_checkin_increase(db: Session, shelf: models.Shelf, delta_kg: float):
             break
 
     reset_checkin()
-    # 이 안착 이전의 증가 기록은 방금 확정된 병과 무관하다
-    _unclaimed_rises.clear()
+    # 이 칸의 미청구 증가는 방금 확정된 안착으로 소비됐다 (다른 칸의 무단 반입 대기는 유지)
+    _unclaimed_rises.pop(shelf.id, None)
     db.commit()
 
     return {
@@ -374,28 +466,37 @@ def update_weight(shelf_id: str, req: schemas.WeightUpdate, db: Session = Depend
 
     # 무게 변화량으로 반입(증가)/반출(감소) 세션을 진행시킨다
     session_result = None
+    unclaimed_drop = False
+    unclaimed_rise = None
     delta = req.weight - prev_w
     if delta >= MIN_EVENT_DELTA_KG:
         session_result = _handle_checkin_increase(db, shelf, delta)
         if session_result is None:
-            # 세션이 소비하지 않은 증가 — 곧이어 올 위치 이동 요청이 청구할 수 있다
-            _unclaimed_rises[shelf.id] = (round(delta, 2), time.time())
-        # 병이 다시 올라왔으면 직전의 미청구 감소 기록은 무효
-        checkout_flow.clear_unclaimed_drop(shelf.id)
+            # 세션이 소비하지 않은 증가 = 스캔 없이 올려진 병. 위치 이동 요청·반입 스캔이
+            # 청구할 수 있도록 기록하고, 경보 대상이 되는 순간 즉시 무단 반입으로 알린다
+            # (unscanned_alert.notify_rise — 반출과 달리 유예 없음).
+            unclaimed_rise = _record_rise(shelf.id, delta)
+        # 병이 다시 올라왔으면 그 무게와 맞는 미청구 감소 한 건은 무효 (맞는 게 없으면 전부)
+        checkout_flow.clear_unclaimed_drop(shelf.id, rise_kg=delta)
     elif delta <= -MIN_EVENT_DELTA_KG:
-        _unclaimed_rises.pop(shelf.id, None)
+        # 방금 스캔 없이 놓인 병이 있으면 그 증가에서 먼저 차감한다 (손 떼기·자리 고치기)
+        absorbed = _absorb_drop_into_rise(shelf.id, -delta)
         session_result = checkout_flow.handle_weight_drop(db, shelf, -delta)
-        if session_result is None and not _relocating_from(db, shelf):
+        if session_result is None and not absorbed and not _relocating_from(db, shelf):
             # 반출 세션이 소비하지 않은 감소 — 사용자가 병을 먼저 들고 온
             # 경우다. 곧이어 올 스캔이 이 감소를 청구해 즉시 확정한다.
+            # 유예 시간 안에 스캔이 없으면 무단 반출로 확정된다 (unscanned_alert).
             checkout_flow.note_unclaimed_drop(shelf.id, -delta)
+            unclaimed_drop = True
 
     db.commit()
     db.refresh(shelf)
     return {
         "status": "success",
         "shelf": shelf,
-        "session_result": session_result
+        "session_result": session_result,
+        "unclaimed_drop": unclaimed_drop,
+        "unclaimed_rise": unclaimed_rise,
     }
 
 @router.post("/{shelf_id}/led")

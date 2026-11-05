@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, UniqueConstraint
 from datetime import datetime
 from database import Base
 
@@ -110,3 +110,19 @@ class BarcodeMap(Base):
     chemical_name = Column(String, nullable=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
+
+class CoStoragePair(Base):
+    """두 시약을 같은 행에 둬도 되는지에 대한 판정 (services/costorage).
+
+    name_a·name_b 는 공백을 정리하고 소문자로 맞춘 시약 표준명을 사전순으로 둔 쌍이다.
+    같은 쌍은 처음 받은 판정을 계속 쓰며, 틀린 판정은 이 행을 직접 고친다."""
+    __tablename__ = "co_storage_pairs"
+    __table_args__ = (UniqueConstraint("name_a", "name_b", name="uq_co_storage_pair"),)
+
+    id = Column(Integer, primary_key=True, index=True)
+    name_a = Column(String, nullable=False, index=True)
+    name_b = Column(String, nullable=False, index=True)
+    dangerous = Column(Boolean, nullable=False)
+    reason = Column(String, nullable=True)
+    source = Column(String, nullable=False, default="llm")   # llm | manual
+    created_at = Column(DateTime, default=datetime.utcnow)

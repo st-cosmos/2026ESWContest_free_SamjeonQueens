@@ -25,8 +25,9 @@ WORKDIR /app
 # Copy python project configuration
 COPY pyproject.toml uv.lock ./
 
-# Install python dependencies using uv (forces system environment installation)
-RUN uv pip install --system -r pyproject.toml
+# Install python dependencies pinned by uv.lock using uv (forces system environment installation)
+RUN uv export --frozen --no-emit-project -o /tmp/requirements.txt \
+    && uv pip install --system -r /tmp/requirements.txt
 
 # Copy backend files
 COPY . .

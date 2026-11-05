@@ -20,6 +20,7 @@ import matching
 import models
 import schemas
 import shelf_power
+import unscanned_alert
 from database import Base, SessionLocal, engine, get_db
 from routes import chemicals, logs, orders, session, settings, shelves, users
 
@@ -254,6 +255,13 @@ async def post_weight(device_id: str, event: WeightEvent, db: Session = Depends(
         "session_result": result["session_result"],
     }
     await ws_manager.broadcast({"type": "weight_update", "device_id": device_id, "weight": shelf.weight})
+    if result.get("unclaimed_drop"):
+        # 반출 스캔 없는 무게 감소 — 유예 시간 뒤에도 스캔이 없으면 앱에 무단 반출 경보를 보낸다
+        asyncio.create_task(unscanned_alert.watch(device_id, ws_manager.broadcast))
+    rise = result.get("unclaimed_rise")
+    if rise:
+        # 반입 스캔 없는 무게 증가 — 절차 위반이므로 유예 없이 즉시 무단 반입 경보를 보낸다
+        await unscanned_alert.notify_rise(device_id, rise[0], rise[1], ws_manager.broadcast)
     return resp_data
 
 

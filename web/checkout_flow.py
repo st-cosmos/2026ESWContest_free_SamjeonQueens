@@ -26,30 +26,75 @@ EMPTY_SHELF_KG = 0.1
 # 반출 세션 없이 발생한 무게 감소를 칸별로 기억해 두고, 이 시간 안에 온
 # 스캔이 그 감소를 청구(claim)하면 대기 없이 즉시 반출을 확정한다.
 UNCLAIMED_DROP_TTL_S = 180.0
-_unclaimed_drops: dict = {}  # shelf_id -> (delta_kg, timestamp)
+# 칸마다 감소를 여러 건 쌓는다 (오래된 것이 앞). 두 병을 연달아 빼면 두 건이 남아 각각
+# 무게로 병을 지목한다 — 예전에는 한 건만 기억해 마지막 병만 지목됐다.
+_unclaimed_drops: dict = {}  # shelf_id -> [(delta_kg, timestamp), ...]
+MAX_UNCLAIMED_DROPS = 5
+# 이 시간 안에 이어지는 감소는 한 병을 두 단계로 든 것으로 보고 직전 건에 합친다
+# (연달아 빼는 두 병은 보통 이보다 느리다). 감지 시각은 첫 단계 것을 유지한다.
+DROP_MERGE_WINDOW_S = 3.0
 
 
 def note_unclaimed_drop(shelf_id: str, delta_kg: float):
     """세션이 소비하지 않은 무게 감소를 기억한다 (routes/shelves.update_weight)."""
-    _unclaimed_drops[shelf_id] = (round(delta_kg, 2), time.time())
+    now = time.time()
+    lst = _unclaimed_drops.setdefault(shelf_id, [])
+    if lst and now - lst[-1][1] <= DROP_MERGE_WINDOW_S:
+        prev_kg, prev_ts = lst[-1]
+        lst[-1] = (round(prev_kg + delta_kg, 2), prev_ts)
+    else:
+        lst.append((round(delta_kg, 2), now))
+    del lst[:-MAX_UNCLAIMED_DROPS]
 
 
-def clear_unclaimed_drop(shelf_id: str):
-    """무게가 다시 올라오면(병 복귀) 직전 감소 기록을 무효화한다."""
+def unclaimed_drops(shelf_id) -> list:
+    """이 칸의 미청구 감소 목록 [(delta_kg, timestamp)], 오래된 순 — 알림 판정용."""
+    return list(_unclaimed_drops.get(shelf_id, ())) if shelf_id else []
+
+
+def clear_unclaimed_drop(shelf_id: str, rise_kg=None):
+    """무게가 다시 올라오면(병 복귀) 감소 기록을 무효화한다.
+
+    rise_kg 가 있으면 그 증가량과 맞는 감소 한 건만 지운다 (두 병을 뺐다가 하나만 돌려놓은
+    경우 나머지는 계속 경보 대상). 맞는 게 없거나 rise_kg 가 없으면(이동 시작 등) 전부 지운다."""
+    lst = _unclaimed_drops.get(shelf_id)
+    if not lst:
+        return
+    if rise_kg is not None:
+        matched = [d for d in lst if weight_within_tolerance(d[0], rise_kg)]
+        if matched:
+            lst.remove(min(matched, key=lambda d: abs(d[0] - rise_kg)))
+            if not lst:
+                _unclaimed_drops.pop(shelf_id, None)
+            return
     _unclaimed_drops.pop(shelf_id, None)
 
 
-def claim_recent_drop(shelf_id):
-    """이 칸의 최근(180초 이내) 미청구 감소량을 소비하고 반환한다. 없으면 None."""
+def claim_recent_drop(shelf_id, expected_kg=None):
+    """이 칸의 미청구 감소 한 건을 소비하고 감소량을 반환한다. 없으면 None.
+
+    expected_kg(스캔한 병의 기록 무게)와 맞는 건이 있으면 나이와 무관하게 그 건을 쓴다 —
+    무단 반출 경보 뒤 한참 지나 '지금 스캔하기'로 와도 그 회수를 청구해 즉시 확정된다.
+    맞는 건이 없으면 최근(UNCLAIMED_DROP_TTL_S 이내) 건만 청구한다."""
     if not shelf_id:
         return None
-    entry = _unclaimed_drops.pop(shelf_id, None)
-    if entry is None:
+    lst = _unclaimed_drops.get(shelf_id)
+    if not lst:
         return None
-    delta, at = entry
-    if time.time() - at > UNCLAIMED_DROP_TTL_S:
+    now = time.time()
+    matched = ([d for d in lst if weight_within_tolerance(expected_kg, d[0])]
+               if expected_kg else [])
+    fresh = [d for d in lst if now - d[1] <= UNCLAIMED_DROP_TTL_S]
+    if matched:
+        pick = min(matched, key=lambda d: abs(d[0] - expected_kg))
+    elif fresh:
+        pick = fresh[-1]
+    else:
         return None
-    return delta
+    lst.remove(pick)
+    if not lst:
+        _unclaimed_drops.pop(shelf_id, None)
+    return pick[0]
 
 
 def weight_within_tolerance(expected_kg, measured_kg) -> bool:
