@@ -12,7 +12,7 @@ router = APIRouter(prefix="/api/orders", tags=["orders"])
 # 미추정 병만 기본값 520g 가정 (용량 추정 기본값, 프런트 재고 관리와 동일 기준)
 CAPACITY_KG = capacity.DEFAULT_CAPACITY_KG
 # 이 잔량(%) 이하로 떨어지면 주문 목록에 자동 추가한다 (반출중·비치중 무관)
-LOW_STOCK_PCT = 15
+LOW_STOCK_PCT = 25
 
 
 def _sync_low_stock_orders(db: Session):
