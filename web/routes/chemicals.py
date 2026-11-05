@@ -70,6 +70,10 @@ def match_chemical_llm(req: schemas.MatchRequest, db: Session = Depends(get_db))
     result = llm_match.identify_chemical_from_ocr(
         req.ocr_text, matching.known_names(db), image_b64=req.image_b64
     )
+    # 모델이 시약 이름 근거 없이 짐작한 답은 버린다 — 카메라가 라벨을 벗어나 상용구("Solution 용액")만
+    # 남은 텍스트에 과망간산칼륨을 답한 사례. 근거 문구(label_text)가 일반 단어·숫자뿐이면 무효.
+    if result and not matching.has_informative_token(result.get("label_text") or result["name"]):
+        result = None
     if not result:
         response = {
             "status": "no_match", "method": "llm", "chemical_name": None,
