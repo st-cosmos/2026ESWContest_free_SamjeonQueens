@@ -19,6 +19,10 @@ AUTO_ACCEPT = 0.9
 CONFIRM_MIN = 0.65
 # fuzzy 후보로 인정할 최소 유사도
 FUZZY_MIN = 0.70
+# 이보다 짧은 토큰은 유사도가 FUZZY_SHORT_MIN 이상이어야 후보로 인정한다 — 짧은 OCR 조각은
+# 우연히 별칭과 비슷해지기 쉽다 ("Forli" ↔ 'formalin' 0.77).
+FUZZY_SHORT_LEN = 6
+FUZZY_SHORT_MIN = 0.85
 
 # 별칭 테이블이 비어 있을 때 시드로 넣는 기본 별칭 (구 CHEMICAL_NAME_MAPPING 대체)
 DEFAULT_ALIASES = {
@@ -156,6 +160,8 @@ GENERIC_WORDS = {
     "acetate", "citrate", "silicate", "acid", "alcohol", "solution", "soln", "ketone", "ether",
     "ester", "amine", "glycol", "ethyl", "methyl", "propyl", "butyl", "phenyl", "benzyl",
     "anhydrous", "reagent", "reagents", "grade", "chemical", "chemicals", "laboratory",
+    # 라벨 상용구 — 시약 이름의 근거가 못 된다 ("For Laboratory Use Only", "Package", 회사 URL)
+    "for", "use", "only", "package", "packing", "www", "com", "ltd", "inc",
     "나트륨", "칼륨", "칼슘", "마그네슘", "암모늄", "용액", "수용액", "표준액", "시약", "무수",
     "산", "염", "알코올", "알콜", "에틸", "메틸",
 }
@@ -176,11 +182,26 @@ FORM_SUFFIXES = ("수용액", "용액", "표준액", "solution", "soln")
 
 
 def _is_generic(norm_token: str) -> bool:
-    """일반 단어이거나, OCR 이 끝을 잘라 읽은 일반 단어("solutio", "chemica")인가."""
+    """일반 단어이거나, OCR 이 일부만 읽은 일반 단어("solutio", "chemica", "tion", "olution")인가.
+
+    끝만 잘린 조각뿐 아니라 앞이 잘린 조각도 일반 단어로 본다. "Iodine Solution" 라벨에서
+    OCR 이 "tion"/"olution" 만 읽으면, 그 조각을 포함한 별칭이 'sodium chloride solution'
+    하나뿐이라 '별칭의 일부' 규칙이 염화나트륨(0.8, 확인 필요)을 내놓던 오탐의 원인이었다."""
     if norm_token in GENERIC_WORDS:
         return True
-    return len(norm_token) >= 4 and any(len(g) > len(norm_token) and g.startswith(norm_token)
-                                        for g in GENERIC_WORDS)
+    if len(norm_token) < 3:
+        return False
+    return any(len(g) > len(norm_token) and norm_token in g for g in GENERIC_WORDS)
+
+
+def has_informative_token(text: str) -> bool:
+    """텍스트에 시약 이름의 근거가 될 만한 토큰(일반 단어·상용구·숫자가 아닌 것)이 있는가.
+    LLM 식별 결과의 근거 문구(label_text) 검증용 — "Solution 용액"뿐이면 짐작한 답이다."""
+    for t in tokenize(text or ""):
+        nt = normalize(t)
+        if len(nt) >= 2 and not nt.isdigit() and not _is_generic(nt):
+            return True
+    return False
 
 
 _ALIAS_SPLIT_RE = re.compile(r"[\n/()\[\],;:|]+")
@@ -439,7 +460,10 @@ def match(db: Session, ocr_text: str, barcode: Optional[str] = None) -> dict:
                 # 길이 차이가 너무 큰 조합의 오탐 방지 (예: 노이즈 3자 vs 별칭 8자)
                 if abs(len(na) - len(nt)) <= max(len(na), len(nt)) // 2:
                     ratio = SequenceMatcher(None, nt, na).ratio()
-                    if ratio >= FUZZY_MIN:
+                    # 짧은 토큰은 거의 같아야 인정한다 — 라벨 상용구 "For Laboratory" 가 "Forli" 로
+                    # 읽히면 'formalin'(포름알데히드)과 0.77 로 붙어 확인 모달이 떴다.
+                    min_ratio = FUZZY_MIN if len(nt) >= FUZZY_SHORT_LEN else FUZZY_SHORT_MIN
+                    if ratio >= min_ratio:
                         # 유사도 매칭은 자동 확정 금지 (최대 0.85)
                         put(std, round(ratio * 0.85, 3), "fuzzy", token)
 

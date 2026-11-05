@@ -15,7 +15,7 @@ data class ChemicalData(
     val time_out: String?,
     val expiration_date: String?,
     val manufacturer: String?,
-    // 가득 찼을 때 총 무게(kg) — 라벨/사진 추정 + 반입 실측 래칫. 없으면 500g 폴백.
+    // 가득 찼을 때 총 무게(kg) — 라벨/사진 추정 + 반입 실측 래칫. 없으면 520g 폴백.
     val capacity_kg: Double? = null
 )
 

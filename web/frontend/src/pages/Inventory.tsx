@@ -33,8 +33,8 @@ function monthsFromToday(m: number): string {
 }
 
 // 잔량 % 환산: 병별 capacity_kg(라벨/사진 추정 + 실측 래칫)을 우선 쓰고,
-// 미추정 병은 가득 = 500g 폴백 (시연 약품 최대 무게)
-const CAPACITY_KG = 0.5;
+// 미추정 병은 가득 = 520g 폴백 (서버 용량 추정 기본값과 동일)
+const CAPACITY_KG = 0.52;
 const DANGER_PCT = 25;
 
 // 테이블 컬럼 폭 (design-spec §4.2)

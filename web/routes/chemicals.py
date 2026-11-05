@@ -12,6 +12,7 @@ import matching
 import models
 import schemas
 import services.capacity as capacity
+import services.costorage as costorage
 import services.llm_match as llm_match
 import services.llm_safety as llm_safety
 import unscanned_alert
@@ -69,6 +70,10 @@ def match_chemical_llm(req: schemas.MatchRequest, db: Session = Depends(get_db))
     result = llm_match.identify_chemical_from_ocr(
         req.ocr_text, matching.known_names(db), image_b64=req.image_b64
     )
+    # 모델이 시약 이름 근거 없이 짐작한 답은 버린다 — 카메라가 라벨을 벗어나 상용구("Solution 용액")만
+    # 남은 텍스트에 과망간산칼륨을 답한 사례. 근거 문구(label_text)가 일반 단어·숫자뿐이면 무효.
+    if result and not matching.has_informative_token(result.get("label_text") or result["name"]):
+        result = None
     if not result:
         response = {
             "status": "no_match", "method": "llm", "chemical_name": None,
@@ -111,16 +116,17 @@ def estimate_capacity(req: schemas.CapacityEstimateRequest, db: Session = Depend
     실리고, 세션이 이미 끝났으면 방금 반입된 같은 이름의 병에 바로 반영한다."""
     images = req.images_b64 or ([req.image_b64] if req.image_b64 else [])
     est = capacity.estimate_capacity(req.chemical_name, req.ocr_text, images)
-    if not est:
-        return {"status": "no_estimate", "capacity_kg": None}
 
     if checkin_session["active"] and checkin_session["chemical_name"] == req.chemical_name:
         checkin_session["capacity_kg"] = est["capacity_kg"]
+        checkin_session["capacity_is_default"] = est["is_default"]
     else:
         chem = db.query(models.Chemical).filter(
             models.Chemical.name == req.chemical_name
         ).order_by(models.Chemical.time_in.desc()).first()
-        if chem:
+        # 내용량 표기 없이 정한 기본값은 이번 반입으로 처음 등록된 병에만 쓴다 —
+        # 이미 용량이 있는 병을 기본값으로 덮지 않는다 (래칫이라 다시 내려오지 않음)
+        if chem and (not est["is_default"] or capacity.take_new_without_estimate(chem.id)):
             chem.capacity_kg = round(
                 max(est["capacity_kg"], chem.weight or 0.0, chem.capacity_kg or 0.0), 2
             )
@@ -146,6 +152,9 @@ def scan_in(req: schemas.ScanInRequest, db: Session = Depends(get_db)):
         db, req,
         f"인식된 텍스트 '{req.ocr_text}'에서 보관 가능한 시약을 매칭하지 못했습니다."
     )
+    # 이 시약과 지금 선반에 놓인 시약들 사이의 혼재 판정 중 없는 것을 미리 받아 둔다.
+    # 병이 놓이는 순간(무게 보고 처리)에는 Gemini 를 기다릴 수 없으므로 여기서 묻는다.
+    costorage.resolve_for(db, matched_std_name)
         
     # Check if there is history of this chemical name to find designated shelf location
     prev_chem = db.query(models.Chemical).filter(
@@ -254,7 +263,7 @@ def scan_out(req: schemas.ScanOutRequest, db: Session = Depends(get_db)):
         shelf = db.query(models.Shelf).filter(models.Shelf.id == chem.shelf_id).first()
         if not shelf:
             continue
-        drop = checkout_flow.claim_recent_drop(chem.shelf_id)
+        drop = checkout_flow.claim_recent_drop(chem.shelf_id, expected_kg=chem.weight)
         if drop is not None or shelf.weight < checkout_flow.EMPTY_SHELF_KG:
             result = checkout_flow.finalize_already_removed(
                 db, chem, req.username, measured_delta=drop
@@ -373,32 +382,35 @@ def dispose_chemical(chem_id: str, req: Dict[str, str], db: Session = Depends(ge
 def get_alerts(db: Session = Depends(get_db), placed_chemical_id: Optional[str] = None):
     # placed_chemical_id: 반입 직후 확인에서 방금 놓은 병. 그 병이 낀 혼재 경고는 그 병을
     # 옮길 병으로 보고 추천 칸을 고른다 (없으면 기존대로 경고 쌍의 첫 병 기준).
-    # 1. Un-scanned checkouts:
-    # A chemical with status "비치중" but its shelf weight is near 0
+    return compute_alerts(db, placed_chemical_id)
+
+
+def compute_alerts(db: Session, placed_chemical_id: Optional[str] = None, ensure_lists: bool = True):
+    """경고 계산. ensure_lists=False 는 무게 보고 처리(비동기 루프) 안에서 부를 때다 —
+    병별 혼재 목록을 Gemini 로 채우지 않아 루프가 멈추지 않는다 (다음 경고 조회가 채운다)."""
+    # 1. Un-scanned checkouts — 판정은 unscanned_alert.suspects 하나로 모은다 (푸시와 모달이
+    #    같은 병을 가리키게). 미청구 감소량과 무게가 맞는 병, 없으면 칸이 비었을 때 남은 병 전부.
+    #    위치 이동 중인 병 제외도 suspects 가 맡는다.
     unscanned_checkouts = []
     chemicals = db.query(models.Chemical).filter(models.Chemical.current_status == "비치중").all()
-    # 위치 이동(지정 위치/안전 위치로 옮기기) 중인 병은 옮기려고 들어 올려 칸이 비어도
-    # 무단 반출이 아니다 — 이동 세션이 끝날 때까지 판정에서 제외한다
-    relocating_id = checkin_session.get("relocate_chemical_id") if checkin_session["active"] else ""
-    for c in chemicals:
-        if c.id == relocating_id:
-            continue
-        if c.shelf_id:
-            shelf = db.query(models.Shelf).filter(models.Shelf.id == c.shelf_id).first()
-            # 유예(GRACE_S) 안에는 띄우지 않는다 — 병을 먼저 들고 스캔하러 오는 정상 순서.
-            # 푸시 알림(unscanned_alert.watch)과 같은 타이밍에 모달이 뜨게 맞춘다.
-            if (shelf and shelf.weight < 0.1 and c.weight >= 0.2
-                    and unscanned_alert.drop_past_grace(c.shelf_id)):
-                # since: 이 회수가 감지된 시각 — 앱이 '같은 회수를 또 띄우지 않기' 판정에 쓴다
-                # (이름이 같은 다른 회수는 새 경보로 떠야 하므로 이름이 아니라 시각으로 구분)
-                drop = checkout_flow.peek_unclaimed_drop(c.shelf_id)
-                unscanned_checkouts.append({
-                    "chemical_id": c.id,
-                    "chemical_name": c.name,
-                    "shelf_id": c.shelf_id,
-                    "shelf_desc": f"선반 {shelf.parent_shelf} · {shelf.row}행 {shelf.col}열",
-                    "since": drop[1] if drop else None,
-                })
+    for shelf_id in sorted({c.shelf_id for c in chemicals if c.shelf_id}):
+        # 유예(GRACE_S) 안의 감소는 띄우지 않는다 — 병을 먼저 들고 스캔하러 오는 정상 순서.
+        # 푸시 알림(unscanned_alert.watch)과 같은 타이밍에 모달이 뜨게 맞춘다.
+        shelf, pairs = unscanned_alert.suspects(db, shelf_id, min_age=unscanned_alert.GRACE_S)
+        # since: 이 회수가 감지된 시각 — 앱이 '같은 회수를 또 띄우지 않기' 판정에 쓴다
+        # (이름이 같은 다른 회수는 새 경보로 떠야 하므로 이름이 아니라 시각으로 구분)
+        for c, since, drop_kg in pairs:
+            # c 가 None 이면 무게가 어느 병과도 안 맞는 감소 — 병을 특정하지 못한 채 칸 단위로
+            # 알린다. chemical_id 는 칸 기준 식별자이고 앱은 이름과 since 로 표시·중복 방지만 한다.
+            unscanned_checkouts.append({
+                "chemical_id": c.id if c else f"shelf:{shelf_id}",
+                "chemical_name": c.name if c else unscanned_alert.unidentified_name(drop_kg),
+                "unidentified": c is None,
+                "drop_kg": drop_kg,
+                "shelf_id": shelf_id,
+                "shelf_desc": f"선반 {shelf.parent_shelf} · {shelf.row}행 {shelf.col}열",
+                "since": since,
+            })
                 
     # 2. Expired chemicals:
     expired_chemicals = []
@@ -430,8 +442,11 @@ def get_alerts(db: Session = Depends(get_db), placed_chemical_id: Optional[str] 
     co_storage_warnings = []
 
     # Ensure all checked-in chemicals have incompatible_chemicals analyzed
-    for c in chemicals:
-        llm_safety.ensure_chemical_incompatibility_info(c, db)
+    # (병별 목록은 화면 표시와, 쌍 판정을 못 받았을 때의 대체 규칙에 쓴다)
+    if ensure_lists:
+        for c in chemicals:
+            llm_safety.ensure_chemical_incompatibility_info(c, db)
+    verdicts = costorage.load_verdicts(db)
 
     stored_chems = [c for c in chemicals if c.shelf_id]
     n = len(stored_chems)
@@ -467,10 +482,9 @@ def get_alerts(db: Session = Depends(get_db), placed_chemical_id: Optional[str] 
             incomp1 = json.loads(c1.incompatible_chemicals) if c1.incompatible_chemicals else []
             incomp2 = json.loads(c2.incompatible_chemicals) if c2.incompatible_chemicals else []
 
-            # 데모 시약끼리는 고정 혼재표로만 판정한다. 그 외에는 직접 지목 + 카테고리명
-            # ("강산"·"강염기" 등) 확장 매칭, 산끼리는 직접 지목만 인정
-            is_incompatible, fixed_reason = llm_safety.pair_incompatible(
-                c1.name, incomp1, c2.name, incomp2)
+            # 시약 쌍 판정: 데모 고정 혼재표 → 저장된 쌍 판정 → (판정 없음) 보류·대체 규칙
+            is_incompatible, pair_reason = costorage.judge(
+                verdicts, c1.name, incomp1, c2.name, incomp2)
 
             if is_incompatible:
                 # 옮길 병: 방금 놓은 병이 이 쌍에 있으면 그 병, 아니면 첫 병. 예전에는 늘 첫 병
@@ -486,7 +500,7 @@ def get_alerts(db: Session = Depends(get_db), placed_chemical_id: Optional[str] 
                     "chemical_2_name": c2.name,
                     "shelf_desc": f"선반 {s1_desc} 및 {s2_desc}",
                     "message": f"🚨 [혼재 위험] {c1.name}와(과) {c2.name}은(는) 인접 보관 금지 시약입니다.",
-                    "reason": fixed_reason or c1.incompatible_reason or c2.incompatible_reason or "인접 보관 시 격렬한 반응, 유독가스 또는 화재/폭발 위험",
+                    "reason": pair_reason or c1.incompatible_reason or c2.incompatible_reason or "인접 보관 시 격렬한 반응, 유독가스 또는 화재/폭발 위험",
                     "recommended_safe_shelf_id": safe_id,
                     "recommended_safe_shelf_desc": safe_desc,
                     "move_chemical_id": mover.id,

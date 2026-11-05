@@ -8,6 +8,7 @@ import device_status
 import models
 import routes.chemicals as chemical_routes
 import schemas
+import services.capacity as capacity
 import services.llm_safety as llm_safety
 import unscanned_alert
 from session_store import checkin_session, reset_checkin
@@ -380,13 +381,22 @@ def _handle_checkin_increase(db: Session, shelf: models.Shelf, delta_kg: float):
 
     # 병별 용량(가득 총 무게) 래칫 — 라벨/사진 추정치와 실측 무게 중 큰 값.
     # 가득 병이 반입되면 실측이 곧 용량이고, 반쯤 쓴 병 재반입은 기존 값을 유지한다.
+    # 내용량 표기 없이 정한 기본값(0.52/0.12 kg)은 처음 등록하는 병에만 쓴다 — 이미 용량이
+    # 있는 병에 쓰면 래칫이라 다시 내려오지 않아 작은 병이 0.52 kg 으로 굳는다.
+    is_new = moving is None and restored is None
     est_cap = checkin_session.get("capacity_kg")
+    if est_cap and checkin_session.get("capacity_is_default") and not is_new:
+        est_cap = None
     chem.capacity_kg = round(
         max(v for v in (est_cap, measured, chem.capacity_kg) if v), 2
     )
+    if is_new and not checkin_session.get("capacity_kg"):
+        # 추정이 아직 안 왔다 — 늦게 오는 기본값을 이 새 병에만 적용할 수 있게 표시
+        capacity.mark_new_without_estimate(chem.id)
 
-    # LLM 기반 혼재 금지 시약 정보 분석 및 저장
-    llm_safety.ensure_chemical_incompatibility_info(chem, db)
+    # 병별 혼재 목록(화면 표시·대체 규칙용)은 여기서 채우지 않는다. 무게 보고 처리는 비동기
+    # 루프에서 돌아 Gemini 를 기다리면 서버 전체가 멈춘다. 다음 경고·재고 조회가 채운다.
+    # 혼재 판정 자체는 반입 스캔 때 받아 둔 시약 쌍 판정(services/costorage)을 쓴다.
 
     # 추천 위치(기존 이력 칸·안전 위치) 안내 LED 소등
     recommended = db.query(models.Shelf).filter(
@@ -409,7 +419,7 @@ def _handle_checkin_increase(db: Session, shelf: models.Shelf, delta_kg: float):
     # 반입 직후 인접 수납칸 혼재 금지 시약 배치 여부 검사
     safe_id, safe_desc = llm_safety.find_recommended_safe_shelf(chem, db)
     co_warning = None
-    alerts = chemical_routes.get_alerts(db, placed_chemical_id=chem.id)
+    alerts = chemical_routes.compute_alerts(db, placed_chemical_id=chem.id, ensure_lists=False)
     for warning in alerts.get("co_storage_warnings", []):
         if warning["chemical_1_id"] == chem.id or warning["chemical_2_id"] == chem.id:
             co_warning = warning
@@ -466,8 +476,8 @@ def update_weight(shelf_id: str, req: schemas.WeightUpdate, db: Session = Depend
             # 청구할 수 있도록 기록하고, 경보 대상이 되는 순간 즉시 무단 반입으로 알린다
             # (unscanned_alert.notify_rise — 반출과 달리 유예 없음).
             unclaimed_rise = _record_rise(shelf.id, delta)
-        # 병이 다시 올라왔으면 직전의 미청구 감소 기록은 무효
-        checkout_flow.clear_unclaimed_drop(shelf.id)
+        # 병이 다시 올라왔으면 그 무게와 맞는 미청구 감소 한 건은 무효 (맞는 게 없으면 전부)
+        checkout_flow.clear_unclaimed_drop(shelf.id, rise_kg=delta)
     elif delta <= -MIN_EVENT_DELTA_KG:
         # 방금 스캔 없이 놓인 병이 있으면 그 증가에서 먼저 차감한다 (손 떼기·자리 고치기)
         absorbed = _absorb_drop_into_rise(shelf.id, -delta)

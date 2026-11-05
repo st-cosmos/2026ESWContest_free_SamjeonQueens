@@ -16,6 +16,10 @@ from typing import Optional
 logger = logging.getLogger("llm_match")
 
 
+LLM_ATTEMPTS = 3          # 429/5xx 에 대한 시도 횟수 (첫 호출 포함)
+LLM_RETRY_WAIT_S = 1.0    # 재시도 전 대기 (503 자체가 5초쯤 걸려 돌아오므로 길게 쉴 이유가 없다)
+
+
 def identify_chemical_from_ocr(ocr_text: str, known_names: list,
                                image_b64: Optional[str] = None) -> Optional[dict]:
     """OCR 텍스트(+선택적 라벨 사진)에서 시약명을 식별한다. 실패/키 미설정 시 None.
@@ -59,10 +63,12 @@ def identify_chemical_from_ocr(ocr_text: str, known_names: list,
 
 마크다운 없이 순수 JSON만 출력해: {{"name": "...", "label_text": "..."}}"""
 
-    # flash 계열은 기본 thinking 때문에 15~20초씩 걸린다 — 스캔 폴백에는 lite 가 적합
-    # (실측: 3.6-flash 21s). 3.1-flash-lite 는 2026-11 "high demand" 503 이 계속돼
-    # 3.5-flash-lite 로 옮김 (실측: 글자만 1.0s, 라벨 사진 포함 1.6~3.5s)
-    model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
+    # 라벨 식별은 다른 Gemini 호출(GEMINI_MODEL: 혼재 판정·용량 추정)과 모델을 따로 쓴다.
+    # flash 계열은 기본 thinking 때문에 15~20초씩 걸리고(실측: 3.6-flash 21s) 무료 한도도 낮아
+    # 스캔 중 몇 초마다 부르는 이 경로에서 429(Too Many Requests)가 났다. 스캔 폴백에는 lite 가
+    # 적합하다 (실측: 글자만 1.0s, 라벨 사진 포함 1.6~3.5s). 3.1-flash-lite 는 2026-11
+    # "high demand" 503 이 계속돼 3.5-flash-lite 를 기본으로 쓴다.
+    model = os.getenv("GEMINI_SCAN_MODEL", "gemini-3.5-flash-lite")
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
     parts = [{"text": prompt}]
     if image_b64:
@@ -76,8 +82,10 @@ def identify_chemical_from_ocr(ocr_text: str, known_names: list,
     }
 
     body = json.dumps(payload).encode("utf-8")
-    # 503(일시 과부하)은 실측에서 드물지 않게 나온다 — 한 번은 짧게 쉬고 다시 시도한다
-    for attempt in range(2):
+    # 503(일시 과부하)·429(분당 한도)는 실측에서 드물지 않게 나온다 — 몇 초 쉬고 두 번까지
+    # 다시 시도한다. 서버가 실패를 no_match 로 돌려주면 앱은 그것도 응답 횟수로 세어 그 병에
+    # 더 묻지 않으므로, 여기서 넘기는 편이 낫다. (두 응답 모두 수 초 안에 바로 돌아온다)
+    for attempt in range(LLM_ATTEMPTS):
         try:
             req = urllib.request.Request(
                 url, data=body, headers={"Content-Type": "application/json"}, method="POST",
@@ -96,8 +104,8 @@ def identify_chemical_from_ocr(ocr_text: str, known_names: list,
                 return None
         except urllib.error.HTTPError as e:
             logger.warning(f"LLM 시약 식별 호출 실패: {e}")
-            if e.code >= 500 and attempt == 0:
-                time.sleep(1.0)
+            if (e.code == 429 or e.code >= 500) and attempt < LLM_ATTEMPTS - 1:
+                time.sleep(LLM_RETRY_WAIT_S)
                 continue
             return None
         except Exception as e:

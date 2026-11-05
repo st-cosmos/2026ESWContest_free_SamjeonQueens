@@ -2,6 +2,7 @@ import os
 import json
 import logging
 import re
+import threading
 import urllib.request
 from typing import Any, Dict
 
@@ -199,18 +200,29 @@ def demo_info(name: str):
     return _DEMO_INFO[key] if key else None
 
 
-def pair_incompatible(name_a: str, items_a, name_b: str, items_b):
-    """두 병을 같은 행에 두면 안 되는가 → (혼재 여부, 고정 표의 사유 또는 None).
-
-    둘 다 데모 시약이면 고정 표만 본다 — 저장된 목록이 무엇이든 표가 정한 두 조합만 경고한다.
-    하나라도 데모 시약이 아니면 양쪽 목록을 서로 대조한다 (상대 목록이 이 병을 지목해도 위험).
-    """
+def demo_pair_verdict(name_a: str, name_b: str):
+    """둘 다 데모 시약이면 고정 표의 판정 (혼재 여부, 사유), 하나라도 아니면 None.
+    저장된 목록이나 쌍 판정이 무엇이든 표가 정한 두 조합만 경고한다."""
     ka, kb = demo_key(name_a), demo_key(name_b)
-    if ka and kb:
-        reason = None if ka == kb else _DEMO_PAIR_REASONS.get(frozenset((ka, kb)))
-        return reason is not None, reason
-    hit = incompatible_with(name_a, items_a, name_b) or incompatible_with(name_b, items_b, name_a)
-    return hit, None
+    if not (ka and kb):
+        return None
+    reason = None if ka == kb else _DEMO_PAIR_REASONS.get(frozenset((ka, kb)))
+    return reason is not None, reason
+
+
+def list_incompatible(name_a: str, items_a, name_b: str, items_b) -> bool:
+    """병마다 받아 둔 혼재 금지 목록끼리 대조 — 쌍 판정이 없을 때의 대체 규칙.
+    상대 목록이 이 병을 지목해도 위험으로 본다."""
+    return incompatible_with(name_a, items_a, name_b) or incompatible_with(name_b, items_b, name_a)
+
+
+def pair_incompatible(name_a: str, items_a, name_b: str, items_b):
+    """고정 표 + 목록 대조 판정 → (혼재 여부, 고정 표의 사유 또는 None).
+    경고 계산과 안전 위치 추천은 저장된 쌍 판정을 먼저 보는 services/costorage.judge 를 쓴다."""
+    rule = demo_pair_verdict(name_a, name_b)
+    if rule is not None:
+        return rule
+    return list_incompatible(name_a, items_a, name_b, items_b), None
 
 
 def get_fallback_incompatibility(chemical_name: str) -> Dict[str, Any]:
@@ -227,8 +239,13 @@ def get_fallback_incompatibility(chemical_name: str) -> Dict[str, Any]:
                 reasons.append(rule["reason"])
 
     if not matched_incompatible:
-        matched_incompatible = {"강산성 물질", "강염기성 물질", "강산화제"}
-        reasons.append("일반 화학 시약으로서 반응성 위험 물질과의 분리 보관이 권장됩니다.")
+        # 규칙에 없는 시약은 '모름'이다. 예전에는 범용 기본값(강산·강염기·강산화제)을 넣었는데,
+        # 목록 대조 규칙이 그 범주를 산·염기·산화제 전부로 확장해 아이오딘 ↔ 아세트산처럼
+        # 급성 위험이 없는 조합까지 혼재 금지로 지목했다. 아무도 지목하지 않는 빈 목록으로 둔다.
+        return {
+            "incompatible_chemicals": [],
+            "reason": "판정 보류: 혼재 정보를 받지 못해 자동으로 위험 판정하지 않습니다.",
+        }
 
     return {
         "incompatible_chemicals": list(matched_incompatible),
@@ -268,8 +285,9 @@ def fetch_incompatible_chemicals_from_llm(chemical_name: str) -> Dict[str, Any]:
     }}
     """
 
-    # 반입 처리 경로를 막지 않도록 응답이 빠른 lite 를 기본으로 쓴다 (GEMINI_MODEL 로 변경 가능)
-    model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite")
+    # 기본은 flash (GEMINI_MODEL 로 변경 가능). lite 는 2026-11 측정에서 한 줄 응답도 10초를 넘겨
+    # 반입 스캔의 쌍 판정(6초 제한)이 타임아웃으로 대체 규칙을 타게 했다.
+    model = os.getenv("GEMINI_MODEL", "gemini-3.5-flash")
     url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
     payload = {
         "contents": [
@@ -311,6 +329,10 @@ def fetch_incompatible_chemicals_from_llm(chemical_name: str) -> Dict[str, Any]:
     return get_fallback_incompatibility(chemical_name)
 
 
+_ensuring_lock = threading.Lock()
+_ensuring: set = set()  # 지금 목록을 묻고 있는 병 id
+
+
 def ensure_chemical_incompatibility_info(chem, db):
     """시약 객체 chem에 혼재 금지 정보가 없을 경우 LLM/Fallback으로 채우고 저장합니다.
 
@@ -326,21 +348,41 @@ def ensure_chemical_incompatibility_info(chem, db):
             db.refresh(chem)
         return chem
     if not chem.incompatible_chemicals:
-        info = fetch_incompatible_chemicals_from_llm(chem.name)
-        # 자기 자신을 가리키는 항목은 뺀다 — 같은 시약 병끼리 혼재로 뜨는 원인
-        items = [x for x in info["incompatible_chemicals"]
-                 if x and not (x in chem.name or chem.name in x)]
-        chem.incompatible_chemicals = json.dumps(items, ensure_ascii=False)
-        chem.incompatible_reason = info["reason"]
-        db.commit()
-        db.refresh(chem)
+        # 경고·재고 조회가 동시에 여러 번 들어와도 같은 병은 한 번만 묻는다
+        # (같은 병을 동시에 여러 번 물으면 Gemini 요청 한도에 걸린다)
+        with _ensuring_lock:
+            if chem.id in _ensuring:
+                return chem
+            _ensuring.add(chem.id)
+        try:
+            info = fetch_incompatible_chemicals_from_llm(chem.name)
+            # 자기 자신을 가리키는 항목은 뺀다 — 같은 시약 병끼리 혼재로 뜨는 원인
+            items = [x for x in info["incompatible_chemicals"]
+                     if x and not (x in chem.name or chem.name in x)]
+            chem.incompatible_chemicals = json.dumps(items, ensure_ascii=False)
+            chem.incompatible_reason = info["reason"]
+            db.commit()
+            db.refresh(chem)
+        finally:
+            with _ensuring_lock:
+                _ensuring.discard(chem.id)
     return chem
 
 
 def find_recommended_safe_shelf(chem, db):
-    """chem과 반응 위험이 없는 안전한 대체 수납칸(shelf_id, desc)을 찾아 반환합니다."""
+    """chem과 반응 위험이 없는 안전한 대체 수납칸(shelf_id, desc)을 찾아 반환합니다.
+    판정은 경고와 같은 시약 쌍 판정(services/costorage)을 쓴다."""
     import models
-    shelves = db.query(models.Shelf).all()
+    import services.costorage as costorage  # costorage 가 이 모듈을 import 하므로 지연 import
+    verdicts = costorage.load_verdicts(db)
+    # 후보는 선반·행·열이 배정된 등록 칸만. 미등록 노드는 parent_shelf 가 없어 어떤 시약과도
+    # 같은 선반으로 묶이지 않아 무조건 "안전"으로 판정됐고, "None행 None열"로 안내되는 원인이었다.
+    shelves = db.query(models.Shelf).filter(
+        models.Shelf.status == "registered",
+        models.Shelf.parent_shelf.isnot(None),
+        models.Shelf.row.isnot(None),
+        models.Shelf.col.isnot(None),
+    ).all()
     incomp_list = json.loads(chem.incompatible_chemicals) if chem.incompatible_chemicals else []
     all_chems = db.query(models.Chemical).filter(models.Chemical.current_status == "비치중").all()
 
@@ -359,8 +401,8 @@ def find_recommended_safe_shelf(chem, db):
                 # (양방향 — 상대 목록이 이 시약을 지목하는 경우도 위험)
                 if (s.row or 1) == (other_shelf.row or 1):
                     other_list = json.loads(other.incompatible_chemicals) if other.incompatible_chemicals else []
-                    # 데모 시약끼리는 고정 혼재표, 그 외에는 양쪽 목록 대조
-                    if pair_incompatible(chem.name, incomp_list, other.name, other_list)[0]:
+                    # 시약 쌍 판정 (데모 고정 표 → 저장된 판정 → 보류·대체 규칙)
+                    if costorage.judge(verdicts, chem.name, incomp_list, other.name, other_list)[0]:
                         is_safe = False
                         break
         if is_safe:
@@ -368,4 +410,5 @@ def find_recommended_safe_shelf(chem, db):
             desc = f"선반 {parent} · {s.row}행 {s.col}열"
             return s.id, desc
 
-    return None, "선반 C · 분리 보관 전용 구역"
+    # 등록된 칸 중 안전한 곳이 없다 — 존재하지 않는 "선반 C" 대신 선반 밖 별도 보관을 안내한다
+    return None, "등록된 선반 밖 별도 보관 구역"
