@@ -384,32 +384,30 @@ def get_alerts(db: Session = Depends(get_db), placed_chemical_id: Optional[str] 
 def compute_alerts(db: Session, placed_chemical_id: Optional[str] = None, ensure_lists: bool = True):
     """경고 계산. ensure_lists=False 는 무게 보고 처리(비동기 루프) 안에서 부를 때다 —
     병별 혼재 목록을 Gemini 로 채우지 않아 루프가 멈추지 않는다 (다음 경고 조회가 채운다)."""
-    # 1. Un-scanned checkouts:
-    # A chemical with status "비치중" but its shelf weight is near 0
+    # 1. Un-scanned checkouts — 판정은 unscanned_alert.suspects 하나로 모은다 (푸시와 모달이
+    #    같은 병을 가리키게). 미청구 감소량과 무게가 맞는 병, 없으면 칸이 비었을 때 남은 병 전부.
+    #    위치 이동 중인 병 제외도 suspects 가 맡는다.
     unscanned_checkouts = []
     chemicals = db.query(models.Chemical).filter(models.Chemical.current_status == "비치중").all()
-    # 위치 이동(지정 위치/안전 위치로 옮기기) 중인 병은 옮기려고 들어 올려 칸이 비어도
-    # 무단 반출이 아니다 — 이동 세션이 끝날 때까지 판정에서 제외한다
-    relocating_id = checkin_session.get("relocate_chemical_id") if checkin_session["active"] else ""
-    for c in chemicals:
-        if c.id == relocating_id:
+    for shelf_id in sorted({c.shelf_id for c in chemicals if c.shelf_id}):
+        # 유예(GRACE_S) 안에는 띄우지 않는다 — 병을 먼저 들고 스캔하러 오는 정상 순서.
+        # 푸시 알림(unscanned_alert.watch)과 같은 타이밍에 모달이 뜨게 맞춘다.
+        if not unscanned_alert.drop_past_grace(shelf_id):
             continue
-        if c.shelf_id:
-            shelf = db.query(models.Shelf).filter(models.Shelf.id == c.shelf_id).first()
-            # 유예(GRACE_S) 안에는 띄우지 않는다 — 병을 먼저 들고 스캔하러 오는 정상 순서.
-            # 푸시 알림(unscanned_alert.watch)과 같은 타이밍에 모달이 뜨게 맞춘다.
-            if (shelf and shelf.weight < 0.1 and c.weight >= 0.2
-                    and unscanned_alert.drop_past_grace(c.shelf_id)):
-                # since: 이 회수가 감지된 시각 — 앱이 '같은 회수를 또 띄우지 않기' 판정에 쓴다
-                # (이름이 같은 다른 회수는 새 경보로 떠야 하므로 이름이 아니라 시각으로 구분)
-                drop = checkout_flow.peek_unclaimed_drop(c.shelf_id)
-                unscanned_checkouts.append({
-                    "chemical_id": c.id,
-                    "chemical_name": c.name,
-                    "shelf_id": c.shelf_id,
-                    "shelf_desc": f"선반 {shelf.parent_shelf} · {shelf.row}행 {shelf.col}열",
-                    "since": drop[1] if drop else None,
-                })
+        shelf, suspects = unscanned_alert.suspects(db, shelf_id)
+        if not suspects:
+            continue
+        # since: 이 회수가 감지된 시각 — 앱이 '같은 회수를 또 띄우지 않기' 판정에 쓴다
+        # (이름이 같은 다른 회수는 새 경보로 떠야 하므로 이름이 아니라 시각으로 구분)
+        drop = checkout_flow.peek_unclaimed_drop(shelf_id)
+        for c in suspects:
+            unscanned_checkouts.append({
+                "chemical_id": c.id,
+                "chemical_name": c.name,
+                "shelf_id": shelf_id,
+                "shelf_desc": f"선반 {shelf.parent_shelf} · {shelf.row}행 {shelf.col}열",
+                "since": drop[1] if drop else None,
+            })
                 
     # 2. Expired chemicals:
     expired_chemicals = []

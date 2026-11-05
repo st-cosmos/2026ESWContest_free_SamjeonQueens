@@ -3,7 +3,8 @@
 두 경보는 타이밍이 다르다.
   * 무단 반출 — 병을 먼저 들고 나서 스캔하는 순서는 정상 사용이다. 세션 없는 감소는
     '미청구 감소'로 남겨 두고, GRACE_S 안에 스캔이 오면 그 스캔이 감소를 청구해 확정한다.
-    유예가 지나도 칸이 빈 채 병이 비치중이면 무단 반출로 확정한다.
+    유예가 지나도 청구되지 않으면 감소량과 무게가 맞는 병을 무단 반출로 확정한다 (suspects).
+    맞는 병이 없으면 칸이 빈 경우에만 남은 비치중 병 전부를 확정한다.
   * 무단 반입 — 스캔 없이 병을 먼저 올려놓는 것은 언제나 절차 위반이다 (정상 반입은
     스캔 → 세션 → 안착 순서뿐). 유예 없이 감지 즉시 경보하고, 사용자는 '지금 스캔하기'로
     그 적재를 청구해 기록을 맞춘다. 미청구 증가 원장은 routes/shelves 가 관리한다.
@@ -55,10 +56,17 @@ def _strip(events: list) -> list:
     return [{k: v for k, v in e.items() if k != "_ts"} for e in reversed(events)]
 
 
-def _pending(db, shelf_id: str):
-    """칸이 비었는데 비치중으로 남아 있는 병들 — GET /alerts 의 unscanned 판정과 같다."""
+def suspects(db, shelf_id: str):
+    """이 칸에서 무단 반출로 볼 병들 (현재 상태). 푸시(watch)와 앱 모달(GET /alerts)이 함께 쓴다.
+
+    1) 미청구 감소가 있으면 그 감소량과 무게가 허용 오차 안에서 맞는 비치중 병을 고른다
+       (여러 개면 가장 가까운 병 하나). 한 칸에 병이 여러 개라 하나를 빼도 칸이 비지 않는
+       경우를 잡는다 — 예전에는 칸이 비어야만 울려서 병이 둘 이상인 칸은 감지되지 않았다.
+    2) 맞는 병이 없으면 칸이 비었을 때(EMPTY_SHELF_KG 미만)만 남은 비치중 병 전부를 든다.
+       (감소 기록이 없는 서버 재시작 직후나, 기록 무게와 동떨어진 감소에 대한 보루)
+    """
     shelf = db.query(models.Shelf).filter(models.Shelf.id == shelf_id).first()
-    if not shelf or shelf.weight >= checkout_flow.EMPTY_SHELF_KG:
+    if not shelf:
         return shelf, []
     chems = db.query(models.Chemical).filter(
         models.Chemical.shelf_id == shelf_id,
@@ -66,8 +74,19 @@ def _pending(db, shelf_id: str):
     ).all()
     # 위치 이동 중인 병(들어 올리기 전에 버튼을 눌렀든, 든 뒤에 눌렀든)은 무단 반출이 아니다
     relocating_id = checkin_session.get("relocate_chemical_id") if checkin_session["active"] else ""
-    return shelf, [c for c in chems
-                   if (c.weight or 0.0) >= MIN_BOTTLE_KG and c.id != relocating_id]
+    chems = [c for c in chems
+             if (c.weight or 0.0) >= MIN_BOTTLE_KG and c.id != relocating_id]
+
+    drop = checkout_flow.peek_unclaimed_drop(shelf_id)
+    if drop is not None:
+        drop_kg = drop[0]
+        matched = [c for c in chems if checkout_flow.weight_within_tolerance(c.weight, drop_kg)]
+        if matched:
+            return shelf, [min(matched, key=lambda c: abs(c.weight - drop_kg))]
+
+    if shelf.weight < checkout_flow.EMPTY_SHELF_KG:
+        return shelf, chems
+    return shelf, []
 
 
 async def watch(shelf_id: str, broadcast):
@@ -76,7 +95,7 @@ async def watch(shelf_id: str, broadcast):
     await asyncio.sleep(GRACE_S)
     db = SessionLocal()
     try:
-        shelf, chems = _pending(db, shelf_id)
+        shelf, chems = suspects(db, shelf_id)
         snapshot = [(c.id, c.name) for c in chems]
         desc = _shelf_desc(shelf)
     finally:
